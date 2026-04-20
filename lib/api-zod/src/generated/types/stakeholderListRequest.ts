@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface StakeholderListRequest {
+  /** @nullable */
+  stakeholderType?: number | null;
+  getAll?: boolean;
+  /** @nullable */
+  cityId?: number | null;
 }

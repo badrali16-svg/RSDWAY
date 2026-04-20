@@ -5,7 +5,10 @@
  * SFDA DTTS (Rasid) Integration API - Proxy for SOAP web services
  * OpenAPI spec version: 0.1.0
  */
+import type { Product } from "./product";
 
-export interface HealthStatus {
-  status: string;
+export interface PharmacySaleCancelRequest {
+  toGLN: string;
+  prescriptionId: string;
+  products: Product[];
 }

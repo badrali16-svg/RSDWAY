@@ -1,22 +1,46 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: SFDA DTTS (Rasid) Integration API - Proxy for SOAP web services
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication configuration
+  - name: import
+    description: Import operations
+  - name: dispatch
+    description: Dispatch operations
+  - name: accept
+    description: Accept operations
+  - name: return
+    description: Return operations
+  - name: supply
+    description: Supply operations
+  - name: consume
+    description: Consume operations
+  - name: transfer
+    description: Transfer operations
+  - name: pharmacy-sale
+    description: Pharmacy sale operations
+  - name: deactivation
+    description: Deactivation operations
+  - name: export
+    description: Export operations
+  - name: package
+    description: Package transfer operations
+  - name: query
+    description: Query / utility operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +48,599 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── AUTH CONFIGURATION ─────────────────────────────────────────────────────
+  /auth/config:
+    get:
+      operationId: getAuthConfig
+      tags: [auth]
+      summary: Get saved credentials (masked)
+      responses:
+        "200":
+          description: Current auth config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthConfig"
+    post:
+      operationId: saveAuthConfig
+      tags: [auth]
+      summary: Save DTTS credentials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthConfigInput"
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthConfig"
+
+  # ── IMPORT ─────────────────────────────────────────────────────────────────
+  /rasid/import:
+    post:
+      operationId: importProducts
+      tags: [import]
+      summary: Import products into DTTS
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportRequest"
+      responses:
+        "200":
+          description: Import response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/import-cancel:
+    post:
+      operationId: importCancelProducts
+      tags: [import]
+      summary: Cancel an import operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductListRequest"
+      responses:
+        "200":
+          description: Cancel response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  # ── SUPPLY ─────────────────────────────────────────────────────────────────
+  /rasid/supply:
+    post:
+      operationId: supplyProducts
+      tags: [supply]
+      summary: Supply (manufacture) products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportRequest"
+      responses:
+        "200":
+          description: Supply response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/supply-cancel:
+    post:
+      operationId: supplyCancelProducts
+      tags: [supply]
+      summary: Cancel a supply operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductListRequest"
+      responses:
+        "200":
+          description: Cancel response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  # ── DISPATCH ───────────────────────────────────────────────────────────────
+  /rasid/dispatch:
+    post:
+      operationId: dispatchProducts
+      tags: [dispatch]
+      summary: Dispatch products to another stakeholder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToGlnProductListRequest"
+      responses:
+        "200":
+          description: Dispatch response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/dispatch-cancel:
+    post:
+      operationId: dispatchCancelProducts
+      tags: [dispatch]
+      summary: Cancel a dispatch operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToGlnProductListRequest"
+      responses:
+        "200":
+          description: Cancel response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  # ── ACCEPT ─────────────────────────────────────────────────────────────────
+  /rasid/accept:
+    post:
+      operationId: acceptProducts
+      tags: [accept]
+      summary: Accept products from a stakeholder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FromGlnProductListRequest"
+      responses:
+        "200":
+          description: Accept response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/accept-dispatch:
+    post:
+      operationId: acceptDispatch
+      tags: [accept]
+      summary: Accept all products in a dispatch notification at once
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptDispatchRequest"
+      responses:
+        "200":
+          description: Accept dispatch response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  # ── RETURN ─────────────────────────────────────────────────────────────────
+  /rasid/return:
+    post:
+      operationId: returnProducts
+      tags: [return]
+      summary: Return products to a stakeholder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToGlnProductListRequest"
+      responses:
+        "200":
+          description: Return response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  # ── CONSUME ────────────────────────────────────────────────────────────────
+  /rasid/consume:
+    post:
+      operationId: consumeProducts
+      tags: [consume]
+      summary: Consume products (hospital/clinic use)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductListRequest"
+      responses:
+        "200":
+          description: Consume response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/consume-cancel:
+    post:
+      operationId: consumeCancelProducts
+      tags: [consume]
+      summary: Cancel a consume operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductListRequest"
+      responses:
+        "200":
+          description: Cancel response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  # ── TRANSFER ───────────────────────────────────────────────────────────────
+  /rasid/transfer:
+    post:
+      operationId: transferProducts
+      tags: [transfer]
+      summary: Transfer products between pharmacies/consumption centers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToGlnProductListRequest"
+      responses:
+        "200":
+          description: Transfer response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/transfer-cancel:
+    post:
+      operationId: transferCancelProducts
+      tags: [transfer]
+      summary: Cancel a transfer operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToGlnProductListRequest"
+      responses:
+        "200":
+          description: Cancel response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  # ── PHARMACY SALE ──────────────────────────────────────────────────────────
+  /rasid/pharmacy-sale:
+    post:
+      operationId: pharmacySale
+      tags: [pharmacy-sale]
+      summary: Pharmacy sale to patient or reimbursement agency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PharmacySaleRequest"
+      responses:
+        "200":
+          description: Sale response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/pharmacy-sale-cancel:
+    post:
+      operationId: pharmacySaleCancel
+      tags: [pharmacy-sale]
+      summary: Cancel a pharmacy sale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PharmacySaleCancelRequest"
+      responses:
+        "200":
+          description: Cancel response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  # ── DEACTIVATION ───────────────────────────────────────────────────────────
+  /rasid/deactivation:
+    post:
+      operationId: deactivateProducts
+      tags: [deactivation]
+      summary: Deactivate/remove products from the system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeactivationRequest"
+      responses:
+        "200":
+          description: Deactivation response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/deactivation-cancel:
+    post:
+      operationId: deactivationCancel
+      tags: [deactivation]
+      summary: Cancel a deactivation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductListRequest"
+      responses:
+        "200":
+          description: Cancel response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  # ── EXPORT ─────────────────────────────────────────────────────────────────
+  /rasid/export:
+    post:
+      operationId: exportProducts
+      tags: [export]
+      summary: Export products out of country
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExportRequest"
+      responses:
+        "200":
+          description: Export response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/export-cancel:
+    post:
+      operationId: exportCancelProducts
+      tags: [export]
+      summary: Cancel an export
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductListRequest"
+      responses:
+        "200":
+          description: Cancel response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  # ── PACKAGE TRANSFER ───────────────────────────────────────────────────────
+  /rasid/package-upload:
+    post:
+      operationId: packageUpload
+      tags: [package]
+      summary: Upload a file to Package Transfer System
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PackageUploadRequest"
+      responses:
+        "200":
+          description: Upload response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/package-download:
+    post:
+      operationId: packageDownload
+      tags: [package]
+      summary: Download a file from Package Transfer System
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PackageDownloadRequest"
+      responses:
+        "200":
+          description: Download response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/package-query:
+    post:
+      operationId: packageQuery
+      tags: [package]
+      summary: Query files in Package Transfer System
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PackageQueryRequest"
+      responses:
+        "200":
+          description: Query response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  # ── QUERY / UTILITY ────────────────────────────────────────────────────────
+  /rasid/check-status:
+    post:
+      operationId: checkStatus
+      tags: [query]
+      summary: Check status of products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductListRequest"
+      responses:
+        "200":
+          description: Status response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/dispatch-detail:
+    post:
+      operationId: dispatchDetail
+      tags: [query]
+      summary: Get details of a dispatch notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DispatchDetailRequest"
+      responses:
+        "200":
+          description: Dispatch detail response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/country-list:
+    post:
+      operationId: getCountryList
+      tags: [query]
+      summary: Get list of countries
+      responses:
+        "200":
+          description: Country list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/city-list:
+    post:
+      operationId: getCityList
+      tags: [query]
+      summary: Get list of cities/regions
+      responses:
+        "200":
+          description: City list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/drug-list:
+    post:
+      operationId: getDrugList
+      tags: [query]
+      summary: Get registered drugs list
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DrugListRequest"
+      responses:
+        "200":
+          description: Drug list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/error-code-list:
+    post:
+      operationId: getErrorCodeList
+      tags: [query]
+      summary: Get error codes and descriptions
+      responses:
+        "200":
+          description: Error code list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/stakeholder-list:
+    post:
+      operationId: getStakeholderList
+      tags: [query]
+      summary: Get registered stakeholders
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StakeholderListRequest"
+      responses:
+        "200":
+          description: Stakeholder list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  # ── OPERATION HISTORY ──────────────────────────────────────────────────────
+  /rasid/history:
+    get:
+      operationId: getOperationHistory
+      tags: [query]
+      summary: Get local operation history
+      responses:
+        "200":
+          description: History list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OperationLog"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +651,279 @@ components:
       required:
         - status
 
+    AuthConfig:
+      type: object
+      properties:
+        username:
+          type: string
+        hasPassword:
+          type: boolean
+        baseUrl:
+          type: string
+      required:
+        - username
+        - hasPassword
+        - baseUrl
+
+    AuthConfigInput:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        baseUrl:
+          type: string
+      required:
+        - username
+        - password
+        - baseUrl
+
+    Product:
+      type: object
+      properties:
+        GTIN:
+          type: string
+        SN:
+          type: ["string", "null"]
+        BN:
+          type: ["string", "null"]
+        XD:
+          type: ["string", "null"]
+        QUANTITY:
+          type: ["integer", "null"]
+      required:
+        - GTIN
+
+    ProductListRequest:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+      required:
+        - products
+
+    ToGlnProductListRequest:
+      type: object
+      properties:
+        toGLN:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+      required:
+        - toGLN
+        - products
+
+    FromGlnProductListRequest:
+      type: object
+      properties:
+        fromGLN:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+      required:
+        - fromGLN
+        - products
+
+    ImportRequest:
+      type: object
+      properties:
+        GTIN:
+          type: string
+        MD:
+          type: string
+        XD:
+          type: string
+        BN:
+          type: string
+        serialNumbers:
+          type: array
+          items:
+            type: string
+      required:
+        - GTIN
+        - MD
+        - XD
+        - BN
+        - serialNumbers
+
+    AcceptDispatchRequest:
+      type: object
+      properties:
+        dispatchNotificationId:
+          type: string
+      required:
+        - dispatchNotificationId
+
+    PharmacySaleRequest:
+      type: object
+      properties:
+        toGLN:
+          type: string
+        doctorId:
+          type: ["string", "null"]
+        patientNationalId:
+          type: ["string", "null"]
+        prescriptionId:
+          type: string
+        prescriptionDate:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+      required:
+        - toGLN
+        - prescriptionId
+        - prescriptionDate
+        - products
+
+    PharmacySaleCancelRequest:
+      type: object
+      properties:
+        toGLN:
+          type: string
+        prescriptionId:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+      required:
+        - toGLN
+        - prescriptionId
+        - products
+
+    DeactivationRequest:
+      type: object
+      properties:
+        DR:
+          type: string
+        explanation:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+      required:
+        - DR
+        - explanation
+        - products
+
+    ExportRequest:
+      type: object
+      properties:
+        countryCode:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+      required:
+        - countryCode
+        - products
+
+    PackageUploadRequest:
+      type: object
+      properties:
+        toGLN:
+          type: string
+        fileBase64:
+          type: string
+      required:
+        - toGLN
+        - fileBase64
+
+    PackageDownloadRequest:
+      type: object
+      properties:
+        transferId:
+          type: string
+      required:
+        - transferId
+
+    PackageQueryRequest:
+      type: object
+      properties:
+        fromGLN:
+          type: ["string", "null"]
+        toGLN:
+          type: ["string", "null"]
+        getAll:
+          type: boolean
+        startDate:
+          type: ["string", "null"]
+        endDate:
+          type: ["string", "null"]
+      required:
+        - getAll
+
+    DispatchDetailRequest:
+      type: object
+      properties:
+        dispatchNotificationId:
+          type: string
+      required:
+        - dispatchNotificationId
+
+    DrugListRequest:
+      type: object
+      properties:
+        drugStatus:
+          type: ["integer", "null"]
+
+    StakeholderListRequest:
+      type: object
+      properties:
+        stakeholderType:
+          type: ["integer", "null"]
+        getAll:
+          type: boolean
+        cityId:
+          type: ["integer", "null"]
+
+    SoapResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        rawXml:
+          type: ["string", "null"]
+        parsed:
+          description: Parsed response object
+        error:
+          type: ["string", "null"]
+        notificationId:
+          type: ["string", "null"]
+      required:
+        - success
+
+    OperationLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        operation:
+          type: string
+        requestPayload:
+          type: string
+        responsePayload:
+          type: ["string", "null"]
+        success:
+          type: boolean
+        notificationId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - operation
+        - requestPayload
+        - success
+        - createdAt
