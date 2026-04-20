@@ -184,6 +184,8 @@ export function ProductListInput({ name = "products" }: { name?: string }) {
           <FileSpreadsheet className="h-6 w-6 mx-auto mb-2 opacity-50" />
           <p>يمكنك رفع ملف Excel أو CSV يحتوي على الأعمدة:</p>
           <p dir="ltr" className="font-mono font-bold mt-1 tracking-wider">GTIN ; SN ; BN ; XD</p>
+          <p dir="ltr" className="font-mono font-bold tracking-wider text-muted-foreground">GTIN ; QUANTITY ; BN ; XD</p>
+          <p className="mt-1">الفاصل يمكن أن يكون <span className="font-mono">(;)</span> أو <span className="font-mono">(,)</span> — التاريخ بصيغة DD/MM/YYYY أو YYYY-MM-DD</p>
           <p className="mt-1">أو إضافة المنتجات يدوياً بالضغط على "إضافة يدوي"</p>
         </div>
       )}
