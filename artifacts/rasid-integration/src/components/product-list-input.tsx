@@ -1,6 +1,7 @@
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { Button } from "./ui/button";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "./ui/form";
+import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Plus, Trash2 } from "lucide-react";
 
@@ -14,7 +15,7 @@ export function ProductListInput({ name = "products" }: { name?: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <FormLabel className="text-base font-semibold">قائمة المنتجات (Products)</FormLabel>
+        <Label className="text-base font-semibold">قائمة المنتجات (Products)</Label>
         <Button
           type="button"
           variant="outline"
