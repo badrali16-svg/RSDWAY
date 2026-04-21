@@ -40,8 +40,10 @@ const navItems: NavItem[] = [
   { href: "/queries", label: "خدمات الاستعلام", icon: Search, slug: "queries" },
   { href: "/history", label: "سجل العمليات", icon: History, slug: "history" },
   { href: "/users", label: "إدارة المستخدمين", icon: Users, slug: "users", adminOnly: true },
-  { href: "/settings", label: "الإعدادات", icon: Settings, slug: "settings", adminOnly: true },
+  { href: "/settings", label: "الإعدادات", icon: Settings, slug: "settings" },
 ];
+
+const ALWAYS_VISIBLE = new Set(["settings"]);
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -51,6 +53,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const visibleItems = navItems.filter((item) => {
     if (item.adminOnly) return user?.role === "admin";
+    if (ALWAYS_VISIBLE.has(item.slug)) return true;
     if (user?.role === "admin") return true;
     return user?.permissions?.includes(item.slug);
   });

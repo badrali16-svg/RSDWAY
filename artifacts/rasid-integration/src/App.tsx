@@ -63,7 +63,7 @@ function AuthedRoutes() {
         <Route path="/">
           <PermissionGuard slug="dashboard"><Dashboard /></PermissionGuard>
         </Route>
-        <Route path="/settings"><AdminGuard><Settings /></AdminGuard></Route>
+        <Route path="/settings"><Settings /></Route>
         <Route path="/users"><AdminGuard><UsersPage /></AdminGuard></Route>
         <Route path="/import">
           <PermissionGuard slug="import"><ImportSupplyPage /></PermissionGuard>

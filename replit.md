@@ -23,6 +23,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Purpose**: Bilingual (Arabic RTL primary) web portal for integrating with Saudi Arabia's SFDA DTTS (رصد) Drug Track & Trace System via SOAP web services.
 - **Pages**: Dashboard, Settings (DTTS credentials, password-gated with `Ash@123456`), Import/Supply, Dispatch/Accept, Return/Consume, Transfer/Pharmacy Sale, Deactivation/Export, Package Transfer, Query Services, Operation History, User Management (admin only)
 - **Auth**: Whole portal requires login. Default admin = `Admin` / `Ash@123456`. Admin can create client accounts with per-user sidebar visibility (checkbox per nav item). Sessions stored in PostgreSQL (`session` table) via `connect-pg-simple`.
+- **Per-user DTTS credentials**: `auth_config` table is keyed by `user_id` (unique). Each user (admin or client) configures their own SFDA Rasid credentials in Settings; SOAP proxy uses the logged-in user's stored credentials. Settings page is always visible to every logged-in user (still gated by the `Ash@123456` password).
 
 ### API Server (`artifacts/api-server`)
 - **Path**: `/api`

@@ -10,6 +10,8 @@ const router: IRouter = Router();
 router.use(healthRouter);
 router.use(sessionRouter);
 router.use(usersRouter);
-router.use(requireAuth, rasidRouter);
+router.use("/rasid", requireAuth);
+router.use("/auth", requireAuth);
+router.use(rasidRouter);
 
 export default router;
