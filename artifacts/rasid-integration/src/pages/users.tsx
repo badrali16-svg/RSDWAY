@@ -1,0 +1,334 @@
+import { useState } from "react";
+import {
+  useListUsers,
+  useCreateUser,
+  useUpdateUser,
+  useDeleteUser,
+  getListUsersQueryKey,
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, UserPlus, Trash2, Save, Users as UsersIcon } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+const PERMISSION_OPTIONS: { slug: string; label: string }[] = [
+  { slug: "dashboard", label: "لوحة القيادة" },
+  { slug: "import", label: "الاستيراد والتصنيع" },
+  { slug: "dispatch", label: "الإرسال والاستلام" },
+  { slug: "return", label: "الإرجاع والاستهلاك" },
+  { slug: "transfer", label: "النقل وصرف الصيدليات" },
+  { slug: "deactivation", label: "التعطيل والتصدير" },
+  { slug: "packages", label: "نقل الحزم" },
+  { slug: "queries", label: "خدمات الاستعلام" },
+  { slug: "history", label: "سجل العمليات" },
+];
+
+export default function UsersPage() {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const { data: users, isLoading } = useListUsers();
+  const createUser = useCreateUser();
+  const updateUser = useUpdateUser();
+  const deleteUser = useDeleteUser();
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: getListUsersQueryKey() });
+
+  // ── new user form state ──────────────────────────────────────────────────
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newPermissions, setNewPermissions] = useState<string[]>(
+    PERMISSION_OPTIONS.map((p) => p.slug),
+  );
+
+  const toggleNewPerm = (slug: string) => {
+    setNewPermissions((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
+    );
+  };
+
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUsername || !newPassword) return;
+    createUser.mutate(
+      { data: { username: newUsername, password: newPassword, permissions: newPermissions } },
+      {
+        onSuccess: () => {
+          toast({ title: "تم إنشاء الحساب", description: `تم إنشاء حساب العميل ${newUsername}` });
+          setNewUsername("");
+          setNewPassword("");
+          setNewPermissions(PERMISSION_OPTIONS.map((p) => p.slug));
+          invalidate();
+        },
+        onError: (err: unknown) => {
+          const msg = err instanceof Error ? err.message : "فشل إنشاء الحساب";
+          toast({ title: "خطأ", description: msg, variant: "destructive" });
+        },
+      },
+    );
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">إدارة المستخدمين</h1>
+        <p className="text-muted-foreground mt-1">
+          إنشاء حسابات العملاء وتحديد الصلاحيات الجانبية لكل حساب
+        </p>
+      </div>
+
+      {/* Create new client */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5 text-primary" />
+            <CardTitle>إنشاء حساب عميل جديد</CardTitle>
+          </div>
+          <CardDescription>
+            حدّد العناصر الجانبية التي يستطيع هذا العميل رؤيتها بعد تسجيل الدخول
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleCreate} className="space-y-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="new-username">اسم المستخدم</Label>
+                <Input
+                  id="new-username"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-password">كلمة المرور</Label>
+                <Input
+                  id="new-password"
+                  type="text"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>العناصر الجانبية المسموح بها</Label>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 rounded-md border p-4">
+                {PERMISSION_OPTIONS.map((opt) => (
+                  <label
+                    key={opt.slug}
+                    className="flex items-center gap-2 text-sm cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={newPermissions.includes(opt.slug)}
+                      onCheckedChange={() => toggleNewPerm(opt.slug)}
+                    />
+                    <span>{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <Button type="submit" disabled={createUser.isPending}>
+              {createUser.isPending ? (
+                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              ) : (
+                <UserPlus className="ml-2 h-4 w-4" />
+              )}
+              إنشاء الحساب
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Existing users */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <UsersIcon className="h-5 w-5 text-primary" />
+            <CardTitle>الحسابات الحالية</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : !users || users.length === 0 ? (
+            <p className="text-sm text-muted-foreground">لا توجد حسابات.</p>
+          ) : (
+            <div className="space-y-4">
+              {users.map((u) => (
+                <UserRow
+                  key={u.id}
+                  user={u}
+                  onUpdate={(payload) =>
+                    updateUser.mutate(
+                      { id: u.id, data: payload },
+                      {
+                        onSuccess: () => {
+                          toast({ title: "تم الحفظ", description: `تم تحديث ${u.username}` });
+                          invalidate();
+                        },
+                        onError: () =>
+                          toast({
+                            title: "خطأ",
+                            description: "فشل الحفظ",
+                            variant: "destructive",
+                          }),
+                      },
+                    )
+                  }
+                  onDelete={() =>
+                    deleteUser.mutate(
+                      { id: u.id },
+                      {
+                        onSuccess: () => {
+                          toast({ title: "تم الحذف" });
+                          invalidate();
+                        },
+                        onError: () =>
+                          toast({
+                            title: "خطأ",
+                            description: "فشل الحذف",
+                            variant: "destructive",
+                          }),
+                      },
+                    )
+                  }
+                  saving={updateUser.isPending}
+                  deleting={deleteUser.isPending}
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+interface UserRowUser {
+  id: number;
+  username: string;
+  role: "admin" | "client";
+  permissions: string[];
+}
+
+function UserRow({
+  user,
+  onUpdate,
+  onDelete,
+  saving,
+  deleting,
+}: {
+  user: UserRowUser;
+  onUpdate: (data: { password: string | null; permissions: string[] }) => void;
+  onDelete: () => void;
+  saving: boolean;
+  deleting: boolean;
+}) {
+  const [perms, setPerms] = useState<string[]>(user.permissions);
+  const [pwd, setPwd] = useState("");
+  const isAdmin = user.role === "admin";
+
+  const toggle = (slug: string) => {
+    setPerms((prev) => (prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]));
+  };
+
+  return (
+    <div className="rounded-md border p-4 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="font-semibold">{user.username}</span>
+          <Badge variant={isAdmin ? "default" : "secondary"}>
+            {isAdmin ? "مدير" : "عميل"}
+          </Badge>
+        </div>
+        {!isAdmin && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-destructive">
+                <Trash2 className="ml-1 h-4 w-4" />
+                حذف
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent dir="rtl">
+              <AlertDialogHeader>
+                <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+                <AlertDialogDescription>
+                  سيتم حذف الحساب «{user.username}» نهائياً.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                <AlertDialogAction onClick={onDelete} disabled={deleting}>
+                  حذف
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </div>
+
+      {!isAdmin && (
+        <>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 rounded-md bg-muted/40 p-3">
+            {PERMISSION_OPTIONS.map((opt) => (
+              <label key={opt.slug} className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox
+                  checked={perms.includes(opt.slug)}
+                  onCheckedChange={() => toggle(opt.slug)}
+                />
+                <span>{opt.label}</span>
+              </label>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1 flex-1 min-w-[200px]">
+              <Label htmlFor={`pwd-${user.id}`}>إعادة تعيين كلمة المرور (اختياري)</Label>
+              <Input
+                id={`pwd-${user.id}`}
+                type="text"
+                value={pwd}
+                onChange={(e) => setPwd(e.target.value)}
+                placeholder="اتركه فارغاً للإبقاء على كلمة المرور الحالية"
+              />
+            </div>
+            <Button
+              onClick={() => {
+                onUpdate({ password: pwd || null, permissions: perms });
+                setPwd("");
+              }}
+              disabled={saving}
+            >
+              {saving ? (
+                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="ml-2 h-4 w-4" />
+              )}
+              حفظ
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

@@ -9,6 +9,66 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface OkResponse {
+  ok: boolean;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface UnlockSettingsRequest {
+  password: string;
+}
+
+export type SessionUserRole =
+  (typeof SessionUserRole)[keyof typeof SessionUserRole];
+
+export const SessionUserRole = {
+  admin: "admin",
+  client: "client",
+} as const;
+
+export interface SessionUser {
+  id: number;
+  username: string;
+  role: SessionUserRole;
+  permissions: string[];
+}
+
+export interface SessionState {
+  user: SessionUser | null;
+}
+
+export type UserSummaryRole =
+  (typeof UserSummaryRole)[keyof typeof UserSummaryRole];
+
+export const UserSummaryRole = {
+  admin: "admin",
+  client: "client",
+} as const;
+
+export interface UserSummary {
+  id: number;
+  username: string;
+  role: UserSummaryRole;
+  permissions: string[];
+  createdAt: string;
+}
+
+export interface CreateUserRequest {
+  username: string;
+  password: string;
+  permissions: string[];
+}
+
+export interface UpdateUserRequest {
+  /** @nullable */
+  password?: string | null;
+  permissions: string[];
+}
+
 export interface AuthConfig {
   username: string;
   hasPassword: boolean;

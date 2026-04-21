@@ -1,12 +1,26 @@
+import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useGetAuthConfig, useSaveAuthConfig } from "@workspace/api-client-react";
+import {
+  useGetAuthConfig,
+  useSaveAuthConfig,
+  useUnlockSettings,
+} from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Save, Loader2, ShieldCheck } from "lucide-react";
+import { Save, Loader2, ShieldCheck, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
@@ -17,7 +31,75 @@ const formSchema = z.object({
 });
 
 export default function Settings() {
+  const [unlocked, setUnlocked] = useState(false);
+  const [gatePassword, setGatePassword] = useState("");
+  const [gateError, setGateError] = useState<string | null>(null);
+  const unlock = useUnlockSettings();
   const { toast } = useToast();
+
+  const handleUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    setGateError(null);
+    unlock.mutate(
+      { data: { password: gatePassword } },
+      {
+        onSuccess: () => {
+          setUnlocked(true);
+          setGatePassword("");
+        },
+        onError: () => {
+          setGateError("كلمة المرور غير صحيحة");
+        },
+      },
+    );
+  };
+
+  if (!unlocked) {
+    return (
+      <div className="flex justify-center pt-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <Lock className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle>صفحة محمية</CardTitle>
+            <CardDescription>
+              يرجى إدخال كلمة المرور للدخول إلى صفحة الإعدادات
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleUnlock} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="gate-password">كلمة المرور</Label>
+                <Input
+                  id="gate-password"
+                  type="password"
+                  value={gatePassword}
+                  onChange={(e) => setGatePassword(e.target.value)}
+                  required
+                  autoFocus
+                />
+                {gateError && <p className="text-sm text-destructive">{gateError}</p>}
+              </div>
+              <Button type="submit" className="w-full" disabled={unlock.isPending}>
+                {unlock.isPending ? (
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Lock className="ml-2 h-4 w-4" />
+                )}
+                دخول
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return <SettingsContent toast={toast} />;
+}
+
+function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"] }) {
   const { data: authConfig, isLoading: authLoading } = useGetAuthConfig();
   const saveAuth = useSaveAuthConfig();
 
@@ -34,28 +116,31 @@ export default function Settings() {
     if (authConfig) {
       form.reset({
         username: authConfig.username || "",
-        password: authConfig.hasPassword ? "********" : "", // Dummy string to pass validation if already set
+        password: authConfig.hasPassword ? "********" : "",
         baseUrl: authConfig.baseUrl || "https://rsd.sfda.gov.sa/ws/dtws",
       });
     }
   }, [authConfig, form]);
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    saveAuth.mutate({ data: values }, {
-      onSuccess: () => {
-        toast({
-          title: "تم الحفظ بنجاح",
-          description: "تم تحديث بيانات الاعتماد لنظام رصد",
-        });
+    saveAuth.mutate(
+      { data: values },
+      {
+        onSuccess: () => {
+          toast({
+            title: "تم الحفظ بنجاح",
+            description: "تم تحديث بيانات الاعتماد لنظام رصد",
+          });
+        },
+        onError: () => {
+          toast({
+            title: "خطأ في الحفظ",
+            description: "حدث خطأ أثناء محاولة حفظ البيانات",
+            variant: "destructive",
+          });
+        },
       },
-      onError: () => {
-        toast({
-          title: "خطأ في الحفظ",
-          description: "حدث خطأ أثناء محاولة حفظ البيانات",
-          variant: "destructive",
-        });
-      }
-    });
+    );
   };
 
   return (
@@ -98,7 +183,7 @@ export default function Settings() {
                     </FormItem>
                   )}
                 />
-                
+
                 <div className="grid gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -113,7 +198,7 @@ export default function Settings() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="password"

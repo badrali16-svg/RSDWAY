@@ -21,7 +21,8 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 ### Rasid Integration Portal (`artifacts/rasid-integration`)
 - **Path**: `/`
 - **Purpose**: Bilingual (Arabic RTL primary) web portal for integrating with Saudi Arabia's SFDA DTTS (رصد) Drug Track & Trace System via SOAP web services.
-- **Pages**: Dashboard, Settings (DTTS credentials), Import/Supply, Dispatch/Accept, Return/Consume, Transfer/Pharmacy Sale, Deactivation/Export, Package Transfer, Query Services, Operation History
+- **Pages**: Dashboard, Settings (DTTS credentials, password-gated with `Ash@123456`), Import/Supply, Dispatch/Accept, Return/Consume, Transfer/Pharmacy Sale, Deactivation/Export, Package Transfer, Query Services, Operation History, User Management (admin only)
+- **Auth**: Whole portal requires login. Default admin = `Admin` / `Ash@123456`. Admin can create client accounts with per-user sidebar visibility (checkbox per nav item). Sessions stored in PostgreSQL (`session` table) via `connect-pg-simple`.
 
 ### API Server (`artifacts/api-server`)
 - **Path**: `/api`

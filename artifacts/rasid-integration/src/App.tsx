@@ -4,9 +4,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
 import NotFound from "@/pages/not-found";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { Loader2 } from "lucide-react";
 
+import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Settings from "@/pages/settings";
+import UsersPage from "@/pages/users";
 import ImportSupplyPage from "@/pages/import-supply";
 import DispatchAcceptPage from "@/pages/dispatch-accept";
 import ReturnConsumePage from "@/pages/return-consume";
@@ -25,24 +29,83 @@ const queryClient = new QueryClient({
   },
 });
 
-function Router() {
+function PermissionGuard({ slug, children }: { slug: string; children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user) return null;
+  if (user.role === "admin") return <>{children}</>;
+  if (!user.permissions?.includes(slug)) {
+    return (
+      <div className="rounded-md border bg-card p-8 text-center">
+        <p className="text-muted-foreground">لا تملك صلاحية الوصول إلى هذه الصفحة.</p>
+      </div>
+    );
+  }
+  return <>{children}</>;
+}
+
+function AdminGuard({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user) return null;
+  if (user.role !== "admin") {
+    return (
+      <div className="rounded-md border bg-card p-8 text-center">
+        <p className="text-muted-foreground">هذه الصفحة متاحة للمدير فقط.</p>
+      </div>
+    );
+  }
+  return <>{children}</>;
+}
+
+function AuthedRoutes() {
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/settings" component={Settings} />
-        <Route path="/import" component={ImportSupplyPage} />
-        <Route path="/dispatch" component={DispatchAcceptPage} />
-        <Route path="/return" component={ReturnConsumePage} />
-        <Route path="/transfer" component={TransferSalePage} />
-        <Route path="/deactivation" component={DeactivationExportPage} />
-        <Route path="/packages" component={PackagesPage} />
-        <Route path="/queries" component={QueriesPage} />
-        <Route path="/history" component={HistoryPage} />
+        <Route path="/">
+          <PermissionGuard slug="dashboard"><Dashboard /></PermissionGuard>
+        </Route>
+        <Route path="/settings"><AdminGuard><Settings /></AdminGuard></Route>
+        <Route path="/users"><AdminGuard><UsersPage /></AdminGuard></Route>
+        <Route path="/import">
+          <PermissionGuard slug="import"><ImportSupplyPage /></PermissionGuard>
+        </Route>
+        <Route path="/dispatch">
+          <PermissionGuard slug="dispatch"><DispatchAcceptPage /></PermissionGuard>
+        </Route>
+        <Route path="/return">
+          <PermissionGuard slug="return"><ReturnConsumePage /></PermissionGuard>
+        </Route>
+        <Route path="/transfer">
+          <PermissionGuard slug="transfer"><TransferSalePage /></PermissionGuard>
+        </Route>
+        <Route path="/deactivation">
+          <PermissionGuard slug="deactivation"><DeactivationExportPage /></PermissionGuard>
+        </Route>
+        <Route path="/packages">
+          <PermissionGuard slug="packages"><PackagesPage /></PermissionGuard>
+        </Route>
+        <Route path="/queries">
+          <PermissionGuard slug="queries"><QueriesPage /></PermissionGuard>
+        </Route>
+        <Route path="/history">
+          <PermissionGuard slug="history"><HistoryPage /></PermissionGuard>
+        </Route>
         <Route component={NotFound} />
       </Switch>
     </Layout>
   );
+}
+
+function Gate() {
+  const { user, isLoading } = useAuth();
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  if (!user) return <LoginPage />;
+  return <AuthedRoutes />;
 }
 
 function App() {
@@ -50,7 +113,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
+          <AuthProvider>
+            <Gate />
+          </AuthProvider>
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

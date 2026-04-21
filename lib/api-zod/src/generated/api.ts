@@ -15,6 +15,114 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary Log into the portal
+ */
+export const LoginBody = zod.object({
+  username: zod.string(),
+  password: zod.string(),
+});
+
+export const LoginResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  role: zod.enum(["admin", "client"]),
+  permissions: zod.array(zod.string()),
+});
+
+/**
+ * @summary Log out of the portal
+ */
+export const LogoutResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
+ * @summary Get current logged-in user
+ */
+export const GetCurrentSessionResponse = zod.object({
+  user: zod.union([
+    zod.object({
+      id: zod.number(),
+      username: zod.string(),
+      role: zod.enum(["admin", "client"]),
+      permissions: zod.array(zod.string()),
+    }),
+    zod.null(),
+  ]),
+});
+
+/**
+ * @summary Verify the settings page password
+ */
+export const UnlockSettingsBody = zod.object({
+  password: zod.string(),
+});
+
+export const UnlockSettingsResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
+ * @summary List all client/admin accounts (admin only)
+ */
+export const ListUsersResponseItem = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  role: zod.enum(["admin", "client"]),
+  permissions: zod.array(zod.string()),
+  createdAt: zod.string(),
+});
+export const ListUsersResponse = zod.array(ListUsersResponseItem);
+
+/**
+ * @summary Create a new client account (admin only)
+ */
+export const CreateUserBody = zod.object({
+  username: zod.string(),
+  password: zod.string(),
+  permissions: zod.array(zod.string()),
+});
+
+export const CreateUserResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  role: zod.enum(["admin", "client"]),
+  permissions: zod.array(zod.string()),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Update a user's permissions or password (admin only)
+ */
+export const UpdateUserParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateUserBody = zod.object({
+  password: zod.string().nullish(),
+  permissions: zod.array(zod.string()),
+});
+
+export const UpdateUserResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  role: zod.enum(["admin", "client"]),
+  permissions: zod.array(zod.string()),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Delete a user (admin only)
+ */
+export const DeleteUserParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteUserResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
  * @summary Get saved credentials (masked)
  */
 export const GetAuthConfigResponse = zod.object({

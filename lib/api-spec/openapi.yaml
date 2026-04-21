@@ -11,6 +11,10 @@ tags:
     description: Health operations
   - name: auth
     description: Authentication configuration
+  - name: session
+    description: User login session
+  - name: users
+    description: Admin user management
   - name: import
     description: Import operations
   - name: dispatch
@@ -48,6 +52,146 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── SESSION (LOGIN/LOGOUT) ─────────────────────────────────────────────────
+  /session/login:
+    post:
+      operationId: login
+      tags: [session]
+      summary: Log into the portal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionUser"
+
+  /session/logout:
+    post:
+      operationId: logout
+      tags: [session]
+      summary: Log out of the portal
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /session/me:
+    get:
+      operationId: getCurrentSession
+      tags: [session]
+      summary: Get current logged-in user
+      responses:
+        "200":
+          description: Current user (or null if not logged in)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionState"
+
+  /session/unlock-settings:
+    post:
+      operationId: unlockSettings
+      tags: [session]
+      summary: Verify the settings page password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UnlockSettingsRequest"
+      responses:
+        "200":
+          description: Unlock result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  # ── ADMIN USER MANAGEMENT ──────────────────────────────────────────────────
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all client/admin accounts (admin only)
+      responses:
+        "200":
+          description: User list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserSummary"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create a new client account (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "200":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSummary"
+
+  /users/{id}:
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update a user's permissions or password (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSummary"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Delete a user (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
 
   # ── AUTH CONFIGURATION ─────────────────────────────────────────────────────
   /auth/config:
@@ -650,6 +794,96 @@ components:
           type: string
       required:
         - status
+
+    OkResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required: [ok]
+
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+
+    UnlockSettingsRequest:
+      type: object
+      properties:
+        password:
+          type: string
+      required: [password]
+
+    SessionUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        role:
+          type: string
+          enum: [admin, client]
+        permissions:
+          type: array
+          items:
+            type: string
+      required: [id, username, role, permissions]
+
+    SessionState:
+      type: object
+      properties:
+        user:
+          oneOf:
+            - $ref: "#/components/schemas/SessionUser"
+            - type: "null"
+      required: [user]
+
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        role:
+          type: string
+          enum: [admin, client]
+        permissions:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+      required: [id, username, role, permissions, createdAt]
+
+    CreateUserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+      required: [username, password, permissions]
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        password:
+          type: ["string", "null"]
+        permissions:
+          type: array
+          items:
+            type: string
+      required: [permissions]
 
     AuthConfig:
       type: object

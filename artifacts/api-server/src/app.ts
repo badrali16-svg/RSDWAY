@@ -1,10 +1,14 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+
+app.set("trust proxy", 1);
 
 app.use(
   pinoHttp({
@@ -25,9 +29,37 @@ app.use(
     },
   }),
 );
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ extended: true, limit: "20mb" }));
+
+const PgStore = connectPgSimple(session);
+
+const sessionSecret = process.env["SESSION_SECRET"];
+if (!sessionSecret) {
+  throw new Error("SESSION_SECRET environment variable is required");
+}
+
+app.use(
+  session({
+    name: "rasid.sid",
+    store: new PgStore({
+      conString: process.env["DATABASE_URL"],
+      tableName: "session",
+      createTableIfMissing: false,
+    }),
+    secret: sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
+    cookie: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    },
+  }),
+);
 
 app.use("/api", router);
 
