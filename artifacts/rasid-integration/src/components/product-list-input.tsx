@@ -5,7 +5,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "./ui/f
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
-import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
 
@@ -83,6 +83,21 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
   const [uploadedFile, setUploadedFile] = useState<{ name: string; count: number } | null>(null);
   const isBatch = mode === "batch";
 
+  const downloadTemplate = () => {
+    const headers = isBatch
+      ? [["GTIN", "BN", "XD", "QUANTITY"]]
+      : [["GTIN", "SN", "BN", "XD"]];
+    const exampleRow = isBatch
+      ? [["74637840842700", "BATCH001", "2026-12-31", 100]]
+      : [["74637840842700", "SN0000001", "BATCH001", "2026-12-31"]];
+    const ws = XLSX.utils.aoa_to_sheet([...headers, ...exampleRow]);
+    ws["!cols"] = headers[0].map(() => ({ wch: 22 }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Products");
+    const filename = isBatch ? "template_batch.xlsx" : "template_sn.xlsx";
+    XLSX.writeFile(wb, filename);
+  };
+
   const processFile = useCallback((file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -133,6 +148,17 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
               {fields.length} منتج
             </Badge>
           )}
+          {/* Download template button — always visible */}
+          <Button
+            type="button" variant="ghost" size="sm"
+            className="gap-2 text-muted-foreground hover:text-primary"
+            onClick={downloadTemplate}
+            title={isBatch ? "تحميل نموذج Excel (Batch)" : "تحميل نموذج Excel (SN)"}
+          >
+            <Download className="h-3.5 w-3.5" />
+            نموذج Excel
+          </Button>
+
           {/* Upload button */}
           {uploadedFile ? (
             <div className="flex items-center gap-2 text-sm border rounded-md px-3 py-1.5 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700">
