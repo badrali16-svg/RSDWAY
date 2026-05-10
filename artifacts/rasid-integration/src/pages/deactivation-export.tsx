@@ -149,9 +149,9 @@ export default function DeactivationExportPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <ShieldAlert className="h-5 w-5 text-primary" />
-                <CardTitle>عملية تعطيل / إتلاف</CardTitle>
+                <CardTitle>{t("deactivation.cardDeactivation")}</CardTitle>
               </div>
-              <CardDescription>تعطيل المنتجات (تالف، مسروق، مسحوب، الخ)</CardDescription>
+              <CardDescription>{t("deactivation.cardDeactivationDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...deactivationForm}>
@@ -159,7 +159,7 @@ export default function DeactivationExportPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={deactivationForm.control} name="DR" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>سبب التعطيل (Deactivation Reason)</FormLabel>
+                        <FormLabel>{t("deactivation.drLabel")}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger dir="ltr" className="text-left">
@@ -167,10 +167,10 @@ export default function DeactivationExportPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent dir="ltr">
-                            <SelectItem value="DAMAGED">DAMAGED (تالف)</SelectItem>
-                            <SelectItem value="STOLEN">STOLEN (مسروق)</SelectItem>
-                            <SelectItem value="RECALLED">RECALLED (مسحوب)</SelectItem>
-                            <SelectItem value="EXPIRED">EXPIRED (منتهي الصلاحية)</SelectItem>
+                            <SelectItem value="DAMAGED">{t("deactivation.drDamaged")}</SelectItem>
+                            <SelectItem value="STOLEN">{t("deactivation.drStolen")}</SelectItem>
+                            <SelectItem value="RECALLED">{t("deactivation.drRecalled")}</SelectItem>
+                            <SelectItem value="EXPIRED">{t("deactivation.drExpired")}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -179,9 +179,9 @@ export default function DeactivationExportPage() {
                   </div>
                   <FormField control={deactivationForm.control} name="explanation" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>تفاصيل إضافية (Explanation)</FormLabel>
+                      <FormLabel>{t("deactivation.explanationLabel")}</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="تفاصيل سبب التعطيل أو الإتلاف..." {...field} />
+                        <Textarea placeholder={t("deactivation.explanationPlaceholder")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -204,9 +204,9 @@ export default function DeactivationExportPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Ban className="h-5 w-5 text-destructive" />
-                <CardTitle>إلغاء التعطيل</CardTitle>
+                <CardTitle>{t("deactivation.cardDeactivationCancel")}</CardTitle>
               </div>
-              <CardDescription>إعادة تفعيل منتجات تم تعطيلها بالخطأ</CardDescription>
+              <CardDescription>{t("deactivation.cardDeactivationCancelDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...deactivationCancelForm}>
@@ -229,17 +229,17 @@ export default function DeactivationExportPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <PlaneTakeoff className="h-5 w-5 text-primary" />
-                <CardTitle>عملية تصدير</CardTitle>
+                <CardTitle>{t("deactivation.cardExport")}</CardTitle>
               </div>
-              <CardDescription>تصدير المنتجات لخارج المملكة العربية السعودية</CardDescription>
+              <CardDescription>{t("deactivation.cardExportDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...exportForm}>
                 <form onSubmit={exportForm.handleSubmit(handleExport)} className="space-y-6">
                   <FormField control={exportForm.control} name="countryCode" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>كود الدولة (Country Code)</FormLabel>
-                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="مثال: AE" {...field} /></FormControl>
+                      <FormLabel>{t("deactivation.countryCodeLabel")}</FormLabel>
+                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder={t("deactivation.countryCodePlaceholder")} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -261,9 +261,9 @@ export default function DeactivationExportPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Ban className="h-5 w-5 text-destructive" />
-                <CardTitle>إلغاء التصدير</CardTitle>
+                <CardTitle>{t("deactivation.cardExportCancel")}</CardTitle>
               </div>
-              <CardDescription>إلغاء عملية تصدير سابقة وإعادة المنتجات لعهدة المنشأة</CardDescription>
+              <CardDescription>{t("deactivation.cardExportCancelDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...exportCancelForm}>

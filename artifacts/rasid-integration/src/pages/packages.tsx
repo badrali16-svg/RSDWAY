@@ -114,9 +114,9 @@ export default function PackagesPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Upload className="h-5 w-5 text-primary" />
-                <CardTitle>رفع حزمة بيانات</CardTitle>
+                <CardTitle>{t("packages.cardUploadTitle")}</CardTitle>
               </div>
-              <CardDescription>رفع ملف مشفر بصيغة Base64 يحتوي على حزمة بيانات</CardDescription>
+              <CardDescription>{t("packages.cardUploadDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...uploadForm}>
@@ -129,7 +129,7 @@ export default function PackagesPage() {
                   )} />
                   <FormField control={uploadForm.control} name="fileBase64" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>محتوى الملف (Base64 Encoded)</FormLabel>
+                      <FormLabel>{t("packages.fileBase64Label")}</FormLabel>
                       <FormControl><Input dir="ltr" className="text-left font-mono text-xs" placeholder="JVBERi0xLjQKJcOkw7zDtsO..." {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -151,16 +151,16 @@ export default function PackagesPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Download className="h-5 w-5 text-primary" />
-                <CardTitle>تنزيل حزمة بيانات</CardTitle>
+                <CardTitle>{t("packages.cardDownloadTitle")}</CardTitle>
               </div>
-              <CardDescription>تنزيل حزمة عن طريق رقم النقل (Transfer ID)</CardDescription>
+              <CardDescription>{t("packages.cardDownloadDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...downloadForm}>
                 <form onSubmit={downloadForm.handleSubmit(handleDownload)} className="space-y-6">
                   <FormField control={downloadForm.control} name="transferId" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>رقم النقل (Transfer ID)</FormLabel>
+                      <FormLabel>{t("packages.transferIdLabel")}</FormLabel>
                       <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Transfer ID" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -182,9 +182,9 @@ export default function PackagesPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Search className="h-5 w-5 text-primary" />
-                <CardTitle>استعلام عن الحزم</CardTitle>
+                <CardTitle>{t("packages.cardQueryTitle")}</CardTitle>
               </div>
-              <CardDescription>البحث عن حزم البيانات الصادرة أو الواردة</CardDescription>
+              <CardDescription>{t("packages.cardQueryDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...queryForm}>
@@ -204,14 +204,14 @@ export default function PackagesPage() {
                     )} />
                     <FormField control={queryForm.control} name="startDate" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>من تاريخ (اختياري)</FormLabel>
+                        <FormLabel>{t("packages.startDate")}</FormLabel>
                         <FormControl><Input dir="ltr" className="text-left" type="date" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={queryForm.control} name="endDate" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>إلى تاريخ (اختياري)</FormLabel>
+                        <FormLabel>{t("packages.endDate")}</FormLabel>
                         <FormControl><Input dir="ltr" className="text-left" type="date" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
@@ -223,8 +223,8 @@ export default function PackagesPage() {
                         <Checkbox checked={field.value} onCheckedChange={field.onChange} className="me-2" />
                       </FormControl>
                       <div className="space-y-1 leading-none me-2">
-                        <FormLabel>جلب كافة الحزم (getAll)</FormLabel>
-                        <FormDescription>سيتم جلب كافة الحزم دون تحديد</FormDescription>
+                        <FormLabel>{t("packages.getAll")}</FormLabel>
+                        <FormDescription>{t("packages.getAllDesc")}</FormDescription>
                       </div>
                     </FormItem>
                   )} />

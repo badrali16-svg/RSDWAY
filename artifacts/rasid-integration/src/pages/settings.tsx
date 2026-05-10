@@ -86,7 +86,7 @@ export default function Settings() {
           setGatePassword("");
         },
         onError: () => {
-          setGateError("كلمة المرور غير صحيحة");
+          setGateError(t("settings.gateWrongPassword"));
         },
       },
     );
@@ -181,10 +181,10 @@ function ApiKeysSection({ toast }: { toast: ReturnType<typeof useToast>["toast"]
       <CardHeader>
         <div className="flex items-center gap-2">
           <Plug className="h-5 w-5 text-primary" />
-          <CardTitle>التكامل الخارجي — مفاتيح API</CardTitle>
+          <CardTitle>{t("settings.apiKeysTitle")}</CardTitle>
         </div>
         <CardDescription>
-          أنشئ مفاتيح API لربط أي نظام خارجي (مثل Odoo) بنظام رصد. كل طلب يستخدم بيانات اعتماد DTTS الخاصة بحسابك.
+          {t("settings.apiKeysDesc")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -193,13 +193,13 @@ function ApiKeysSection({ toast }: { toast: ReturnType<typeof useToast>["toast"]
         <div className="rounded-lg border bg-muted/30 p-4 space-y-3 text-sm">
           <p className="font-semibold flex items-center gap-2">
             <Key className="h-4 w-4 text-primary" />
-            كيفية الاستخدام مع Odoo أو أي نظام خارجي
+            {t("settings.apiHowToUse")}
           </p>
-          <p className="text-muted-foreground">أضف الـ header التالي في كل طلب API:</p>
+          <p className="text-muted-foreground">{t("settings.apiAddHeader")}</p>
           <pre dir="ltr" className="bg-background border rounded px-3 py-2 text-xs font-mono overflow-x-auto">
 {"X-API-Key: rsd_<your-key>"}
           </pre>
-          <p className="text-muted-foreground">مثال — إرسال Dispatch من Odoo:</p>
+          <p className="text-muted-foreground">{t("settings.apiExample")}</p>
           <pre dir="ltr" className="bg-background border rounded px-3 py-2 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all">
 {`POST ${baseUrl}/api/external/v1/dispatch
 X-API-Key: rsd_<your-key>
@@ -214,7 +214,7 @@ Content-Type: application/json
           </pre>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs text-muted-foreground">
             <div>
-              <p className="font-semibold text-foreground mb-1">عمليات بالرقم التسلسلي (SN):</p>
+              <p className="font-semibold text-foreground mb-1">{t("settings.apiOpsSN")}</p>
               <ul className="space-y-0.5 font-mono" dir="ltr">
                 {["/external/v1/dispatch","/external/v1/dispatch-cancel","/external/v1/accept","/external/v1/accept-dispatch","/external/v1/return","/external/v1/transfer","/external/v1/transfer-cancel","/external/v1/import","/external/v1/supply"].map(ep => (
                   <li key={ep}>{ep}</li>
@@ -222,7 +222,7 @@ Content-Type: application/json
               </ul>
             </div>
             <div>
-              <p className="font-semibold text-foreground mb-1">عمليات بالتشغيلة (Batch):</p>
+              <p className="font-semibold text-foreground mb-1">{t("settings.apiOpsBatch")}</p>
               <ul className="space-y-0.5 font-mono" dir="ltr">
                 {["/external/v1/dispatch-batch","/external/v1/dispatch-cancel-batch","/external/v1/accept-batch","/external/v1/return-batch","/external/v1/transfer-batch","/external/v1/transfer-cancel-batch"].map(ep => (
                   <li key={ep}>{ep}</li>
@@ -231,7 +231,7 @@ Content-Type: application/json
             </div>
           </div>
           <p className="text-xs text-muted-foreground pt-1">
-            <span className="font-semibold">تعيين Odoo:</span> Receipt → accept | Delivery → dispatch | Return → return | Internal Transfer → transfer
+            <span className="font-semibold">{t("settings.apiOdooMapping")}</span> Receipt → accept | Delivery → dispatch | Return → return | Internal Transfer → transfer
           </p>
         </div>
 
@@ -242,19 +242,19 @@ Content-Type: application/json
           <div className="rounded-lg border-2 border-green-500 bg-green-50 dark:bg-green-900/20 p-4 space-y-3">
             <div className="flex items-center gap-2 text-green-700 dark:text-green-400 font-semibold">
               <CheckCircle2 className="h-5 w-5" />
-              تم إنشاء المفتاح — احفظه الآن، لن يظهر مرة أخرى
+              {t("settings.keyCreatedMsg")}
             </div>
             <div className="flex items-center gap-2">
               <code dir="ltr" className="flex-1 bg-background border rounded px-3 py-2 text-xs font-mono break-all">{createdKey.key}</code>
               <Button
                 type="button" variant="outline" size="icon"
-                onClick={() => { navigator.clipboard.writeText(createdKey.key); toast({ title: "تم النسخ" }); }}
+                onClick={() => { navigator.clipboard.writeText(createdKey.key); toast({ title: t("settings.copied") }); }}
               >
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
             <Button type="button" variant="ghost" size="sm" onClick={() => setCreatedKey(null)}>
-              تم — أخفِ المفتاح
+              {t("settings.keyHide")}
             </Button>
           </div>
         )}
@@ -262,7 +262,7 @@ Content-Type: application/json
         {/* Create new key */}
         <div className="flex gap-2 items-end">
           <div className="flex-1 space-y-1.5">
-            <Label htmlFor="key-name">اسم المفتاح (مثل: Odoo Production)</Label>
+            <Label htmlFor="key-name">{t("settings.keyNameLabel")}</Label>
             <Input
               id="key-name"
               placeholder="Odoo Warehouse Integration"
@@ -273,14 +273,14 @@ Content-Type: application/json
           </div>
           <Button type="button" onClick={handleCreate} disabled={!newKeyName.trim() || createKey.isPending} className="gap-2">
             {createKey.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            إنشاء مفتاح
+            {t("settings.createKey")}
           </Button>
         </div>
 
         {/* Keys list */}
         {keys.length > 0 ? (
           <div className="space-y-2">
-            <Label>المفاتيح الحالية</Label>
+            <Label>{t("settings.currentKeys")}</Label>
             {keys.map(k => (
               <div key={k.id} className="flex items-center gap-3 rounded-lg border px-4 py-3">
                 <Key className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -288,22 +288,22 @@ Content-Type: application/json
                   <p className="font-medium text-sm">{k.name}</p>
                   <p dir="ltr" className="text-xs text-muted-foreground font-mono">{k.keyPreview}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    أُنشئ: {new Date(k.createdAt).toLocaleDateString("ar-SA")}
-                    {k.lastUsedAt && ` · آخر استخدام: ${new Date(k.lastUsedAt).toLocaleDateString("ar-SA")}`}
+                    {t("settings.createdOn")} {new Date(k.createdAt).toLocaleDateString("ar-SA")}
+                    {k.lastUsedAt && ` · ${t("settings.lastUsed")} ${new Date(k.lastUsedAt).toLocaleDateString("ar-SA")}`}
                   </p>
                 </div>
                 <Badge variant={k.enabled ? "default" : "secondary"} className="text-xs shrink-0">
-                  {k.enabled ? "مفعّل" : "معطّل"}
+                  {k.enabled ? t("settings.keyActive") : t("settings.keyDisabled")}
                 </Badge>
                 {confirmRevoke === k.id ? (
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs text-destructive flex items-center gap-1">
-                      <AlertTriangle className="h-3 w-3" />تأكيد الحذف؟
+                      <AlertTriangle className="h-3 w-3" />{t("settings.revokeConfirm")}
                     </span>
                     <Button type="button" size="sm" variant="destructive" onClick={() => handleRevoke(k.id)} disabled={deleteKey.isPending}>
-                      {deleteKey.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "نعم"}
+                      {deleteKey.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : t("settings.revokeYes")}
                     </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => setConfirmRevoke(null)}>لا</Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setConfirmRevoke(null)}>{t("settings.revokeNo")}</Button>
                   </div>
                 ) : (
                   <Button type="button" variant="ghost" size="icon" className="text-destructive hover:text-destructive shrink-0" onClick={() => setConfirmRevoke(k.id)}>
@@ -314,7 +314,7 @@ Content-Type: application/json
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground text-center py-4">لا توجد مفاتيح API بعد — أنشئ مفتاحاً للبدء.</p>
+          <p className="text-sm text-muted-foreground text-center py-4">{t("settings.noKeys")}</p>
         )}
       </CardContent>
     </Card>
@@ -397,7 +397,7 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
       onError: () => {
         setConnectionStatus({
           success: false,
-          message: "حدث خطأ أثناء اختبار الاتصال",
+          message: t("settings.connErrMsg"),
           testedAt: new Date().toISOString(),
         });
       },
@@ -443,7 +443,7 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
                 <p className="text-sm text-muted-foreground mt-0.5">{connectionStatus.message}</p>
                 {connectionStatus.environment && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    <span className="font-medium">البيئة:</span> {connectionStatus.environment}
+                    <span className="font-medium">{t("settings.envLabel")}</span> {connectionStatus.environment}
                   </p>
                 )}
                 {connectionStatus.baseUrl && (
@@ -464,9 +464,9 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
       {/* ── Environment Selector ──────────────────────────────────────────── */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">اختيار البيئة</CardTitle>
+          <CardTitle className="text-lg">{t("settings.envTitle")}</CardTitle>
           <CardDescription>
-            حدد البيئة التي تريد الاتصال بها — الاختبار للتجربة والإنتاج للعمل الفعلي
+            {t("settings.envDesc")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -487,11 +487,11 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <p className={`font-semibold ${isTestEnv ? "text-primary" : ""}`}>
-                    البيئة الافتراضية (Test)
+                    {t("settings.testEnvName")}
                   </p>
                   {isTestEnv && (
                     <Badge variant="default" className="text-xs">
-                      محدد
+                      {t("settings.selected")}
                     </Badge>
                   )}
                 </div>
@@ -499,7 +499,7 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
                   {TEST_URL}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  للاختبار والتطوير بدون التأثير على البيانات الحقيقية
+                  {t("settings.testEnvDesc")}
                 </p>
               </div>
             </button>
@@ -520,11 +520,11 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <p className={`font-semibold ${!isTestEnv ? "text-primary" : ""}`}>
-                    بيئة الإنتاج (Production)
+                    {t("settings.prodEnvName")}
                   </p>
                   {!isTestEnv && (
                     <Badge variant="default" className="text-xs">
-                      محدد
+                      {t("settings.selected")}
                     </Badge>
                   )}
                 </div>
@@ -532,7 +532,7 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
                   {PROD_URL}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  للعمل الفعلي مع الهيئة العامة للغذاء والدواء (SFDA)
+                  {t("settings.prodEnvDesc")}
                 </p>
               </div>
             </button>
@@ -548,11 +548,10 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
         <CardHeader>
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-primary" />
-            <CardTitle>بيانات اعتماد نظام رصد (DTTS)</CardTitle>
+            <CardTitle>{t("settings.credTitle")}</CardTitle>
           </div>
           <CardDescription>
-            أدخل بيانات حسابك لدى الهيئة العامة للغذاء والدواء لتتمكن من إرسال العمليات.
-            يتم تخزين كلمة المرور بشكل مشفر وآمن.
+            {t("settings.credDesc")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -568,12 +567,12 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
                   name="baseUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>رابط الخدمة (Base URL)</FormLabel>
+                      <FormLabel>{t("settings.baseUrlLabel")}</FormLabel>
                       <FormControl>
                         <Input dir="ltr" className="text-left" placeholder="https://..." {...field} />
                       </FormControl>
                       <FormDescription>
-                        يمكنك اختيار البيئة من الأزرار أعلاه أو كتابة رابط مخصص
+                        {t("settings.baseUrlDesc")}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -586,7 +585,7 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>اسم المستخدم (Username)</FormLabel>
+                        <FormLabel>{t("settings.usernameLabel")}</FormLabel>
                         <FormControl>
                           <Input dir="ltr" className="text-left" placeholder="GLN_..." {...field} />
                         </FormControl>
@@ -600,7 +599,7 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>كلمة المرور (Password)</FormLabel>
+                        <FormLabel>{t("settings.passwordLabel")}</FormLabel>
                         <FormControl>
                           <Input
                             dir="ltr"
@@ -625,7 +624,7 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
                     ) : (
                       <Save className="ml-2 h-4 w-4" />
                     )}
-                    حفظ الإعدادات
+                    {t("settings.saveBtn")}
                   </Button>
 
                   <Button
@@ -643,13 +642,13 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
                     ) : (
                       <Wifi className="ml-2 h-4 w-4" />
                     )}
-                    اختبار الاتصال
+                    {t("settings.testConn")}
                   </Button>
                 </div>
 
                 {!authConfig?.hasPassword && (
                   <p className="text-xs text-muted-foreground">
-                    يرجى حفظ البيانات أولاً قبل اختبار الاتصال
+                    {t("settings.saveFirstHint")}
                   </p>
                 )}
               </form>

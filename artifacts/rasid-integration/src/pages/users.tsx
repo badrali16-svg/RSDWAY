@@ -29,17 +29,17 @@ import {
 import { OP_PERMISSION_GROUPS, ALL_OP_SLUGS } from "@/lib/op-permissions";
 import { useLanguage } from "@/lib/language-context";
 
-const NAV_PERMISSION_OPTIONS: { slug: string; label: string }[] = [
-  { slug: "dashboard", label: "لوحة القيادة" },
-  { slug: "import", label: "الاستيراد والتصنيع" },
-  { slug: "dispatch", label: "الإرسال والاستلام" },
-  { slug: "return", label: "الإرجاع والاستهلاك" },
-  { slug: "transfer", label: "النقل وصرف الصيدليات" },
-  { slug: "deactivation", label: "التعطيل والتصدير" },
-  { slug: "packages", label: "نقل الحزم" },
-  { slug: "queries", label: "خدمات الاستعلام" },
-  { slug: "history", label: "سجل العمليات" },
-  { slug: "clients", label: "إدارة العملاء" },
+const NAV_PERMISSION_OPTIONS: { slug: string }[] = [
+  { slug: "dashboard" },
+  { slug: "import" },
+  { slug: "dispatch" },
+  { slug: "return" },
+  { slug: "transfer" },
+  { slug: "deactivation" },
+  { slug: "packages" },
+  { slug: "queries" },
+  { slug: "history" },
+  { slug: "clients" },
 ];
 
 // Nav slugs that are auto-derived from op groups (not manually controlled)
@@ -110,8 +110,8 @@ export default function UsersPage() {
           invalidate();
         },
         onError: (err: unknown) => {
-          const msg = err instanceof Error ? err.message : "فشل إنشاء الحساب";
-          toast({ title: "خطأ", description: msg, variant: "destructive" });
+          const msg = err instanceof Error ? err.message : t("users.createErrFallback");
+          toast({ title: t("common.error"), description: msg, variant: "destructive" });
         },
       },
     );
@@ -129,17 +129,15 @@ export default function UsersPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <UserPlus className="h-5 w-5 text-primary" />
-            <CardTitle>إنشاء حساب عميل جديد</CardTitle>
+            <CardTitle>{t("users.createCardTitle")}</CardTitle>
           </div>
-          <CardDescription>
-            حدّد العناصر الجانبية والعمليات التي يستطيع هذا العميل استخدامها
-          </CardDescription>
+          <CardDescription>{t("users.createCardDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleCreate} className="space-y-5">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="new-username">اسم المستخدم</Label>
+                <Label htmlFor="new-username">{t("users.usernameLabel")}</Label>
                 <Input
                   id="new-username"
                   value={newUsername}
@@ -148,7 +146,7 @@ export default function UsersPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-password">كلمة المرور</Label>
+                <Label htmlFor="new-password">{t("users.passwordLabel")}</Label>
                 <Input
                   id="new-password"
                   type="text"
@@ -163,9 +161,9 @@ export default function UsersPage() {
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <LayoutDashboard className="h-4 w-4 text-primary" />
-                العناصر الجانبية المسموح بها
+                {t("users.navPermsLabel")}
               </Label>
-              <p className="text-xs text-muted-foreground">الصفحات المرتبطة بالعمليات (مثل الاستيراد والإرسال) تظهر تلقائياً عند تفعيل أي عملية منها.</p>
+              <p className="text-xs text-muted-foreground">{t("users.navPermsHint")}</p>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3 rounded-md border p-4">
                 {MANUAL_NAV_OPTIONS.map((opt) => (
                   <label key={opt.slug} className="flex items-center gap-2 text-sm cursor-pointer">
@@ -173,7 +171,7 @@ export default function UsersPage() {
                       checked={newPermissions.includes(opt.slug)}
                       onCheckedChange={() => toggleNewPerm(opt.slug)}
                     />
-                    <span>{opt.label}</span>
+                    <span>{t(`nav.${opt.slug}` as Parameters<typeof t>[0])}</span>
                   </label>
                 ))}
               </div>
@@ -183,12 +181,11 @@ export default function UsersPage() {
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Cog className="h-4 w-4 text-primary" />
-                العمليات المسموح بها
+                {t("users.opPermsLabel")}
               </Label>
               <div className="space-y-3 rounded-md border p-4">
                 {OP_PERMISSION_GROUPS.map((group) => {
                   const groupSlugs = group.ops.map((o) => o.slug);
-                  const allChecked = groupSlugs.every((s) => newPermissions.includes(s));
                   const someChecked = groupSlugs.some((s) => newPermissions.includes(s));
                   return (
                     <div key={group.group}>
@@ -233,7 +230,7 @@ export default function UsersPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <UsersIcon className="h-5 w-5 text-primary" />
-            <CardTitle>الحسابات الحالية</CardTitle>
+            <CardTitle>{t("users.existingCard")}</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -242,7 +239,7 @@ export default function UsersPage() {
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : !users || users.length === 0 ? (
-            <p className="text-sm text-muted-foreground">لا توجد حسابات.</p>
+            <p className="text-sm text-muted-foreground">{t("users.noAccounts")}</p>
           ) : (
             <div className="space-y-4">
               {users.map((u) => (
@@ -254,13 +251,13 @@ export default function UsersPage() {
                       { id: u.id, data: payload },
                       {
                         onSuccess: () => {
-                          toast({ title: "تم الحفظ", description: `تم تحديث ${u.username}` });
+                          toast({ title: t("users.savedTitle"), description: `${t("users.savedDesc")} ${u.username}` });
                           invalidate();
                         },
                         onError: () =>
                           toast({
-                            title: "خطأ",
-                            description: "فشل الحفظ",
+                            title: t("common.error"),
+                            description: t("users.saveErrDesc"),
                             variant: "destructive",
                           }),
                       },
@@ -271,13 +268,13 @@ export default function UsersPage() {
                       { id: u.id },
                       {
                         onSuccess: () => {
-                          toast({ title: "تم الحذف" });
+                          toast({ title: t("users.deletedTitle") });
                           invalidate();
                         },
                         onError: () =>
                           toast({
-                            title: "خطأ",
-                            description: "فشل الحذف",
+                            title: t("common.error"),
+                            description: t("users.deleteErrDesc"),
                             variant: "destructive",
                           }),
                       },
@@ -318,6 +315,7 @@ function UserRow({
   const [perms, setPerms] = useState<string[]>(user.permissions);
   const [pwd, setPwd] = useState("");
   const isAdmin = user.role === "admin";
+  const { t } = useLanguage();
 
   const toggle = (slug: string) => {
     setPerms((prev) => {
@@ -339,7 +337,7 @@ function UserRow({
         <div className="flex items-center gap-2">
           <span className="font-semibold">{user.username}</span>
           <Badge variant={isAdmin ? "default" : "secondary"}>
-            {isAdmin ? "مدير" : "عميل"}
+            {isAdmin ? t("users.roleAdmin") : t("users.roleClient")}
           </Badge>
         </div>
         {!isAdmin && (
@@ -347,20 +345,20 @@ function UserRow({
             <AlertDialogTrigger asChild>
               <Button variant="ghost" size="sm" className="text-destructive">
                 <Trash2 className="ml-1 h-4 w-4" />
-                حذف
+                {t("users.deleteBtn")}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent dir="rtl">
               <AlertDialogHeader>
-                <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+                <AlertDialogTitle>{t("users.deleteDialogTitle")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  سيتم حذف الحساب «{user.username}» نهائياً.
+                  {t("users.deleteDialogDesc").replace("{username}", user.username)}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                <AlertDialogCancel>{t("users.deleteDialogCancel")}</AlertDialogCancel>
                 <AlertDialogAction onClick={onDelete} disabled={deleting}>
-                  حذف
+                  {t("users.deleteDialogConfirm")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -374,9 +372,9 @@ function UserRow({
           <div className="space-y-1.5">
             <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
               <LayoutDashboard className="h-3.5 w-3.5" />
-              العناصر الجانبية
+              {t("users.navSectionLabel")}
             </p>
-            <p className="text-xs text-muted-foreground">الصفحات المرتبطة بالعمليات تظهر تلقائياً عند تفعيل أي عملية منها.</p>
+            <p className="text-xs text-muted-foreground">{t("users.navSectionHint")}</p>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 rounded-md bg-muted/30 border p-3">
               {MANUAL_NAV_OPTIONS.map((opt) => (
                 <label key={opt.slug} className="flex items-center gap-2 text-sm cursor-pointer">
@@ -384,7 +382,7 @@ function UserRow({
                     checked={perms.includes(opt.slug)}
                     onCheckedChange={() => toggle(opt.slug)}
                   />
-                  <span>{opt.label}</span>
+                  <span>{t(`nav.${opt.slug}` as Parameters<typeof t>[0])}</span>
                 </label>
               ))}
             </div>
@@ -394,12 +392,11 @@ function UserRow({
           <div className="space-y-1.5">
             <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
               <Cog className="h-3.5 w-3.5" />
-              العمليات المسموح بها
+              {t("users.opSectionLabel")}
             </p>
             <div className="space-y-3 rounded-md bg-muted/30 border p-3">
               {OP_PERMISSION_GROUPS.map((group) => {
                 const groupSlugs = group.ops.map((o) => o.slug);
-                const allChecked = groupSlugs.every((s) => perms.includes(s));
                 const someChecked = groupSlugs.some((s) => perms.includes(s));
                 return (
                   <div key={group.group}>
@@ -429,13 +426,13 @@ function UserRow({
 
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1 flex-1 min-w-[200px]">
-              <Label htmlFor={`pwd-${user.id}`}>إعادة تعيين كلمة المرور (اختياري)</Label>
+              <Label htmlFor={`pwd-${user.id}`}>{t("users.resetPwdLabel")}</Label>
               <Input
                 id={`pwd-${user.id}`}
                 type="text"
                 value={pwd}
                 onChange={(e) => setPwd(e.target.value)}
-                placeholder="اتركه فارغاً للإبقاء على كلمة المرور الحالية"
+                placeholder={t("users.resetPwdPlaceholder")}
               />
             </div>
             <Button
@@ -450,7 +447,7 @@ function UserRow({
               ) : (
                 <Save className="ml-2 h-4 w-4" />
               )}
-              حفظ
+              {t("users.savingBtn")}
             </Button>
           </div>
         </>

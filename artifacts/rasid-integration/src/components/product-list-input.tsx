@@ -7,6 +7,7 @@ import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/language-context";
 import * as XLSX from "xlsx";
 
 type ProductRow = {
@@ -78,6 +79,7 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
   const { control, setValue, getValues } = useFormContext();
   const { fields, append, remove } = useFieldArray({ control, name });
   const { toast } = useToast();
+  const { t } = useLanguage();
   const fileRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<{ name: string; count: number } | null>(null);
@@ -105,14 +107,14 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
         const data = e.target?.result as ArrayBuffer;
         const products = parseProductsFromSheet(data);
         if (products.length === 0) {
-          toast({ title: "لم يتم العثور على بيانات", description: "تأكد من أن الملف يحتوي على عمود GTIN على الأقل", variant: "destructive" });
+          toast({ title: t("products.noDataTitle"), description: t("products.noDataDesc"), variant: "destructive" });
           return;
         }
         setValue(name, products);
         setUploadedFile({ name: file.name, count: products.length });
-        toast({ title: "تم رفع الملف", description: `تم استيراد ${products.length} منتج من الملف` });
+        toast({ title: t("products.uploadedTitle"), description: `${products.length} ${t("products.uploadedDesc")}` });
       } catch {
-        toast({ title: "خطأ في قراءة الملف", description: "تأكد من أن الملف بصيغة Excel أو CSV صحيحة", variant: "destructive" });
+        toast({ title: t("products.uploadErrTitle"), description: t("products.uploadErrDesc"), variant: "destructive" });
       }
     };
     reader.readAsArrayBuffer(file);
@@ -140,12 +142,12 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
     <div className="space-y-4">
       {/* Header row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Label className="text-base font-semibold">قائمة المنتجات (Products)</Label>
+        <Label className="text-base font-semibold">{t("products.listLabel")}</Label>
         <div className="flex items-center gap-2 flex-wrap">
           {fields.length > 0 && (
             <Badge variant="secondary" className="gap-1">
               <CheckCircle2 className="h-3 w-3 text-green-600" />
-              {fields.length} منتج
+              {fields.length} {t("products.count")}
             </Badge>
           )}
           {/* Download template button — always visible */}
@@ -153,10 +155,10 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
             type="button" variant="ghost" size="sm"
             className="gap-2 text-muted-foreground hover:text-primary"
             onClick={downloadTemplate}
-            title={isBatch ? "تحميل نموذج Excel (Batch)" : "تحميل نموذج Excel (SN)"}
+            title={isBatch ? `${t("products.downloadTemplate")} (Batch)` : `${t("products.downloadTemplate")} (SN)`}
           >
             <Download className="h-3.5 w-3.5" />
-            نموذج Excel
+            {t("products.downloadTemplate")}
           </Button>
 
           {/* Upload button */}
@@ -183,7 +185,7 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
               style={isDragging ? { borderColor: "hsl(var(--primary))", background: "hsl(var(--primary)/0.05)" } : {}}
             >
               <Upload className="h-3.5 w-3.5" />
-              رفع ملف Excel / CSV
+              {t("products.uploadFile")}
             </Button>
           )}
           <input
@@ -202,7 +204,7 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
-            إضافة يدوي
+            {t("products.addManual")}
           </Button>
         </div>
       </div>
@@ -211,7 +213,7 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
       {!uploadedFile && fields.length === 0 && (
         <div className="rounded-md border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground">
           <FileSpreadsheet className="h-6 w-6 mx-auto mb-2 opacity-50" />
-          <p>يمكنك رفع ملف Excel أو CSV يحتوي على الأعمدة:</p>
+          <p>{t("products.uploadHint")}</p>
           {isBatch ? (
             <p dir="ltr" className="font-mono font-bold mt-1 tracking-wider">GTIN ; BN ; XD ; QUANTITY</p>
           ) : (
@@ -220,8 +222,8 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
               <p dir="ltr" className="font-mono font-bold tracking-wider text-muted-foreground">GTIN ; QUANTITY ; BN ; XD</p>
             </>
           )}
-          <p className="mt-1">الفاصل يمكن أن يكون <span className="font-mono">(;)</span> أو <span className="font-mono">(,)</span> — التاريخ بصيغة DD/MM/YYYY أو YYYY-MM-DD</p>
-          <p className="mt-1">أو إضافة المنتجات يدوياً بالضغط على "إضافة يدوي"</p>
+          <p className="mt-1">{t("products.separatorHint")}</p>
+          <p className="mt-1">{t("products.manualHint")}</p>
         </div>
       )}
 
@@ -231,7 +233,7 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
           {fields.map((field, index) => (
             <div key={field.id} className="relative p-4 border rounded-md bg-card space-y-4">
               <div className="flex items-center justify-between pb-2 border-b">
-                <span className="font-medium text-sm text-muted-foreground">المنتج {index + 1}</span>
+                <span className="font-medium text-sm text-muted-foreground">{t("products.item")} {index + 1}</span>
                 <Button
                   type="button" variant="ghost" size="icon"
                   className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
@@ -260,7 +262,7 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
                 )}
                 <FormField control={control} name={`${name}.${index}.BN`} render={({ field }) => (
                   <FormItem>
-                    <FormLabel>BN {isBatch && <span className="text-muted-foreground text-xs">(مطلوب)</span>}</FormLabel>
+                    <FormLabel>BN {isBatch && <span className="text-muted-foreground text-xs">{t("products.bnRequired")}</span>}</FormLabel>
                     <FormControl><Input dir="ltr" className="text-left" placeholder="Batch Number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || undefined)} /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -275,7 +277,7 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
                 <FormField control={control} name={`${name}.${index}.QUANTITY`} render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      الكمية (QUANTITY){isBatch && <span className="text-destructive ms-1">*</span>}
+                      {t("products.quantityLabel")}{isBatch && <span className="text-destructive ms-1">*</span>}
                     </FormLabel>
                     <FormControl>
                       <Input

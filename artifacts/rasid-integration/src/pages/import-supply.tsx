@@ -55,6 +55,7 @@ function SnSerialInput({ value, onChange }: SnInputProps) {
   const [isDragging, setIsDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const parseFile = useCallback((file: File) => {
     const reader = new FileReader();
@@ -78,19 +79,19 @@ function SnSerialInput({ value, onChange }: SnInputProps) {
             .filter(Boolean);
           onChange(sns.join("\n"));
           setUploadedFile({ name: file.name, count: sns.length });
-          toast({ title: "تم رفع الملف", description: `تم استيراد ${sns.length} رقم تسلسلي (العمود: ${firstKey})` });
+          toast({ title: t("import.uploadedTitle"), description: `${t("import.uploadedFromColumn")} ${sns.length} ${firstKey})` });
         } else if (snKey) {
           const sns = rows
             .map(r => String(r[snKey] ?? "").trim())
             .filter(Boolean);
           onChange(sns.join("\n"));
           setUploadedFile({ name: file.name, count: sns.length });
-          toast({ title: "تم رفع الملف", description: `تم استيراد ${sns.length} رقم تسلسلي` });
+          toast({ title: t("import.uploadedTitle"), description: `${t("import.uploadedSN")} ${sns.length}` });
         } else {
-          toast({ title: "الملف فارغ", description: "لا توجد بيانات في الملف", variant: "destructive" });
+          toast({ title: t("import.emptyFileTitle"), description: t("import.emptyFileDesc"), variant: "destructive" });
         }
       } catch {
-        toast({ title: "خطأ في قراءة الملف", description: "تأكد من أن الملف بصيغة Excel أو CSV صحيحة", variant: "destructive" });
+        toast({ title: t("products.uploadErrTitle"), description: t("products.uploadErrDesc"), variant: "destructive" });
       }
     };
     reader.readAsArrayBuffer(file);
@@ -124,7 +125,7 @@ function SnSerialInput({ value, onChange }: SnInputProps) {
           onClick={() => setInputMode("manual")}
           className="gap-2"
         >
-          إدخال يدوي
+          {t("import.manualInput")}
         </Button>
         <Button
           type="button"
@@ -134,12 +135,12 @@ function SnSerialInput({ value, onChange }: SnInputProps) {
           className="gap-2"
         >
           <Upload className="h-3.5 w-3.5" />
-          رفع ملف Excel / CSV
+          {t("import.uploadFileBtn")}
         </Button>
         {value && (
           <Badge variant="secondary" className="gap-1">
             <CheckCircle2 className="h-3 w-3 text-green-600" />
-            {value.split("\n").filter(Boolean).length} رقم
+            {value.split("\n").filter(Boolean).length} {t("import.serialCount")}
           </Badge>
         )}
       </div>
@@ -167,16 +168,16 @@ function SnSerialInput({ value, onChange }: SnInputProps) {
               onClick={() => fileRef.current?.click()}
             >
               <FileSpreadsheet className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-              <p className="font-medium text-sm">اسحب الملف هنا أو اضغط للاختيار</p>
+              <p className="font-medium text-sm">{t("import.dropHint")}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                يدعم ملفات Excel (.xlsx, .xls) وCSV (.csv)
+                {t("import.dropSupported")}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                يجب أن يحتوي الملف على عمود باسم <span dir="ltr" className="font-mono font-bold">SN</span>
+                {t("import.dropSnColumn")} <span dir="ltr" className="font-mono font-bold">SN</span>
               </p>
               <Button type="button" variant="outline" size="sm" className="mt-4 gap-2" onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}>
                 <Upload className="h-4 w-4" />
-                اختر ملفاً
+                {t("import.dropChoose")}
               </Button>
               <input
                 ref={fileRef}
@@ -193,14 +194,14 @@ function SnSerialInput({ value, onChange }: SnInputProps) {
                 <div>
                   <p className="font-medium text-sm">{uploadedFile.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    تم تحميل <span className="font-bold text-green-700 dark:text-green-400">{uploadedFile.count}</span> رقم تسلسلي
+                    <span className="font-bold text-green-700 dark:text-green-400">{uploadedFile.count}</span> {t("import.loadedCount")}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} className="gap-1 text-xs">
                   <Upload className="h-3 w-3" />
-                  تغيير
+                  {t("import.changeFile")}
                 </Button>
                 <Button type="button" variant="ghost" size="icon" onClick={clearFile} className="h-8 w-8 text-destructive hover:text-destructive">
                   <X className="h-4 w-4" />
@@ -218,10 +219,10 @@ function SnSerialInput({ value, onChange }: SnInputProps) {
 
           {value && (
             <div className="rounded-md border bg-muted/30 p-3">
-              <p className="text-xs font-medium text-muted-foreground mb-2">معاينة الأرقام المستوردة:</p>
+              <p className="text-xs font-medium text-muted-foreground mb-2">{t("import.previewLabel")}</p>
               <pre dir="ltr" className="text-xs font-mono text-left max-h-[100px] overflow-y-auto">
                 {value.split("\n").filter(Boolean).slice(0, 10).join("\n")}
-                {value.split("\n").filter(Boolean).length > 10 && `\n... و${value.split("\n").filter(Boolean).length - 10} أرقام أخرى`}
+                {value.split("\n").filter(Boolean).length > 10 && `\n... ${value.split("\n").filter(Boolean).length - 10} ${t("import.moreNumbers")}`}
               </pre>
             </div>
           )}
@@ -276,7 +277,7 @@ export default function ImportSupplyPage() {
         toast({ title: t("common.saved"), description: isSupply ? t("import.successSupply") : t("import.successImport") });
       },
       onError: () => {
-        toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
+        toast({ title: t("common.error"), description: t("import.connError"), variant: "destructive" });
       }
     });
   };
@@ -290,7 +291,7 @@ export default function ImportSupplyPage() {
         toast({ title: t("common.saved"), description: isSupply ? t("import.successSupplyCancel") : t("import.successImportCancel") });
       },
       onError: () => {
-        toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
+        toast({ title: t("common.error"), description: t("import.connError"), variant: "destructive" });
       }
     });
   };
@@ -308,21 +309,21 @@ export default function ImportSupplyPage() {
           )} />
           <FormField control={form.control} name="BN" render={({ field }) => (
             <FormItem>
-              <FormLabel>رقم التشغيلة (BN)</FormLabel>
+              <FormLabel>{t("import.bnLabel")}</FormLabel>
               <FormControl><Input dir="ltr" className="text-left" placeholder="Batch Number" {...field} /></FormControl>
               <FormMessage />
             </FormItem>
           )} />
           <FormField control={form.control} name="MD" render={({ field }) => (
             <FormItem>
-              <FormLabel>تاريخ التصنيع (MD)</FormLabel>
+              <FormLabel>{t("import.mdLabel")}</FormLabel>
               <FormControl><Input dir="ltr" className="text-left" type="date" {...field} /></FormControl>
               <FormMessage />
             </FormItem>
           )} />
           <FormField control={form.control} name="XD" render={({ field }) => (
             <FormItem>
-              <FormLabel>تاريخ الانتهاء (XD)</FormLabel>
+              <FormLabel>{t("import.xdLabel")}</FormLabel>
               <FormControl><Input dir="ltr" className="text-left" type="date" {...field} /></FormControl>
               <FormMessage />
             </FormItem>
@@ -331,7 +332,7 @@ export default function ImportSupplyPage() {
 
         <FormField control={form.control} name="serialNumbersStr" render={({ field }) => (
           <FormItem>
-            <FormLabel>الأرقام التسلسلية (SNs)</FormLabel>
+            <FormLabel>{t("import.snLabel")}</FormLabel>
             <FormControl>
               <SnSerialInput value={field.value} onChange={field.onChange} />
             </FormControl>
@@ -339,7 +340,7 @@ export default function ImportSupplyPage() {
           </FormItem>
         )} />
 
-        <Button type="submit" disabled={(isSupply ? supplyMutation.isPending : importMutation.isPending) || !canDo(isSupply ? "op:supply" : "op:import")} title={!canDo(isSupply ? "op:supply" : "op:import") ? "غير مصرّح بهذه العملية" : undefined} className="w-full sm:w-auto">
+        <Button type="submit" disabled={(isSupply ? supplyMutation.isPending : importMutation.isPending) || !canDo(isSupply ? "op:supply" : "op:import")} title={!canDo(isSupply ? "op:supply" : "op:import") ? t("common.noPermission") : undefined} className="w-full sm:w-auto">
           {(isSupply ? supplyMutation.isPending : importMutation.isPending) ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo(isSupply ? "op:supply" : "op:import") ? <Lock className="me-2 h-4 w-4" /> : null}
           {isSupply ? t("import.executeSupply") : t("import.executeImport")}
         </Button>

@@ -113,7 +113,7 @@ export default function QueriesPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Info className="h-5 w-5 text-primary" />
-                <CardTitle>الاستعلام عن حالة المنتجات</CardTitle>
+                <CardTitle>{t("queries.cardStatus")}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -135,7 +135,7 @@ export default function QueriesPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Search className="h-5 w-5 text-primary" />
-                <CardTitle>تفاصيل إشعار الإرسال</CardTitle>
+                <CardTitle>{t("queries.cardDispatch")}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -163,7 +163,7 @@ export default function QueriesPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
-                <CardTitle>قائمة الجهات</CardTitle>
+                <CardTitle>{t("queries.cardStakeholder")}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -172,18 +172,18 @@ export default function QueriesPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={stakeholderForm.control} name="stakeholderType" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>نوع الجهة (اختياري)</FormLabel>
+                        <FormLabel>{t("queries.stakeholderType")}</FormLabel>
                         <FormControl>
-                          <Input dir="ltr" className="text-left" type="number" placeholder="مثال: 1" {...field} onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value || ""} />
+                          <Input dir="ltr" className="text-left" type="number" placeholder="e.g. 1" {...field} onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={stakeholderForm.control} name="cityId" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>معرف المدينة (اختياري)</FormLabel>
+                        <FormLabel>{t("queries.cityId")}</FormLabel>
                         <FormControl>
-                          <Input dir="ltr" className="text-left" type="number" placeholder="مثال: 101" {...field} onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value || ""} />
+                          <Input dir="ltr" className="text-left" type="number" placeholder="e.g. 101" {...field} onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -195,7 +195,7 @@ export default function QueriesPage() {
                         <Checkbox checked={field.value} onCheckedChange={field.onChange} className="me-2" />
                       </FormControl>
                       <div className="space-y-1 leading-none me-2">
-                        <FormLabel>جلب كافة الجهات</FormLabel>
+                        <FormLabel>{t("queries.getAllStakeholders")}</FormLabel>
                       </div>
                     </FormItem>
                   )} />
@@ -214,7 +214,7 @@ export default function QueriesPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Pill className="h-5 w-5 text-primary" />
-                <CardTitle>قائمة الأدوية</CardTitle>
+                <CardTitle>{t("queries.cardDrug")}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -222,9 +222,9 @@ export default function QueriesPage() {
                 <form onSubmit={drugListForm.handleSubmit((v) => runMutation(drugListMutation, v))} className="space-y-6">
                   <FormField control={drugListForm.control} name="drugStatus" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>حالة الدواء (اختياري)</FormLabel>
+                      <FormLabel>{t("queries.drugStatus")}</FormLabel>
                       <FormControl>
-                        <Input dir="ltr" className="text-left max-w-sm" type="number" placeholder="مثال: 1 (فعال)" {...field} onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value || ""} />
+                        <Input dir="ltr" className="text-left max-w-sm" type="number" placeholder="e.g. 1" {...field} onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} value={field.value || ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -244,7 +244,7 @@ export default function QueriesPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Globe className="h-5 w-5 text-primary" />
-                <CardTitle>قائمة الدول المعتمدة</CardTitle>
+                <CardTitle>{t("queries.cardCountry")}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -261,7 +261,7 @@ export default function QueriesPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-primary" />
-                <CardTitle>قائمة مدن المملكة</CardTitle>
+                <CardTitle>{t("queries.cardCity")}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -278,7 +278,7 @@ export default function QueriesPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-primary" />
-                <CardTitle>رموز الأخطاء (Error Codes)</CardTitle>
+                <CardTitle>{t("queries.cardError")}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
