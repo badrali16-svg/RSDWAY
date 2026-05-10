@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
+import { GlnInput } from "@/components/gln-input";
 
 const dispatchSchema = z.object({
   toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),
@@ -148,8 +149,7 @@ export default function DispatchAcceptPage() {
                 <form onSubmit={dispatchForm.handleSubmit((v) => dispatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إرسال المنتجات بنجاح"), onError }))} className="space-y-6">
                   <FormField control={dispatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GLN المستلم (toGLN)</FormLabel>
-                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -181,8 +181,7 @@ export default function DispatchAcceptPage() {
                 <form onSubmit={dispatchBatchForm.handleSubmit((v) => dispatchBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إرسال المنتجات بالتشغيلة بنجاح"), onError }))} className="space-y-6">
                   <FormField control={dispatchBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GLN المستلم (toGLN)</FormLabel>
-                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -214,8 +213,7 @@ export default function DispatchAcceptPage() {
                 <form onSubmit={dispatchForm.handleSubmit((v) => dispatchCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء الإرسال بنجاح"), onError }))} className="space-y-6">
                   <FormField control={dispatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GLN المستلم (toGLN)</FormLabel>
-                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -247,8 +245,7 @@ export default function DispatchAcceptPage() {
                 <form onSubmit={dispatchBatchForm.handleSubmit((v) => dispatchCancelBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء الإرسال بالتشغيلة بنجاح"), onError }))} className="space-y-6">
                   <FormField control={dispatchBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GLN المستلم (toGLN)</FormLabel>
-                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -280,8 +277,7 @@ export default function DispatchAcceptPage() {
                 <form onSubmit={acceptForm.handleSubmit((v) => acceptMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم استلام المنتجات بنجاح"), onError }))} className="space-y-6">
                   <FormField control={acceptForm.control} name="fromGLN" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GLN المرسل (fromGLN)</FormLabel>
-                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المرسل (fromGLN)" />
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -313,8 +309,7 @@ export default function DispatchAcceptPage() {
                 <form onSubmit={acceptBatchForm.handleSubmit((v) => acceptBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم استلام المنتجات بالتشغيلة بنجاح"), onError }))} className="space-y-6">
                   <FormField control={acceptBatchForm.control} name="fromGLN" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GLN المرسل (fromGLN)</FormLabel>
-                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المرسل (fromGLN)" />
                       <FormMessage />
                     </FormItem>
                   )} />

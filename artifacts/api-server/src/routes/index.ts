@@ -4,6 +4,7 @@ import rasidRouter from "./rasid";
 import sessionRouter from "./session";
 import usersRouter from "./users";
 import externalRouter from "./external";
+import clientsRouter from "./clients";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -15,5 +16,6 @@ router.use("/rasid", requireAuth);
 router.use("/auth", requireAuth);
 router.use(rasidRouter);
 router.use(externalRouter);
+router.use(clientsRouter);
 
 export default router;

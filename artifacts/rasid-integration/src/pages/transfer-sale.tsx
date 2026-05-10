@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
+import { GlnInput } from "@/components/gln-input";
 
 const transferSchema = z.object({
   toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),
@@ -142,8 +143,7 @@ export default function TransferSalePage() {
                 <form onSubmit={transferForm.handleSubmit((v) => transferMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم نقل المنتجات بنجاح"), onError }))} className="space-y-6">
                   <FormField control={transferForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GLN المستلم (toGLN)</FormLabel>
-                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -175,8 +175,7 @@ export default function TransferSalePage() {
                 <form onSubmit={transferBatchForm.handleSubmit((v) => transferBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم نقل المنتجات بالتشغيلة بنجاح"), onError }))} className="space-y-6">
                   <FormField control={transferBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GLN المستلم (toGLN)</FormLabel>
-                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -208,8 +207,7 @@ export default function TransferSalePage() {
                 <form onSubmit={transferForm.handleSubmit((v) => transferCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء النقل بنجاح"), onError }))} className="space-y-6">
                   <FormField control={transferForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GLN المستلم (toGLN)</FormLabel>
-                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -241,8 +239,7 @@ export default function TransferSalePage() {
                 <form onSubmit={transferBatchForm.handleSubmit((v) => transferCancelBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء النقل بالتشغيلة بنجاح"), onError }))} className="space-y-6">
                   <FormField control={transferBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GLN المستلم (toGLN)</FormLabel>
-                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -275,8 +272,7 @@ export default function TransferSalePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <FormField control={pharmacySaleForm.control} name="toGLN" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>GLN للفرع (toGLN)</FormLabel>
-                        <FormControl><Input dir="ltr" className="text-left" placeholder="Global Location Number" {...field} /></FormControl>
+                        <GlnInput value={field.value} onChange={field.onChange} label="GLN للفرع (toGLN)" />
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -338,8 +334,7 @@ export default function TransferSalePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={pharmacySaleCancelForm.control} name="toGLN" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>GLN للفرع (toGLN)</FormLabel>
-                        <FormControl><Input dir="ltr" className="text-left" placeholder="Global Location Number" {...field} /></FormControl>
+                        <GlnInput value={field.value} onChange={field.onChange} label="GLN للفرع (toGLN)" />
                         <FormMessage />
                       </FormItem>
                     )} />

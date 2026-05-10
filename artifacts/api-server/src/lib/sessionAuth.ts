@@ -13,6 +13,7 @@ export const ALL_NAV_PERMISSIONS = [
   "packages",
   "queries",
   "history",
+  "clients",
 ] as const;
 
 export const ALL_OP_PERMISSIONS = [

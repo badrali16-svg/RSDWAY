@@ -38,6 +38,7 @@ const NAV_PERMISSION_OPTIONS: { slug: string; label: string }[] = [
   { slug: "packages", label: "نقل الحزم" },
   { slug: "queries", label: "خدمات الاستعلام" },
   { slug: "history", label: "سجل العمليات" },
+  { slug: "clients", label: "إدارة العملاء" },
 ];
 
 // Nav slugs that are auto-derived from op groups (not manually controlled)

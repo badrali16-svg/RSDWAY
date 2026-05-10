@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
+import { GlnInput } from "@/components/gln-input";
 
 const returnSchema = z.object({
   toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),
@@ -118,8 +119,7 @@ export default function ReturnConsumePage() {
                 <form onSubmit={returnForm.handleSubmit((v) => returnMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إرسال طلب الإرجاع بنجاح"), onError }))} className="space-y-6">
                   <FormField control={returnForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GLN المستلم (toGLN)</FormLabel>
-                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -150,8 +150,7 @@ export default function ReturnConsumePage() {
                 <form onSubmit={returnBatchForm.handleSubmit((v) => returnBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم الإرجاع بالتشغيلة بنجاح"), onError }))} className="space-y-6">
                   <FormField control={returnBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GLN المستلم (toGLN)</FormLabel>
-                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
                       <FormMessage />
                     </FormItem>
                   )} />

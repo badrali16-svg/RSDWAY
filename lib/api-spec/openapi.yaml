@@ -41,6 +41,8 @@ tags:
     description: Package transfer operations
   - name: query
     description: Query / utility operations
+  - name: clients
+    description: Client (GLN) management
 paths:
   /external/keys:
     get:
@@ -235,6 +237,81 @@ paths:
       operationId: deleteUser
       tags: [users]
       summary: Delete a user (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  # ── CLIENT (GLN) MANAGEMENT ────────────────────────────────────────────────
+  /clients:
+    get:
+      operationId: listClients
+      tags: [clients]
+      summary: List all clients for the logged-in user
+      responses:
+        "200":
+          description: Client list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Client"
+    post:
+      operationId: createClient
+      tags: [clients]
+      summary: Create a new client entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClientRequest"
+      responses:
+        "200":
+          description: Created client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+
+  /clients/{id}:
+    put:
+      operationId: updateClient
+      tags: [clients]
+      summary: Update a client entry
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClientRequest"
+      responses:
+        "200":
+          description: Updated client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+    delete:
+      operationId: deleteClient
+      tags: [clients]
+      summary: Delete a client entry
       parameters:
         - in: path
           name: id
@@ -1442,6 +1519,54 @@ components:
         - name
         - key
         - createdAt
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        gln:
+          type: string
+        glnOwnerName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - name
+        - gln
+        - createdAt
+        - updatedAt
+
+    CreateClientRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        gln:
+          type: string
+        glnOwnerName:
+          type: ["string", "null"]
+      required:
+        - name
+        - gln
+
+    UpdateClientRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        gln:
+          type: string
+        glnOwnerName:
+          type: ["string", "null"]
+      required:
+        - name
+        - gln
 
     OperationLog:
       type: object

@@ -167,6 +167,70 @@ export const DeleteUserResponse = zod.object({
 });
 
 /**
+ * @summary List all clients for the logged-in user
+ */
+export const ListClientsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  gln: zod.string(),
+  glnOwnerName: zod.string().nullish(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
+export const ListClientsResponse = zod.array(ListClientsResponseItem);
+
+/**
+ * @summary Create a new client entry
+ */
+export const CreateClientBody = zod.object({
+  name: zod.string(),
+  gln: zod.string(),
+  glnOwnerName: zod.string().nullish(),
+});
+
+export const CreateClientResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  gln: zod.string(),
+  glnOwnerName: zod.string().nullish(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
+
+/**
+ * @summary Update a client entry
+ */
+export const UpdateClientParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateClientBody = zod.object({
+  name: zod.string(),
+  gln: zod.string(),
+  glnOwnerName: zod.string().nullish(),
+});
+
+export const UpdateClientResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  gln: zod.string(),
+  glnOwnerName: zod.string().nullish(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
+
+/**
+ * @summary Delete a client entry
+ */
+export const DeleteClientParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteClientResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
  * @summary Get saved credentials (masked)
  */
 export const GetAuthConfigResponse = zod.object({

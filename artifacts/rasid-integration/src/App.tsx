@@ -11,6 +11,7 @@ import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Settings from "@/pages/settings";
 import UsersPage from "@/pages/users";
+import ClientsPage from "@/pages/clients";
 import ImportSupplyPage from "@/pages/import-supply";
 import DispatchAcceptPage from "@/pages/dispatch-accept";
 import ReturnConsumePage from "@/pages/return-consume";
@@ -88,6 +89,9 @@ function AuthedRoutes() {
         </Route>
         <Route path="/history">
           <PermissionGuard slug="history"><HistoryPage /></PermissionGuard>
+        </Route>
+        <Route path="/clients">
+          <PermissionGuard slug="clients"><ClientsPage /></PermissionGuard>
         </Route>
         <Route component={NotFound} />
       </Switch>

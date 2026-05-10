@@ -254,6 +254,30 @@ export interface CreatedApiKey {
   createdAt: string;
 }
 
+export interface Client {
+  id: number;
+  name: string;
+  gln: string;
+  /** @nullable */
+  glnOwnerName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateClientRequest {
+  name: string;
+  gln: string;
+  /** @nullable */
+  glnOwnerName?: string | null;
+}
+
+export interface UpdateClientRequest {
+  name: string;
+  gln: string;
+  /** @nullable */
+  glnOwnerName?: string | null;
+}
+
 export interface OperationLog {
   id: number;
   operation: string;

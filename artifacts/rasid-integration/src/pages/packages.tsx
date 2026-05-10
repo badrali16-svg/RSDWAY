@@ -17,6 +17,7 @@ import { Loader2, Upload, Download, Search, Box, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
+import { GlnInput } from "@/components/gln-input";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const uploadSchema = z.object({
@@ -120,8 +121,7 @@ export default function PackagesPage() {
                 <form onSubmit={uploadForm.handleSubmit(handleUpload)} className="space-y-6">
                   <FormField control={uploadForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GLN المستلم (toGLN)</FormLabel>
-                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -190,15 +190,13 @@ export default function PackagesPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={queryForm.control} name="fromGLN" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>GLN المرسل (اختياري)</FormLabel>
-                        <FormControl><Input dir="ltr" className="text-left" placeholder="Global Location Number" {...field} /></FormControl>
+                        <GlnInput value={field.value ?? ""} onChange={field.onChange} label="GLN المرسل (اختياري)" />
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={queryForm.control} name="toGLN" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>GLN المستلم (اختياري)</FormLabel>
-                        <FormControl><Input dir="ltr" className="text-left" placeholder="Global Location Number" {...field} /></FormControl>
+                        <GlnInput value={field.value ?? ""} onChange={field.onChange} label="GLN المستلم (اختياري)" />
                         <FormMessage />
                       </FormItem>
                     )} />

@@ -14,6 +14,7 @@ import {
   Menu,
   Users,
   LogOut,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -39,6 +40,7 @@ const navItems: NavItem[] = [
   { href: "/packages", label: "نقل الحزم", icon: Box, slug: "packages" },
   { href: "/queries", label: "خدمات الاستعلام", icon: Search, slug: "queries" },
   { href: "/history", label: "سجل العمليات", icon: History, slug: "history" },
+  { href: "/clients", label: "إدارة العملاء", icon: Building2, slug: "clients" },
   { href: "/users", label: "إدارة المستخدمين", icon: Users, slug: "users", adminOnly: true },
   { href: "/settings", label: "الإعدادات", icon: Settings, slug: "settings" },
 ];
