@@ -5,9 +5,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collap
 import { Button } from "./ui/button";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 
 export function SoapResponseViewer({ response }: { response: SoapResponse | null }) {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   if (!response) return null;
 
@@ -33,7 +36,7 @@ export function SoapResponseViewer({ response }: { response: SoapResponse | null
         </AlertDescription>
       </Alert>
 
-      {response.rawXml && (
+      {isAdmin && response.rawXml && (
         <Collapsible open={isOpen} onOpenChange={setIsOpen} className="rounded-md border bg-card text-card-foreground">
           <div className="flex items-center justify-between px-4 py-3">
             <h4 className="text-sm font-semibold">استجابة XML (Raw XML)</h4>
