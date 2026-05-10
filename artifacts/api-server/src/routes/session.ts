@@ -17,6 +17,10 @@ router.post("/session/login", async (req, res): Promise<void> => {
     return;
   }
   const row = rows[0];
+  if (!row.isActive) {
+    res.status(403).json({ error: "Account is inactive. Please contact the administrator." });
+    return;
+  }
   const ok = await verifyPassword(password, row.passwordHash);
   if (!ok) {
     res.status(401).json({ error: "Invalid username or password" });

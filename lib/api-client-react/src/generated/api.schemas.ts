@@ -54,6 +54,7 @@ export interface UserSummary {
   username: string;
   role: UserSummaryRole;
   permissions: string[];
+  isActive: boolean;
   createdAt: string;
 }
 
@@ -74,6 +75,10 @@ export interface UpdateUserRequest {
   /** @nullable */
   password?: string | null;
   permissions: string[];
+}
+
+export interface SetUserStatusRequest {
+  isActive: boolean;
 }
 
 export interface AuthConfig {

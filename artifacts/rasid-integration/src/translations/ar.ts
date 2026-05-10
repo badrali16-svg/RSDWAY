@@ -455,6 +455,19 @@ export const ar: Record<string, string> = {
   "users.dttsPwdSaved": "كلمة المرور محفوظة ✓ — أدخل جديدة للتغيير",
   "users.dttsEnterPwdToSave": "يجب إدخال كلمة المرور للحفظ",
 
+  // Users — الحالة والبحث والتصغير
+  "users.statusActive": "نشط",
+  "users.statusInactive": "غير نشط",
+  "users.setActive": "تفعيل",
+  "users.setInactive": "تعطيل",
+  "users.statusSavedOk": "تم تحديث حالة الحساب",
+  "users.statusSaveErr": "فشل تحديث حالة الحساب",
+  "users.searchPlaceholder": "ابحث باسم المستخدم أو رقم GLN...",
+  "users.noResults": "لا توجد حسابات تطابق بحثك",
+  "users.expand": "توسيع",
+  "users.collapse": "تصغير",
+  "users.inactiveLoginErr": "الحساب غير نشط، يرجى التواصل مع الإدارة",
+
   // Product List Input
   "products.listLabel": "قائمة المنتجات (Products)",
   "products.count": "منتج",

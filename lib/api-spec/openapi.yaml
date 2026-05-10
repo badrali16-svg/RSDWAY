@@ -251,6 +251,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthConfig"
 
+  /users/{id}/status:
+    patch:
+      operationId: setUserStatus
+      tags: [users]
+      summary: Enable or disable a user account (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetUserStatusRequest"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSummary"
+
   /users/{id}:
     patch:
       operationId: updateUser
@@ -1179,9 +1204,11 @@ components:
           type: array
           items:
             type: string
+        isActive:
+          type: boolean
         createdAt:
           type: string
-      required: [id, username, role, permissions, createdAt]
+      required: [id, username, role, permissions, isActive, createdAt]
 
     CreateUserRequest:
       type: object
@@ -1208,6 +1235,13 @@ components:
           items:
             type: string
       required: [permissions]
+
+    SetUserStatusRequest:
+      type: object
+      properties:
+        isActive:
+          type: boolean
+      required: [isActive]
 
     AuthConfig:
       type: object

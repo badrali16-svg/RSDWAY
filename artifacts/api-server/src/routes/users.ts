@@ -12,6 +12,7 @@ function toSummary(row: typeof usersTable.$inferSelect) {
     username: row.username,
     role: row.role,
     permissions: row.permissions ?? [],
+    isActive: row.isActive ?? true,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -136,6 +137,30 @@ router.patch("/users/:id", requireAdmin, async (req, res): Promise<void> => {
     updates.passwordHash = await hashPassword(password);
   }
   const [row] = await db.update(usersTable).set(updates).where(eq(usersTable.id, id)).returning();
+  res.json(toSummary(row));
+});
+
+router.patch("/users/:id/status", requireAdmin, async (req, res): Promise<void> => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const existing = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+  if (existing.length === 0) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  if (existing[0].role === "admin") {
+    res.status(403).json({ error: "Cannot change admin status" });
+    return;
+  }
+  const { isActive } = req.body as { isActive?: boolean };
+  if (typeof isActive !== "boolean") {
+    res.status(400).json({ error: "isActive must be a boolean" });
+    return;
+  }
+  const [row] = await db.update(usersTable).set({ isActive }).where(eq(usersTable.id, id)).returning();
   res.json(toSummary(row));
 });
 

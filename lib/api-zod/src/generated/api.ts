@@ -114,6 +114,7 @@ export const ListUsersResponseItem = zod.object({
   username: zod.string(),
   role: zod.enum(["admin", "client"]),
   permissions: zod.array(zod.string()),
+  isActive: zod.boolean(),
   createdAt: zod.string(),
 });
 export const ListUsersResponse = zod.array(ListUsersResponseItem);
@@ -139,6 +140,7 @@ export const CreateUserResponse = zod.object({
   username: zod.string(),
   role: zod.enum(["admin", "client"]),
   permissions: zod.array(zod.string()),
+  isActive: zod.boolean(),
   createdAt: zod.string(),
 });
 
@@ -175,6 +177,26 @@ export const SaveUserAuthConfigResponse = zod.object({
 });
 
 /**
+ * @summary Enable or disable a user account (admin only)
+ */
+export const SetUserStatusParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const SetUserStatusBody = zod.object({
+  isActive: zod.boolean(),
+});
+
+export const SetUserStatusResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  role: zod.enum(["admin", "client"]),
+  permissions: zod.array(zod.string()),
+  isActive: zod.boolean(),
+  createdAt: zod.string(),
+});
+
+/**
  * @summary Update a user's permissions or password (admin only)
  */
 export const UpdateUserParams = zod.object({
@@ -191,6 +213,7 @@ export const UpdateUserResponse = zod.object({
   username: zod.string(),
   role: zod.enum(["admin", "client"]),
   permissions: zod.array(zod.string()),
+  isActive: zod.boolean(),
   createdAt: zod.string(),
 });
 

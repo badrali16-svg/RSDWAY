@@ -5,13 +5,7 @@
  * SFDA DTTS (Rasid) Integration API - Proxy for SOAP web services
  * OpenAPI spec version: 0.1.0
  */
-import type { UserSummaryRole } from "./userSummaryRole";
 
-export interface UserSummary {
-  id: number;
-  username: string;
-  role: UserSummaryRole;
-  permissions: string[];
+export interface SetUserStatusRequest {
   isActive: boolean;
-  createdAt: string;
 }

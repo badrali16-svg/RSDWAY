@@ -455,6 +455,19 @@ export const en: Record<string, string> = {
   "users.dttsPwdSaved": "Password is saved ✓ — enter a new one to update",
   "users.dttsEnterPwdToSave": "Enter password to save settings",
 
+  // Users — status & search & minimize
+  "users.statusActive": "Active",
+  "users.statusInactive": "Inactive",
+  "users.setActive": "Activate",
+  "users.setInactive": "Deactivate",
+  "users.statusSavedOk": "Account status updated",
+  "users.statusSaveErr": "Failed to update account status",
+  "users.searchPlaceholder": "Search by username or GLN...",
+  "users.noResults": "No accounts match your search",
+  "users.expand": "Expand",
+  "users.collapse": "Collapse",
+  "users.inactiveLoginErr": "Account is inactive. Please contact the administrator.",
+
   // Product List Input
   "products.listLabel": "Product List",
   "products.count": "products",

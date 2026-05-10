@@ -40,6 +40,7 @@ export * from "./productListRequest";
 export * from "./sessionState";
 export * from "./sessionUser";
 export * from "./sessionUserRole";
+export * from "./setUserStatusRequest";
 export * from "./soapResponse";
 export * from "./stakeholderListRequest";
 export * from "./toGlnBatchProductListRequest";

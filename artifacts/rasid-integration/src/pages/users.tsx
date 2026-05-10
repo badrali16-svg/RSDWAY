@@ -4,6 +4,7 @@ import {
   useCreateUser,
   useUpdateUser,
   useDeleteUser,
+  useSetUserStatus,
   useTestConnectionDirect,
   useGetUserAuthConfig,
   useSaveUserAuthConfig,
@@ -20,6 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   Loader2, UserPlus, Trash2, Save, Users as UsersIcon,
   LayoutDashboard, Cog, ShieldCheck, Globe, CheckCircle2, XCircle, Wifi,
+  ChevronDown, ChevronUp, Search, Power, PowerOff,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -85,6 +87,7 @@ export default function UsersPage() {
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
+  const setUserStatus = useSetUserStatus();
   const testConnectionDirect = useTestConnectionDirect();
 
   const invalidate = () => qc.invalidateQueries({ queryKey: getListUsersQueryKey() });
@@ -430,69 +433,130 @@ export default function UsersPage() {
       </Card>
 
       {/* Existing users */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <UsersIcon className="h-5 w-5 text-primary" />
-            <CardTitle>{t("users.existingCard")}</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : !users || users.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("users.noAccounts")}</p>
-          ) : (
-            <div className="space-y-4">
-              {users.map((u) => (
-                <UserRow
-                  key={u.id}
-                  user={u}
-                  onUpdate={(payload) =>
-                    updateUser.mutate(
-                      { id: u.id, data: payload },
-                      {
-                        onSuccess: () => {
-                          toast({ title: t("users.savedTitle"), description: `${t("users.savedDesc")} ${u.username}` });
-                          invalidate();
-                        },
-                        onError: () =>
-                          toast({
-                            title: t("common.error"),
-                            description: t("users.saveErrDesc"),
-                            variant: "destructive",
-                          }),
-                      },
-                    )
-                  }
-                  onDelete={() =>
-                    deleteUser.mutate(
-                      { id: u.id },
-                      {
-                        onSuccess: () => {
-                          toast({ title: t("users.deletedTitle") });
-                          invalidate();
-                        },
-                        onError: () =>
-                          toast({
-                            title: t("common.error"),
-                            description: t("users.deleteErrDesc"),
-                            variant: "destructive",
-                          }),
-                      },
-                    )
-                  }
-                  saving={updateUser.isPending}
-                  deleting={deleteUser.isPending}
-                />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <ExistingUsersCard
+        users={users ?? []}
+        isLoading={isLoading}
+        onUpdate={(id, payload) =>
+          updateUser.mutate(
+            { id, data: payload },
+            {
+              onSuccess: () => {
+                toast({ title: t("users.savedTitle"), description: t("users.savedDesc") });
+                invalidate();
+              },
+              onError: () =>
+                toast({ title: t("common.error"), description: t("users.saveErrDesc"), variant: "destructive" }),
+            },
+          )
+        }
+        onDelete={(id) =>
+          deleteUser.mutate(
+            { id },
+            {
+              onSuccess: () => { toast({ title: t("users.deletedTitle") }); invalidate(); },
+              onError: () =>
+                toast({ title: t("common.error"), description: t("users.deleteErrDesc"), variant: "destructive" }),
+            },
+          )
+        }
+        onSetStatus={(id, isActive) =>
+          setUserStatus.mutate(
+            { id, data: { isActive } },
+            {
+              onSuccess: () => { toast({ title: t("users.statusSavedOk") }); invalidate(); },
+              onError: () =>
+                toast({ title: t("common.error"), description: t("users.statusSaveErr"), variant: "destructive" }),
+            },
+          )
+        }
+        savingId={updateUser.isPending ? -1 : undefined}
+        deletingId={deleteUser.isPending ? -1 : undefined}
+      />
     </div>
+  );
+}
+
+// ── ExistingUsersCard ─────────────────────────────────────────────────────────
+
+interface UserSummaryItem {
+  id: number;
+  username: string;
+  role: string;
+  permissions: string[];
+  isActive: boolean;
+  createdAt: string;
+}
+
+function ExistingUsersCard({
+  users,
+  isLoading,
+  onUpdate,
+  onDelete,
+  onSetStatus,
+  savingId,
+  deletingId,
+}: {
+  users: UserSummaryItem[];
+  isLoading: boolean;
+  onUpdate: (id: number, data: { password: string | null; permissions: string[] }) => void;
+  onDelete: (id: number) => void;
+  onSetStatus: (id: number, isActive: boolean) => void;
+  savingId?: number;
+  deletingId?: number;
+}) {
+  const { t } = useLanguage();
+  const [search, setSearch] = useState("");
+
+  const filtered = users.filter((u) =>
+    u.username.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <UsersIcon className="h-5 w-5 text-primary" />
+          <CardTitle>{t("users.existingCard")}</CardTitle>
+          <Badge variant="secondary" className="ms-auto">{users.length}</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Search box */}
+        <div className="relative">
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            className="ps-9"
+            placeholder={t("users.searchPlaceholder")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            {search ? t("users.noResults") : t("users.noAccounts")}
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {filtered.map((u) => (
+              <UserRow
+                key={u.id}
+                user={u as UserRowUser}
+                onUpdate={(payload) => onUpdate(u.id, payload)}
+                onDelete={() => onDelete(u.id)}
+                onSetStatus={(isActive) => onSetStatus(u.id, isActive)}
+                saving={savingId === u.id}
+                deleting={deletingId === u.id}
+              />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -705,21 +769,25 @@ interface UserRowUser {
   username: string;
   role: "admin" | "client";
   permissions: string[];
+  isActive: boolean;
 }
 
 function UserRow({
   user,
   onUpdate,
   onDelete,
+  onSetStatus,
   saving,
   deleting,
 }: {
   user: UserRowUser;
   onUpdate: (data: { password: string | null; permissions: string[] }) => void;
   onDelete: () => void;
+  onSetStatus: (isActive: boolean) => void;
   saving: boolean;
   deleting: boolean;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const [perms, setPerms] = useState<string[]>(user.permissions);
   const [pwd, setPwd] = useState("");
   const isAdmin = user.role === "admin";
@@ -740,20 +808,54 @@ function UserRow({
   };
 
   return (
-    <div className="rounded-md border p-4 space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold">{user.username}</span>
-          <Badge variant={isAdmin ? "default" : "secondary"}>
-            {isAdmin ? t("users.roleAdmin") : t("users.roleClient")}
-          </Badge>
-        </div>
+    <div className={`rounded-md border transition-all ${!user.isActive ? "opacity-70 bg-muted/20" : ""}`}>
+      {/* ── Collapsed header (always visible) ── */}
+      <div className="flex flex-wrap items-center gap-2 p-3">
+        {/* Status indicator dot */}
+        <span className={`h-2 w-2 rounded-full shrink-0 ${user.isActive ? "bg-green-500" : "bg-muted-foreground"}`} />
+
+        {/* Username + role */}
+        <span className="font-semibold text-sm flex-1 min-w-0 truncate">{user.username}</span>
+        <Badge variant={isAdmin ? "default" : "secondary"} className="text-xs shrink-0">
+          {isAdmin ? t("users.roleAdmin") : t("users.roleClient")}
+        </Badge>
+
+        {/* Active/Inactive badge + toggle (non-admin only) */}
+        {!isAdmin && (
+          <button
+            type="button"
+            title={user.isActive ? t("users.setInactive") : t("users.setActive")}
+            onClick={() => onSetStatus(!user.isActive)}
+            className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium border transition-colors ${
+              user.isActive
+                ? "border-green-300 bg-green-50 text-green-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                : "border-muted-foreground/30 bg-muted text-muted-foreground hover:bg-green-50 hover:border-green-300 hover:text-green-700"
+            }`}
+          >
+            {user.isActive ? (
+              <><Power className="h-3 w-3" />{t("users.statusActive")}</>
+            ) : (
+              <><PowerOff className="h-3 w-3" />{t("users.statusInactive")}</>
+            )}
+          </button>
+        )}
+
+        {/* Expand / collapse */}
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground rounded px-1.5 py-0.5 hover:bg-muted transition-colors"
+          title={expanded ? t("users.collapse") : t("users.expand")}
+        >
+          {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+
+        {/* Delete (non-admin only) */}
         {!isAdmin && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-destructive">
-                <Trash2 className="ml-1 h-4 w-4" />
-                {t("users.deleteBtn")}
+              <Button variant="ghost" size="icon" className="text-destructive h-7 w-7 shrink-0">
+                <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent dir="rtl">
@@ -774,9 +876,10 @@ function UserRow({
         )}
       </div>
 
-      {!isAdmin && (
-        <>
-          {/* Nav permissions — only manually-controlled items */}
+      {/* ── Expanded details ── */}
+      {expanded && !isAdmin && (
+        <div className="border-t px-4 pb-4 pt-3 space-y-4">
+          {/* Nav permissions */}
           <div className="space-y-1.5">
             <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
               <LayoutDashboard className="h-3.5 w-3.5" />
@@ -832,9 +935,10 @@ function UserRow({
             </div>
           </div>
 
-          {/* DTTS Credentials section */}
+          {/* DTTS Credentials */}
           <UserDttsSection userId={user.id} />
 
+          {/* Password reset + save */}
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1 flex-1 min-w-[200px]">
               <Label htmlFor={`pwd-${user.id}`}>{t("users.resetPwdLabel")}</Label>
@@ -847,21 +951,14 @@ function UserRow({
               />
             </div>
             <Button
-              onClick={() => {
-                onUpdate({ password: pwd || null, permissions: perms });
-                setPwd("");
-              }}
+              onClick={() => { onUpdate({ password: pwd || null, permissions: perms }); setPwd(""); }}
               disabled={saving}
             >
-              {saving ? (
-                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="ml-2 h-4 w-4" />
-              )}
+              {saving ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Save className="ms-2 h-4 w-4" />}
               {t("users.savingBtn")}
             </Button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

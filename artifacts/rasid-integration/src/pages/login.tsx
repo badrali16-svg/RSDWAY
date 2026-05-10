@@ -27,10 +27,11 @@ export default function LoginPage() {
           await qc.invalidateQueries({ queryKey: getGetCurrentSessionQueryKey() });
           window.location.href = import.meta.env.BASE_URL || "/";
         },
-        onError: () => {
+        onError: (err: unknown) => {
+          const status = (err as { response?: { status?: number } })?.response?.status;
           toast({
             title: t("login.failTitle"),
-            description: t("login.failDesc"),
+            description: status === 403 ? t("users.inactiveLoginErr") : t("login.failDesc"),
             variant: "destructive",
           });
         },

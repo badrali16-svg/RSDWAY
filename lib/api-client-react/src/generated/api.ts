@@ -47,6 +47,7 @@ import type {
   ProductListRequest,
   SessionState,
   SessionUser,
+  SetUserStatusRequest,
   SoapResponse,
   StakeholderListRequest,
   ToGlnBatchProductListRequest,
@@ -1037,6 +1038,93 @@ export const useSaveUserAuthConfig = <
   TContext
 > => {
   return useMutation(getSaveUserAuthConfigMutationOptions(options));
+};
+
+/**
+ * @summary Enable or disable a user account (admin only)
+ */
+export const getSetUserStatusUrl = (id: number) => {
+  return `/api/users/${id}/status`;
+};
+
+export const setUserStatus = async (
+  id: number,
+  setUserStatusRequest: SetUserStatusRequest,
+  options?: RequestInit,
+): Promise<UserSummary> => {
+  return customFetch<UserSummary>(getSetUserStatusUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setUserStatusRequest),
+  });
+};
+
+export const getSetUserStatusMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setUserStatus>>,
+    TError,
+    { id: number; data: BodyType<SetUserStatusRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setUserStatus>>,
+  TError,
+  { id: number; data: BodyType<SetUserStatusRequest> },
+  TContext
+> => {
+  const mutationKey = ["setUserStatus"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setUserStatus>>,
+    { id: number; data: BodyType<SetUserStatusRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return setUserStatus(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetUserStatusMutationResult = NonNullable<
+  Awaited<ReturnType<typeof setUserStatus>>
+>;
+export type SetUserStatusMutationBody = BodyType<SetUserStatusRequest>;
+export type SetUserStatusMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Enable or disable a user account (admin only)
+ */
+export const useSetUserStatus = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setUserStatus>>,
+    TError,
+    { id: number; data: BodyType<SetUserStatusRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof setUserStatus>>,
+  TError,
+  { id: number; data: BodyType<SetUserStatusRequest> },
+  TContext
+> => {
+  return useMutation(getSetUserStatusMutationOptions(options));
 };
 
 /**
