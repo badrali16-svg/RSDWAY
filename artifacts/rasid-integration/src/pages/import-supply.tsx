@@ -16,8 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PackagePlus, Ban, Upload, FileSpreadsheet, X, CheckCircle2 } from "lucide-react";
+import { Loader2, PackagePlus, Ban, Upload, FileSpreadsheet, X, CheckCircle2, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import * as XLSX from "xlsx";
@@ -231,6 +232,8 @@ function SnSerialInput({ value, onChange }: SnInputProps) {
 
 export default function ImportSupplyPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
 
   const importMutation = useImportProducts();
@@ -334,8 +337,8 @@ export default function ImportSupplyPage() {
           </FormItem>
         )} />
 
-        <Button type="submit" disabled={isSupply ? supplyMutation.isPending : importMutation.isPending} className="w-full sm:w-auto">
-          {(isSupply ? supplyMutation.isPending : importMutation.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button type="submit" disabled={(isSupply ? supplyMutation.isPending : importMutation.isPending) || !canDo(isSupply ? "op:supply" : "op:import")} title={!canDo(isSupply ? "op:supply" : "op:import") ? "غير مصرّح بهذه العملية" : undefined} className="w-full sm:w-auto">
+          {(isSupply ? supplyMutation.isPending : importMutation.isPending) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo(isSupply ? "op:supply" : "op:import") ? <Lock className="mr-2 h-4 w-4" /> : null}
           {isSupply ? "تنفيذ عملية التصنيع" : "تنفيذ عملية الاستيراد"}
         </Button>
       </form>
@@ -387,8 +390,8 @@ export default function ImportSupplyPage() {
               <Form {...cancelForm}>
                 <form onSubmit={cancelForm.handleSubmit((v) => handleCancelSubmit(v, false))} className="space-y-6">
                   <ProductListInput />
-                  <Button type="submit" variant="destructive" disabled={importCancelMutation.isPending} className="w-full sm:w-auto">
-                    {importCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" variant="destructive" disabled={importCancelMutation.isPending || !canDo("op:import-cancel")} title={!canDo("op:import-cancel") ? "غير مصرّح بهذه العملية" : undefined} className="w-full sm:w-auto">
+                    {importCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:import-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     تنفيذ الإلغاء
                   </Button>
                 </form>
@@ -427,8 +430,8 @@ export default function ImportSupplyPage() {
               <Form {...cancelForm}>
                 <form onSubmit={cancelForm.handleSubmit((v) => handleCancelSubmit(v, true))} className="space-y-6">
                   <ProductListInput />
-                  <Button type="submit" variant="destructive" disabled={supplyCancelMutation.isPending} className="w-full sm:w-auto">
-                    {supplyCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" variant="destructive" disabled={supplyCancelMutation.isPending || !canDo("op:supply-cancel")} title={!canDo("op:supply-cancel") ? "غير مصرّح بهذه العملية" : undefined} className="w-full sm:w-auto">
+                    {supplyCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:supply-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     تنفيذ الإلغاء
                   </Button>
                 </form>

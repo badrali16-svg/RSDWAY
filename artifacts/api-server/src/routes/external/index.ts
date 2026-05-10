@@ -27,18 +27,11 @@
  *   POST /api/external/v1/transfer-cancel-batch
  *   POST /api/external/v1/import
  *   POST /api/external/v1/supply
- *
- * Odoo mapping:
- *   Receipt (incoming)           → accept  / accept-batch
- *   Delivery (outgoing)          → dispatch / dispatch-batch
- *   Return picking               → return   / return-batch
- *   Internal transfer            → transfer / transfer-batch
- *   Vendor return (reverse recv) → dispatch-cancel / dispatch-cancel-batch
  */
 
 import { Router } from "express";
 import type { Request, Response, NextFunction } from "express";
-import { db, operationLogsTable, apiKeysTable } from "@workspace/db";
+import { db, operationLogsTable, apiKeysTable, usersTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import crypto from "node:crypto";
 import { callSoap, buildProductListXml, extractNotificationId } from "../../lib/soapProxy";
@@ -60,37 +53,61 @@ function buildBatchXml(products: Array<{ GTIN: string; BN?: string; XD?: string;
   ).join("")}</PRODUCTLIST>`;
 }
 
-// Validate X-API-Key and return the associated userId
-async function resolveApiKey(req: Request, res: Response): Promise<number | null> {
+interface KeyInfo {
+  userId: number;
+  role: string;
+  permissions: string[];
+}
+
+// Validate X-API-Key and return key owner info (userId, role, permissions)
+async function resolveApiKey(req: Request, res: Response): Promise<KeyInfo | null> {
   const apiKey = req.headers["x-api-key"];
   if (!apiKey || typeof apiKey !== "string") {
     res.status(401).json({ success: false, error: "Missing X-API-Key header. Include your API key in the request header: X-API-Key: rsd_..." });
     return null;
   }
-  const [row] = await db
+  const [keyRow] = await db
     .select()
     .from(apiKeysTable)
     .where(and(eq(apiKeysTable.keyValue, apiKey), eq(apiKeysTable.enabled, true)))
     .limit(1);
-  if (!row) {
+  if (!keyRow) {
     res.status(401).json({ success: false, error: "Invalid or disabled API key." });
     return null;
   }
   // Update last used timestamp (fire-and-forget)
-  db.update(apiKeysTable).set({ lastUsedAt: new Date() }).where(eq(apiKeysTable.id, row.id)).catch(() => {});
-  return row.userId;
+  db.update(apiKeysTable).set({ lastUsedAt: new Date() }).where(eq(apiKeysTable.id, keyRow.id)).catch(() => {});
+
+  // Fetch user to get current role + permissions
+  const [userRow] = await db.select().from(usersTable).where(eq(usersTable.id, keyRow.userId)).limit(1);
+  if (!userRow) {
+    res.status(401).json({ success: false, error: "API key owner no longer exists." });
+    return null;
+  }
+  return { userId: keyRow.userId, role: userRow.role, permissions: userRow.permissions ?? [] };
 }
 
-// Run a DTTS SOAP call on behalf of the API key owner
+// Run a DTTS SOAP call on behalf of the API key owner, enforcing op permissions
 async function proxyExternal(
+  opSlug: string,
   operation: string,
   svcName: string,
   soapBody: string,
   requestPayload: object,
-  userId: number,
+  keyInfo: KeyInfo,
   res: Response
 ): Promise<void> {
-  const creds = await getCredentialsForUser(userId);
+  // Operation permission check — admin bypasses all
+  if (keyInfo.role !== "admin" && !keyInfo.permissions.includes(opSlug)) {
+    res.status(403).json({
+      success: false,
+      error: `العملية '${operation}' غير مصرّح بها لصاحب مفتاح API هذا. يرجى التواصل مع المدير لتفعيلها.`,
+      rawXml: null,
+      notificationId: null,
+    });
+    return;
+  }
+  const creds = await getCredentialsForUser(keyInfo.userId);
   if (!creds) {
     res.status(400).json({
       success: false,
@@ -153,7 +170,6 @@ router.post("/external/keys", requireAuth, async (req, res): Promise<void> => {
     .insert(apiKeysTable)
     .values({ userId, name: name.trim(), keyValue, enabled: true })
     .returning();
-  // Return the full key only once — store only in DB
   res.json({ id: row.id, name: row.name, key: keyValue, createdAt: row.createdAt });
 });
 
@@ -168,100 +184,101 @@ router.delete("/external/keys/:id", requireAuth, async (req, res): Promise<void>
 
 // ── EXTERNAL OPERATION ENDPOINTS (API key auth) ───────────────────────────────
 
-// Middleware that resolves the API key for all /external/v1/* routes
+type ExtendedRequest = Request & { keyInfo?: KeyInfo };
+
 async function apiKeyMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const userId = await resolveApiKey(req, res);
-  if (userId === null) return;
-  (req as Request & { apiKeyUserId?: number }).apiKeyUserId = userId;
+  const keyInfo = await resolveApiKey(req, res);
+  if (keyInfo === null) return;
+  (req as ExtendedRequest).keyInfo = keyInfo;
   next();
 }
 
 router.use("/external/v1", apiKeyMiddleware as (req: Request, res: Response, next: NextFunction) => void);
 
-function getUserId(req: Request): number {
-  return (req as Request & { apiKeyUserId?: number }).apiKeyUserId!;
+function getKeyInfo(req: Request): KeyInfo {
+  return (req as ExtendedRequest).keyInfo!;
 }
 
 // DISPATCH
 router.post("/external/v1/dispatch", async (req, res): Promise<void> => {
   const { toGLN, products } = req.body;
   const body = `<dis:DispatchServiceRequest xmlns:dis="http://dtts.sfda.gov.sa/DispatchService"><TOGLN>${toGLN}</TOGLN>${buildProductListXml(products)}</dis:DispatchServiceRequest>`;
-  await proxyExternal("Dispatch", "DispatchService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:dispatch", "Dispatch", "DispatchService", body, req.body, getKeyInfo(req), res);
 });
 
 router.post("/external/v1/dispatch-cancel", async (req, res): Promise<void> => {
   const { toGLN, products } = req.body;
   const body = `<dis:DispatchCancelServiceRequest xmlns:dis="http://dtts.sfda.gov.sa/DispatchCancelService"><TOGLN>${toGLN}</TOGLN>${buildProductListXml(products)}</dis:DispatchCancelServiceRequest>`;
-  await proxyExternal("DispatchCancel", "DispatchCancelService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:dispatch-cancel", "DispatchCancel", "DispatchCancelService", body, req.body, getKeyInfo(req), res);
 });
 
 router.post("/external/v1/dispatch-batch", async (req, res): Promise<void> => {
   const { toGLN, products } = req.body;
   const body = `<dis:DispatchBatchServiceRequest xmlns:dis="http://dtts.sfda.gov.sa/DispatchBatchService"><TOGLN>${toGLN}</TOGLN>${buildBatchXml(products)}</dis:DispatchBatchServiceRequest>`;
-  await proxyExternal("DispatchBatch", "DispatchBatchService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:dispatch-batch", "DispatchBatch", "DispatchBatchService", body, req.body, getKeyInfo(req), res);
 });
 
 router.post("/external/v1/dispatch-cancel-batch", async (req, res): Promise<void> => {
   const { toGLN, products } = req.body;
   const body = `<dis:DispatchCancelBatchServiceRequest xmlns:dis="http://dtts.sfda.gov.sa/DispatchCancelBatchService"><TOGLN>${toGLN}</TOGLN>${buildBatchXml(products)}</dis:DispatchCancelBatchServiceRequest>`;
-  await proxyExternal("DispatchCancelBatch", "DispatchCancelBatchService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:dispatch-cancel-batch", "DispatchCancelBatch", "DispatchCancelBatchService", body, req.body, getKeyInfo(req), res);
 });
 
 // ACCEPT
 router.post("/external/v1/accept", async (req, res): Promise<void> => {
   const { fromGLN, products } = req.body;
   const body = `<acc:AcceptServiceRequest xmlns:acc="http://dtts.sfda.gov.sa/AcceptService"><FROMGLN>${fromGLN}</FROMGLN>${buildProductListXml(products)}</acc:AcceptServiceRequest>`;
-  await proxyExternal("Accept", "AcceptService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:accept", "Accept", "AcceptService", body, req.body, getKeyInfo(req), res);
 });
 
 router.post("/external/v1/accept-dispatch", async (req, res): Promise<void> => {
   const { dispatchNotificationId } = req.body;
   const body = `<acc:AcceptDispatchServiceRequest xmlns:acc="http://dtts.sfda.gov.sa/AcceptDispatchService"><DISPATCHNOTIFICATIONID>${dispatchNotificationId}</DISPATCHNOTIFICATIONID></acc:AcceptDispatchServiceRequest>`;
-  await proxyExternal("AcceptDispatch", "AcceptDispatchService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:accept-dispatch", "AcceptDispatch", "AcceptDispatchService", body, req.body, getKeyInfo(req), res);
 });
 
 router.post("/external/v1/accept-batch", async (req, res): Promise<void> => {
   const { fromGLN, products } = req.body;
   const body = `<acc:AcceptBatchServiceRequest xmlns:acc="http://dtts.sfda.gov.sa/AcceptBatchService"><FROMGLN>${fromGLN}</FROMGLN>${buildBatchXml(products)}</acc:AcceptBatchServiceRequest>`;
-  await proxyExternal("AcceptBatch", "AcceptBatchService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:accept-batch", "AcceptBatch", "AcceptBatchService", body, req.body, getKeyInfo(req), res);
 });
 
 // RETURN
 router.post("/external/v1/return", async (req, res): Promise<void> => {
   const { toGLN, products } = req.body;
   const body = `<ret:ReturnServiceRequest xmlns:ret="http://dtts.sfda.gov.sa/ReturnService"><TOGLN>${toGLN}</TOGLN>${buildProductListXml(products)}</ret:ReturnServiceRequest>`;
-  await proxyExternal("Return", "ReturnService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:return", "Return", "ReturnService", body, req.body, getKeyInfo(req), res);
 });
 
 router.post("/external/v1/return-batch", async (req, res): Promise<void> => {
   const { toGLN, products } = req.body;
   const body = `<ret:ReturnBatchServiceRequest xmlns:ret="http://dtts.sfda.gov.sa/ReturnBatchService"><TOGLN>${toGLN}</TOGLN>${buildBatchXml(products)}</ret:ReturnBatchServiceRequest>`;
-  await proxyExternal("ReturnBatch", "ReturnBatchService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:return-batch", "ReturnBatch", "ReturnBatchService", body, req.body, getKeyInfo(req), res);
 });
 
 // TRANSFER
 router.post("/external/v1/transfer", async (req, res): Promise<void> => {
   const { toGLN, products } = req.body;
   const body = `<tran:TransferServiceRequest xmlns:tran="http://dtts.sfda.gov.sa/TransferService"><TOGLN>${toGLN}</TOGLN>${buildProductListXml(products)}</tran:TransferServiceRequest>`;
-  await proxyExternal("Transfer", "TransferService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:transfer", "Transfer", "TransferService", body, req.body, getKeyInfo(req), res);
 });
 
 router.post("/external/v1/transfer-cancel", async (req, res): Promise<void> => {
   const { toGLN, products } = req.body;
   const body = `<tran:TransferCancelServiceRequest xmlns:tran="http://dtts.sfda.gov.sa/TransferCancelService"><TOGLN>${toGLN}</TOGLN>${buildProductListXml(products)}</tran:TransferCancelServiceRequest>`;
-  await proxyExternal("TransferCancel", "TransferCancelService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:transfer-cancel", "TransferCancel", "TransferCancelService", body, req.body, getKeyInfo(req), res);
 });
 
 router.post("/external/v1/transfer-batch", async (req, res): Promise<void> => {
   const { toGLN, products } = req.body;
   const body = `<tran:TransferBatchServiceRequest xmlns:tran="http://dtts.sfda.gov.sa/TransferBatchService"><TOGLN>${toGLN}</TOGLN>${buildBatchXml(products)}</tran:TransferBatchServiceRequest>`;
-  await proxyExternal("TransferBatch", "TransferBatchService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:transfer-batch", "TransferBatch", "TransferBatchService", body, req.body, getKeyInfo(req), res);
 });
 
 router.post("/external/v1/transfer-cancel-batch", async (req, res): Promise<void> => {
   const { toGLN, products } = req.body;
   const body = `<tran:TransferCancelBatchServiceRequest xmlns:tran="http://dtts.sfda.gov.sa/TransferCancelBatchService"><TOGLN>${toGLN}</TOGLN>${buildBatchXml(products)}</tran:TransferCancelBatchServiceRequest>`;
-  await proxyExternal("TransferCancelBatch", "TransferCancelBatchService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:transfer-cancel-batch", "TransferCancelBatch", "TransferCancelBatchService", body, req.body, getKeyInfo(req), res);
 });
 
 // IMPORT
@@ -269,14 +286,14 @@ router.post("/external/v1/import", async (req, res): Promise<void> => {
   const { GTIN, MD, XD, BN, serialNumbers } = req.body;
   const sns = (serialNumbers as string[] ?? []).map((sn: string) => `<SN>${sn}</SN>`).join("");
   const body = `<imp:ImportServiceRequest xmlns:imp="http://dtts.sfda.gov.sa/ImportService"><GTIN>${GTIN}</GTIN><MD>${MD}</MD><XD>${XD}</XD><BN>${BN}</BN><SERIALNUMBERS>${sns}</SERIALNUMBERS></imp:ImportServiceRequest>`;
-  await proxyExternal("Import", "ImportService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:import", "Import", "ImportService", body, req.body, getKeyInfo(req), res);
 });
 
 // SUPPLY
 router.post("/external/v1/supply", async (req, res): Promise<void> => {
   const { toGLN, products } = req.body;
   const body = `<sup:SupplyServiceRequest xmlns:sup="http://dtts.sfda.gov.sa/SupplyService"><TOGLN>${toGLN}</TOGLN>${buildProductListXml(products)}</sup:SupplyServiceRequest>`;
-  await proxyExternal("Supply", "SupplyService", body, req.body, getUserId(req), res);
+  await proxyExternal("op:supply", "Supply", "SupplyService", body, req.body, getKeyInfo(req), res);
 });
 
 export default router;

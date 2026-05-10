@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, UserPlus, Trash2, Save, Users as UsersIcon } from "lucide-react";
+import { Loader2, UserPlus, Trash2, Save, Users as UsersIcon, LayoutDashboard, Cog } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -26,8 +26,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { OP_PERMISSION_GROUPS, ALL_OP_SLUGS } from "@/lib/op-permissions";
 
-const PERMISSION_OPTIONS: { slug: string; label: string }[] = [
+const NAV_PERMISSION_OPTIONS: { slug: string; label: string }[] = [
   { slug: "dashboard", label: "لوحة القيادة" },
   { slug: "import", label: "الاستيراد والتصنيع" },
   { slug: "dispatch", label: "الإرسال والاستلام" },
@@ -39,6 +40,9 @@ const PERMISSION_OPTIONS: { slug: string; label: string }[] = [
   { slug: "history", label: "سجل العمليات" },
 ];
 
+const ALL_NAV_SLUGS = NAV_PERMISSION_OPTIONS.map((p) => p.slug);
+const ALL_DEFAULT_PERMS = [...ALL_NAV_SLUGS, ...ALL_OP_SLUGS];
+
 export default function UsersPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -49,16 +53,20 @@ export default function UsersPage() {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: getListUsersQueryKey() });
 
-  // ── new user form state ──────────────────────────────────────────────────
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [newPermissions, setNewPermissions] = useState<string[]>(
-    PERMISSION_OPTIONS.map((p) => p.slug),
-  );
+  const [newPermissions, setNewPermissions] = useState<string[]>(ALL_DEFAULT_PERMS);
 
   const toggleNewPerm = (slug: string) => {
     setNewPermissions((prev) =>
       prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
+    );
+  };
+
+  // Toggle all ops in a group
+  const toggleGroupOps = (slugs: string[], checked: boolean, setter: (fn: (p: string[]) => string[]) => void) => {
+    setter((prev) =>
+      checked ? [...new Set([...prev, ...slugs])] : prev.filter((s) => !slugs.includes(s))
     );
   };
 
@@ -72,7 +80,7 @@ export default function UsersPage() {
           toast({ title: "تم إنشاء الحساب", description: `تم إنشاء حساب العميل ${newUsername}` });
           setNewUsername("");
           setNewPassword("");
-          setNewPermissions(PERMISSION_OPTIONS.map((p) => p.slug));
+          setNewPermissions(ALL_DEFAULT_PERMS);
           invalidate();
         },
         onError: (err: unknown) => {
@@ -88,7 +96,7 @@ export default function UsersPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-primary">إدارة المستخدمين</h1>
         <p className="text-muted-foreground mt-1">
-          إنشاء حسابات العملاء وتحديد الصلاحيات الجانبية لكل حساب
+          إنشاء حسابات العملاء وتحديد الصلاحيات الجانبية والعمليات المسموح بها لكل حساب
         </p>
       </div>
 
@@ -100,7 +108,7 @@ export default function UsersPage() {
             <CardTitle>إنشاء حساب عميل جديد</CardTitle>
           </div>
           <CardDescription>
-            حدّد العناصر الجانبية التي يستطيع هذا العميل رؤيتها بعد تسجيل الدخول
+            حدّد العناصر الجانبية والعمليات التي يستطيع هذا العميل استخدامها
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -127,14 +135,15 @@ export default function UsersPage() {
               </div>
             </div>
 
+            {/* Nav permissions */}
             <div className="space-y-2">
-              <Label>العناصر الجانبية المسموح بها</Label>
+              <Label className="flex items-center gap-2">
+                <LayoutDashboard className="h-4 w-4 text-primary" />
+                العناصر الجانبية المسموح بها
+              </Label>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3 rounded-md border p-4">
-                {PERMISSION_OPTIONS.map((opt) => (
-                  <label
-                    key={opt.slug}
-                    className="flex items-center gap-2 text-sm cursor-pointer"
-                  >
+                {NAV_PERMISSION_OPTIONS.map((opt) => (
+                  <label key={opt.slug} className="flex items-center gap-2 text-sm cursor-pointer">
                     <Checkbox
                       checked={newPermissions.includes(opt.slug)}
                       onCheckedChange={() => toggleNewPerm(opt.slug)}
@@ -142,6 +151,44 @@ export default function UsersPage() {
                     <span>{opt.label}</span>
                   </label>
                 ))}
+              </div>
+            </div>
+
+            {/* Op permissions */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Cog className="h-4 w-4 text-primary" />
+                العمليات المسموح بها
+              </Label>
+              <div className="space-y-3 rounded-md border p-4">
+                {OP_PERMISSION_GROUPS.map((group) => {
+                  const groupSlugs = group.ops.map((o) => o.slug);
+                  const allChecked = groupSlugs.every((s) => newPermissions.includes(s));
+                  const someChecked = groupSlugs.some((s) => newPermissions.includes(s));
+                  return (
+                    <div key={group.group}>
+                      <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer mb-2">
+                        <Checkbox
+                          checked={allChecked}
+                          data-state={someChecked && !allChecked ? "indeterminate" : undefined}
+                          onCheckedChange={(c) => toggleGroupOps(groupSlugs, !!c, setNewPermissions)}
+                        />
+                        <span className="text-primary">{group.group}</span>
+                      </label>
+                      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 pr-6">
+                        {group.ops.map((op) => (
+                          <label key={op.slug} className="flex items-center gap-2 text-xs cursor-pointer">
+                            <Checkbox
+                              checked={newPermissions.includes(op.slug)}
+                              onCheckedChange={() => toggleNewPerm(op.slug)}
+                            />
+                            <span>{op.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -252,8 +299,14 @@ function UserRow({
     setPerms((prev) => (prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]));
   };
 
+  const toggleGroup = (slugs: string[], checked: boolean) => {
+    setPerms((prev) =>
+      checked ? [...new Set([...prev, ...slugs])] : prev.filter((s) => !slugs.includes(s))
+    );
+  };
+
   return (
-    <div className="rounded-md border p-4 space-y-3">
+    <div className="rounded-md border p-4 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="font-semibold">{user.username}</span>
@@ -289,16 +342,61 @@ function UserRow({
 
       {!isAdmin && (
         <>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 rounded-md bg-muted/40 p-3">
-            {PERMISSION_OPTIONS.map((opt) => (
-              <label key={opt.slug} className="flex items-center gap-2 text-sm cursor-pointer">
-                <Checkbox
-                  checked={perms.includes(opt.slug)}
-                  onCheckedChange={() => toggle(opt.slug)}
-                />
-                <span>{opt.label}</span>
-              </label>
-            ))}
+          {/* Nav permissions */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              العناصر الجانبية
+            </p>
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 rounded-md bg-muted/30 border p-3">
+              {NAV_PERMISSION_OPTIONS.map((opt) => (
+                <label key={opt.slug} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox
+                    checked={perms.includes(opt.slug)}
+                    onCheckedChange={() => toggle(opt.slug)}
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Op permissions */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+              <Cog className="h-3.5 w-3.5" />
+              العمليات المسموح بها
+            </p>
+            <div className="space-y-3 rounded-md bg-muted/30 border p-3">
+              {OP_PERMISSION_GROUPS.map((group) => {
+                const groupSlugs = group.ops.map((o) => o.slug);
+                const allChecked = groupSlugs.every((s) => perms.includes(s));
+                const someChecked = groupSlugs.some((s) => perms.includes(s));
+                return (
+                  <div key={group.group}>
+                    <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer mb-1.5">
+                      <Checkbox
+                        checked={allChecked}
+                        data-state={someChecked && !allChecked ? "indeterminate" : undefined}
+                        onCheckedChange={(c) => toggleGroup(groupSlugs, !!c)}
+                      />
+                      <span className="text-primary">{group.group}</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3 pr-6">
+                      {group.ops.map((op) => (
+                        <label key={op.slug} className="flex items-center gap-2 text-xs cursor-pointer">
+                          <Checkbox
+                            checked={perms.includes(op.slug)}
+                            onCheckedChange={() => toggle(op.slug)}
+                          />
+                          <span>{op.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-end gap-3">

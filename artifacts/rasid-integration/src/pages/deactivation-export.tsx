@@ -15,8 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Ban, PlaneTakeoff, ShieldAlert } from "lucide-react";
+import { Loader2, Ban, PlaneTakeoff, ShieldAlert, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -56,6 +57,8 @@ const exportSchema = z.object({
 
 export default function DeactivationExportPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
 
   const deactivationMutation = useDeactivateProducts();
@@ -181,8 +184,8 @@ export default function DeactivationExportPage() {
                     </FormItem>
                   )} />
                   <ProductListInput />
-                  <Button type="submit" disabled={deactivationMutation.isPending}>
-                    {deactivationMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={deactivationMutation.isPending || !canDo("op:deactivation")} title={!canDo("op:deactivation") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {deactivationMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:deactivation") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     تنفيذ عملية التعطيل
                   </Button>
                 </form>
@@ -204,8 +207,8 @@ export default function DeactivationExportPage() {
               <Form {...deactivationCancelForm}>
                 <form onSubmit={deactivationCancelForm.handleSubmit(handleDeactivationCancel)} className="space-y-6">
                   <ProductListInput />
-                  <Button type="submit" variant="destructive" disabled={deactivationCancelMutation.isPending}>
-                    {deactivationCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" variant="destructive" disabled={deactivationCancelMutation.isPending || !canDo("op:deactivation-cancel")} title={!canDo("op:deactivation-cancel") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {deactivationCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:deactivation-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     إلغاء عملية التعطيل
                   </Button>
                 </form>
@@ -234,8 +237,8 @@ export default function DeactivationExportPage() {
                     </FormItem>
                   )} />
                   <ProductListInput />
-                  <Button type="submit" disabled={exportMutation.isPending}>
-                    {exportMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={exportMutation.isPending || !canDo("op:export")} title={!canDo("op:export") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {exportMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:export") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     تنفيذ عملية التصدير
                   </Button>
                 </form>
@@ -257,8 +260,8 @@ export default function DeactivationExportPage() {
               <Form {...exportCancelForm}>
                 <form onSubmit={exportCancelForm.handleSubmit(handleExportCancel)} className="space-y-6">
                   <ProductListInput />
-                  <Button type="submit" variant="destructive" disabled={exportCancelMutation.isPending}>
-                    {exportCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" variant="destructive" disabled={exportCancelMutation.isPending || !canDo("op:export-cancel")} title={!canDo("op:export-cancel") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {exportCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:export-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     إلغاء عملية التصدير
                   </Button>
                 </form>

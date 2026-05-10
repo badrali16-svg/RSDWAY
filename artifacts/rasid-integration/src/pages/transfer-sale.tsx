@@ -16,8 +16,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Repeat, ShoppingCart, Ban, Layers } from "lucide-react";
+import { Loader2, Repeat, ShoppingCart, Ban, Layers, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 
@@ -71,6 +72,8 @@ const pharmacySaleCancelSchema = z.object({
 
 export default function TransferSalePage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
 
   const transferMutation = useTransferProducts();
@@ -144,8 +147,8 @@ export default function TransferSalePage() {
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={transferMutation.isPending}>
-                    {transferMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={transferMutation.isPending || !canDo("op:transfer")} title={!canDo("op:transfer") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {transferMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     تنفيذ النقل (SN)
                   </Button>
                 </form>
@@ -175,8 +178,8 @@ export default function TransferSalePage() {
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" disabled={transferBatchMutation.isPending}>
-                    {transferBatchMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={transferBatchMutation.isPending || !canDo("op:transfer-batch")} title={!canDo("op:transfer-batch") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {transferBatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-batch") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     تنفيذ النقل بالتشغيلة
                   </Button>
                 </form>
@@ -206,8 +209,8 @@ export default function TransferSalePage() {
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" variant="destructive" disabled={transferCancelMutation.isPending}>
-                    {transferCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" variant="destructive" disabled={transferCancelMutation.isPending || !canDo("op:transfer-cancel")} title={!canDo("op:transfer-cancel") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {transferCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     إلغاء النقل (SN)
                   </Button>
                 </form>
@@ -237,8 +240,8 @@ export default function TransferSalePage() {
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" variant="destructive" disabled={transferCancelBatchMutation.isPending}>
-                    {transferCancelBatchMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" variant="destructive" disabled={transferCancelBatchMutation.isPending || !canDo("op:transfer-cancel-batch")} title={!canDo("op:transfer-cancel-batch") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {transferCancelBatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-cancel-batch") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     إلغاء النقل بالتشغيلة
                   </Button>
                 </form>
@@ -298,8 +301,8 @@ export default function TransferSalePage() {
                     )} />
                   </div>
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={pharmacySaleMutation.isPending}>
-                    {pharmacySaleMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={pharmacySaleMutation.isPending || !canDo("op:pharmacy-sale")} title={!canDo("op:pharmacy-sale") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {pharmacySaleMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:pharmacy-sale") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     تنفيذ عملية الصرف
                   </Button>
                 </form>
@@ -338,8 +341,8 @@ export default function TransferSalePage() {
                     )} />
                   </div>
                   <ProductListInput mode="sn" />
-                  <Button type="submit" variant="destructive" disabled={pharmacySaleCancelMutation.isPending}>
-                    {pharmacySaleCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" variant="destructive" disabled={pharmacySaleCancelMutation.isPending || !canDo("op:pharmacy-sale-cancel")} title={!canDo("op:pharmacy-sale-cancel") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {pharmacySaleCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:pharmacy-sale-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     إلغاء عملية الصرف
                   </Button>
                 </form>

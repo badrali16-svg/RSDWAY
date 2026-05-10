@@ -17,8 +17,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Truck, Check, Ban, Layers } from "lucide-react";
+import { Loader2, Truck, Check, Ban, Layers, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 
@@ -70,6 +71,8 @@ const acceptDispatchSchema = z.object({
 
 export default function DispatchAcceptPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
 
   const dispatchMutation = useDispatchProducts();
@@ -150,8 +153,8 @@ export default function DispatchAcceptPage() {
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={dispatchMutation.isPending}>
-                    {dispatchMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={dispatchMutation.isPending || !canDo("op:dispatch")} title={!canDo("op:dispatch") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {dispatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     تنفيذ عملية الإرسال (SN)
                   </Button>
                 </form>
@@ -181,8 +184,8 @@ export default function DispatchAcceptPage() {
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" disabled={dispatchBatchMutation.isPending}>
-                    {dispatchBatchMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={dispatchBatchMutation.isPending || !canDo("op:dispatch-batch")} title={!canDo("op:dispatch-batch") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {dispatchBatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-batch") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     تنفيذ الإرسال بالتشغيلة
                   </Button>
                 </form>
@@ -212,8 +215,8 @@ export default function DispatchAcceptPage() {
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" variant="destructive" disabled={dispatchCancelMutation.isPending}>
-                    {dispatchCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" variant="destructive" disabled={dispatchCancelMutation.isPending || !canDo("op:dispatch-cancel")} title={!canDo("op:dispatch-cancel") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {dispatchCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     إلغاء الإرسال (SN)
                   </Button>
                 </form>
@@ -243,8 +246,8 @@ export default function DispatchAcceptPage() {
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" variant="destructive" disabled={dispatchCancelBatchMutation.isPending}>
-                    {dispatchCancelBatchMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" variant="destructive" disabled={dispatchCancelBatchMutation.isPending || !canDo("op:dispatch-cancel-batch")} title={!canDo("op:dispatch-cancel-batch") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {dispatchCancelBatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-cancel-batch") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     إلغاء الإرسال بالتشغيلة
                   </Button>
                 </form>
@@ -274,8 +277,8 @@ export default function DispatchAcceptPage() {
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={acceptMutation.isPending}>
-                    {acceptMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={acceptMutation.isPending || !canDo("op:accept")} title={!canDo("op:accept") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {acceptMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:accept") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     تنفيذ الاستلام (SN)
                   </Button>
                 </form>
@@ -305,8 +308,8 @@ export default function DispatchAcceptPage() {
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" disabled={acceptBatchMutation.isPending}>
-                    {acceptBatchMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={acceptBatchMutation.isPending || !canDo("op:accept-batch")} title={!canDo("op:accept-batch") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {acceptBatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:accept-batch") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     تنفيذ الاستلام بالتشغيلة
                   </Button>
                 </form>
@@ -335,8 +338,8 @@ export default function DispatchAcceptPage() {
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <Button type="submit" disabled={acceptDispatchMutation.isPending}>
-                    {acceptDispatchMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={acceptDispatchMutation.isPending || !canDo("op:accept-dispatch")} title={!canDo("op:accept-dispatch") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {acceptDispatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:accept-dispatch") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     استلام الإشعار
                   </Button>
                 </form>

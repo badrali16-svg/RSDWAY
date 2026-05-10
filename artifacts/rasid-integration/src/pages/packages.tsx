@@ -13,8 +13,9 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Upload, Download, Search, Box } from "lucide-react";
+import { Loader2, Upload, Download, Search, Box, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -37,6 +38,8 @@ const querySchema = z.object({
 
 export default function PackagesPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
 
   const uploadMutation = usePackageUpload();
@@ -128,8 +131,8 @@ export default function PackagesPage() {
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <Button type="submit" disabled={uploadMutation.isPending}>
-                    {uploadMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={uploadMutation.isPending || !canDo("op:package-upload")} title={!canDo("op:package-upload") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {uploadMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:package-upload") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     رفع الحزمة
                   </Button>
                 </form>
@@ -157,8 +160,8 @@ export default function PackagesPage() {
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <Button type="submit" disabled={downloadMutation.isPending}>
-                    {downloadMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={downloadMutation.isPending || !canDo("op:package-download")} title={!canDo("op:package-download") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {downloadMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:package-download") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     تنزيل الحزمة
                   </Button>
                 </form>
@@ -220,8 +223,8 @@ export default function PackagesPage() {
                       </div>
                     </FormItem>
                   )} />
-                  <Button type="submit" disabled={queryMutation.isPending}>
-                    {queryMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Button type="submit" disabled={queryMutation.isPending || !canDo("op:package-query")} title={!canDo("op:package-query") ? "غير مصرّح بهذه العملية" : undefined}>
+                    {queryMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:package-query") ? <Lock className="mr-2 h-4 w-4" /> : null}
                     استعلام
                   </Button>
                 </form>
