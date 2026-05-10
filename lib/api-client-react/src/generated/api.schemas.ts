@@ -185,6 +185,14 @@ export interface StakeholderListRequest {
   cityId?: number | null;
 }
 
+export interface ConnectionTestResult {
+  success: boolean;
+  message: string;
+  environment?: string;
+  baseUrl?: string;
+  testedAt: string;
+}
+
 export interface SoapResponse {
   success: boolean;
   /** @nullable */

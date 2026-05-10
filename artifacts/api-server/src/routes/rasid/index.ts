@@ -61,6 +61,34 @@ async function proxy(
 }
 
 // ── AUTH CONFIG (per logged-in user) ─────────────────────────────────────────
+router.post("/auth/test-connection", async (req, res): Promise<void> => {
+  const userId = req.session?.user?.id;
+  if (!userId) {
+    res.status(401).json({ success: false, message: "غير مسجّل الدخول", testedAt: new Date().toISOString() });
+    return;
+  }
+  const creds = await getCredentialsForUser(userId);
+  if (!creds) {
+    res.status(400).json({ success: false, message: "لم يتم ضبط بيانات اعتماد رصد. يرجى حفظ اسم المستخدم وكلمة المرور أولاً.", testedAt: new Date().toISOString() });
+    return;
+  }
+
+  const baseUrl = creds.baseUrl ?? "https://tandttest.sfda.gov.sa/ws";
+  const isTest = baseUrl.includes("tandttest") || baseUrl.includes("test");
+  const environment = isTest ? "بيئة الاختبار (Test)" : "بيئة الإنتاج (Production)";
+
+  const testEndpoint = `${baseUrl.replace(/\/$/, "")}/ErrorCodeListService/ErrorCodeListService`;
+  const soapBody = `<err:ErrorCodeListServiceRequest xmlns:err="http://dtts.sfda.gov.sa/ErrorCodeListService"/>`;
+
+  const result = await callSoap({ endpoint: testEndpoint, action: "", body: soapBody, username: creds.username, password: creds.password });
+
+  if (result.success) {
+    res.json({ success: true, message: "تم الاتصال بنجاح بنظام رصد", environment, baseUrl, testedAt: new Date().toISOString() });
+  } else {
+    res.json({ success: false, message: result.error ?? "فشل الاتصال بنظام رصد", environment, baseUrl, testedAt: new Date().toISOString() });
+  }
+});
+
 router.get("/auth/config", async (req, res): Promise<void> => {
   const userId = req.session?.user?.id;
   if (!userId) {

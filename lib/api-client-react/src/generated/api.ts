@@ -20,6 +20,7 @@ import type {
   AcceptDispatchRequest,
   AuthConfig,
   AuthConfigInput,
+  ConnectionTestResult,
   CreateUserRequest,
   DeactivationRequest,
   DispatchDetailRequest,
@@ -940,6 +941,87 @@ export const useSaveAuthConfig = <
   TContext
 > => {
   return useMutation(getSaveAuthConfigMutationOptions(options));
+};
+
+/**
+ * @summary Test the current DTTS connection using stored credentials
+ */
+export const getTestConnectionUrl = () => {
+  return `/api/auth/test-connection`;
+};
+
+export const testConnection = async (
+  options?: RequestInit,
+): Promise<ConnectionTestResult> => {
+  return customFetch<ConnectionTestResult>(getTestConnectionUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getTestConnectionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof testConnection>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof testConnection>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["testConnection"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof testConnection>>,
+    void
+  > = () => {
+    return testConnection(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TestConnectionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof testConnection>>
+>;
+
+export type TestConnectionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Test the current DTTS connection using stored credentials
+ */
+export const useTestConnection = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof testConnection>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof testConnection>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getTestConnectionMutationOptions(options));
 };
 
 /**

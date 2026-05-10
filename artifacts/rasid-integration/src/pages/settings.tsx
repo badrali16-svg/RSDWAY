@@ -6,6 +6,7 @@ import {
   useGetAuthConfig,
   useSaveAuthConfig,
   useUnlockSettings,
+  useTestConnection,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -20,15 +21,41 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Save, Loader2, ShieldCheck, Lock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Save,
+  Loader2,
+  ShieldCheck,
+  Lock,
+  Wifi,
+  WifiOff,
+  FlaskConical,
+  Globe,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  RefreshCw,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+
+const PROD_URL = "https://rsd.sfda.gov.sa/ws/dtws";
+const TEST_URL = "https://tandttest.sfda.gov.sa/ws";
 
 const formSchema = z.object({
   username: z.string().min(1, "اسم المستخدم مطلوب"),
   password: z.string().min(1, "كلمة المرور مطلوبة"),
   baseUrl: z.string().url("يجب أن يكون رابطاً صحيحاً").min(1, "رابط النظام مطلوب"),
 });
+
+type ConnectionStatus = {
+  success: boolean;
+  message: string;
+  environment?: string;
+  baseUrl?: string;
+  testedAt: string;
+} | null;
 
 export default function Settings() {
   const [unlocked, setUnlocked] = useState(false);
@@ -102,13 +129,15 @@ export default function Settings() {
 function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"] }) {
   const { data: authConfig, isLoading: authLoading } = useGetAuthConfig();
   const saveAuth = useSaveAuthConfig();
+  const testConn = useTestConnection();
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       username: "",
       password: "",
-      baseUrl: "https://rsd.sfda.gov.sa/ws/dtws",
+      baseUrl: TEST_URL,
     },
   });
 
@@ -117,12 +146,26 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
       form.reset({
         username: authConfig.username || "",
         password: authConfig.hasPassword ? "********" : "",
-        baseUrl: authConfig.baseUrl || "https://rsd.sfda.gov.sa/ws/dtws",
+        baseUrl: authConfig.baseUrl || TEST_URL,
       });
     }
   }, [authConfig, form]);
 
+  const currentBaseUrl = form.watch("baseUrl");
+  const isTestEnv =
+    !currentBaseUrl ||
+    currentBaseUrl.includes("tandttest") ||
+    currentBaseUrl.includes("test");
+
+  const handleEnvSelect = (env: "prod" | "test") => {
+    form.setValue("baseUrl", env === "prod" ? PROD_URL : TEST_URL, {
+      shouldValidate: true,
+    });
+    setConnectionStatus(null);
+  };
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
+    setConnectionStatus(null);
     saveAuth.mutate(
       { data: values },
       {
@@ -143,13 +186,165 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
     );
   };
 
+  const handleTestConnection = () => {
+    setConnectionStatus(null);
+    testConn.mutate(undefined, {
+      onSuccess: (data) => {
+        setConnectionStatus({
+          success: data.success,
+          message: data.message,
+          environment: data.environment,
+          baseUrl: data.baseUrl,
+          testedAt: data.testedAt,
+        });
+      },
+      onError: () => {
+        setConnectionStatus({
+          success: false,
+          message: "حدث خطأ أثناء اختبار الاتصال",
+          testedAt: new Date().toISOString(),
+        });
+      },
+    });
+  };
+
+  const formatDate = (iso: string) => {
+    try {
+      return new Date(iso).toLocaleString("ar-SA", {
+        dateStyle: "short",
+        timeStyle: "medium",
+      });
+    } catch {
+      return iso;
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-primary">الإعدادات</h1>
-        <p className="text-muted-foreground mt-1">إعدادات الربط مع نظام رصد والتفويض</p>
+        <p className="text-muted-foreground mt-1">إعدادات الربط مع نظام رصد (DTTS) والتفويض</p>
       </div>
 
+      {/* ── Connection Status Banner ─────────────────────────────────────── */}
+      {connectionStatus && (
+        <Card
+          className={`border-2 ${connectionStatus.success ? "border-green-500 bg-green-50" : "border-destructive bg-red-50"}`}
+        >
+          <CardContent className="pt-4">
+            <div className="flex items-start gap-3">
+              {connectionStatus.success ? (
+                <CheckCircle2 className="h-6 w-6 text-green-600 mt-0.5 shrink-0" />
+              ) : (
+                <XCircle className="h-6 w-6 text-destructive mt-0.5 shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p
+                  className={`font-semibold ${connectionStatus.success ? "text-green-800" : "text-destructive"}`}
+                >
+                  {connectionStatus.success ? "الاتصال ناجح ✓" : "فشل الاتصال ✗"}
+                </p>
+                <p className="text-sm text-muted-foreground mt-0.5">{connectionStatus.message}</p>
+                {connectionStatus.environment && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    <span className="font-medium">البيئة:</span> {connectionStatus.environment}
+                  </p>
+                )}
+                {connectionStatus.baseUrl && (
+                  <p className="text-xs text-muted-foreground font-mono mt-0.5 break-all">
+                    {connectionStatus.baseUrl}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {formatDate(connectionStatus.testedAt)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Environment Selector ──────────────────────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">اختيار البيئة</CardTitle>
+          <CardDescription>
+            حدد البيئة التي تريد الاتصال بها — الاختبار للتجربة والإنتاج للعمل الفعلي
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {/* Test Environment */}
+            <button
+              type="button"
+              onClick={() => handleEnvSelect("test")}
+              className={`relative flex items-start gap-3 rounded-lg border-2 p-4 text-right transition-all hover:bg-muted/50 ${
+                isTestEnv
+                  ? "border-primary bg-primary/5"
+                  : "border-border"
+              }`}
+            >
+              <FlaskConical
+                className={`h-6 w-6 shrink-0 mt-0.5 ${isTestEnv ? "text-primary" : "text-muted-foreground"}`}
+              />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className={`font-semibold ${isTestEnv ? "text-primary" : ""}`}>
+                    البيئة الافتراضية (Test)
+                  </p>
+                  {isTestEnv && (
+                    <Badge variant="default" className="text-xs">
+                      محدد
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5 break-all font-mono">
+                  {TEST_URL}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  للاختبار والتطوير بدون التأثير على البيانات الحقيقية
+                </p>
+              </div>
+            </button>
+
+            {/* Production Environment */}
+            <button
+              type="button"
+              onClick={() => handleEnvSelect("prod")}
+              className={`relative flex items-start gap-3 rounded-lg border-2 p-4 text-right transition-all hover:bg-muted/50 ${
+                !isTestEnv
+                  ? "border-primary bg-primary/5"
+                  : "border-border"
+              }`}
+            >
+              <Globe
+                className={`h-6 w-6 shrink-0 mt-0.5 ${!isTestEnv ? "text-primary" : "text-muted-foreground"}`}
+              />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className={`font-semibold ${!isTestEnv ? "text-primary" : ""}`}>
+                    بيئة الإنتاج (Production)
+                  </p>
+                  {!isTestEnv && (
+                    <Badge variant="default" className="text-xs">
+                      محدد
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5 break-all font-mono">
+                  {PROD_URL}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  للعمل الفعلي مع الهيئة العامة للغذاء والدواء (SFDA)
+                </p>
+              </div>
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Credentials Form ─────────────────────────────────────────────── */}
       <Card className="max-w-2xl">
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -178,7 +373,9 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
                       <FormControl>
                         <Input dir="ltr" className="text-left" placeholder="https://..." {...field} />
                       </FormControl>
-                      <FormDescription>الرابط الافتراضي: https://rsd.sfda.gov.sa/ws/dtws</FormDescription>
+                      <FormDescription>
+                        يمكنك اختيار البيئة من الأزرار أعلاه أو كتابة رابط مخصص
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -206,7 +403,13 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
                       <FormItem>
                         <FormLabel>كلمة المرور (Password)</FormLabel>
                         <FormControl>
-                          <Input dir="ltr" className="text-left" type="password" placeholder="********" {...field} />
+                          <Input
+                            dir="ltr"
+                            className="text-left"
+                            type="password"
+                            placeholder="********"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -214,14 +417,42 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
                   />
                 </div>
 
-                <Button type="submit" disabled={saveAuth.isPending} className="w-full sm:w-auto">
-                  {saveAuth.isPending ? (
-                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="ml-2 h-4 w-4" />
-                  )}
-                  حفظ الإعدادات
-                </Button>
+                <Separator />
+
+                <div className="flex flex-wrap gap-3">
+                  <Button type="submit" disabled={saveAuth.isPending}>
+                    {saveAuth.isPending ? (
+                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="ml-2 h-4 w-4" />
+                    )}
+                    حفظ الإعدادات
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleTestConnection}
+                    disabled={testConn.isPending || !authConfig?.hasPassword}
+                  >
+                    {testConn.isPending ? (
+                      <RefreshCw className="ml-2 h-4 w-4 animate-spin" />
+                    ) : connectionStatus?.success ? (
+                      <Wifi className="ml-2 h-4 w-4 text-green-600" />
+                    ) : connectionStatus && !connectionStatus.success ? (
+                      <WifiOff className="ml-2 h-4 w-4 text-destructive" />
+                    ) : (
+                      <Wifi className="ml-2 h-4 w-4" />
+                    )}
+                    اختبار الاتصال
+                  </Button>
+                </div>
+
+                {!authConfig?.hasPassword && (
+                  <p className="text-xs text-muted-foreground">
+                    يرجى حفظ البيانات أولاً قبل اختبار الاتصال
+                  </p>
+                )}
               </form>
             </Form>
           )}

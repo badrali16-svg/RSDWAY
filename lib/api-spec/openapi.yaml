@@ -224,6 +224,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthConfig"
 
+  /auth/test-connection:
+    post:
+      operationId: testConnection
+      tags: [auth]
+      summary: Test the current DTTS connection using stored credentials
+      responses:
+        "200":
+          description: Connection test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionTestResult"
+
   # ── IMPORT ─────────────────────────────────────────────────────────────────
   /rasid/import:
     post:
@@ -1121,6 +1134,24 @@ components:
           type: boolean
         cityId:
           type: ["integer", "null"]
+
+    ConnectionTestResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        environment:
+          type: string
+        baseUrl:
+          type: string
+        testedAt:
+          type: string
+      required:
+        - success
+        - message
+        - testedAt
 
     SoapResponse:
       type: object

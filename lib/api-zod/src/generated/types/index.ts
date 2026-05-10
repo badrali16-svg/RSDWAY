@@ -9,6 +9,7 @@
 export * from "./acceptDispatchRequest";
 export * from "./authConfig";
 export * from "./authConfigInput";
+export * from "./connectionTestResult";
 export * from "./createUserRequest";
 export * from "./deactivationRequest";
 export * from "./dispatchDetailRequest";

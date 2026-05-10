@@ -147,6 +147,17 @@ export const SaveAuthConfigResponse = zod.object({
 });
 
 /**
+ * @summary Test the current DTTS connection using stored credentials
+ */
+export const TestConnectionResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string(),
+  environment: zod.string().optional(),
+  baseUrl: zod.string().optional(),
+  testedAt: zod.string(),
+});
+
+/**
  * @summary Import products into DTTS
  */
 export const ImportProductsBody = zod.object({
