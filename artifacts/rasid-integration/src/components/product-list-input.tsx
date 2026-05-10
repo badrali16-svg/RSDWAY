@@ -74,13 +74,14 @@ function parseProductsFromSheet(data: ArrayBuffer): ProductRow[] {
   return rows;
 }
 
-export function ProductListInput({ name = "products" }: { name?: string }) {
+export function ProductListInput({ name = "products", mode = "sn" }: { name?: string; mode?: "sn" | "batch" }) {
   const { control, setValue, getValues } = useFormContext();
   const { fields, append, remove } = useFieldArray({ control, name });
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<{ name: string; count: number } | null>(null);
+  const isBatch = mode === "batch";
 
   const processFile = useCallback((file: File) => {
     const reader = new FileReader();
@@ -169,7 +170,9 @@ export function ProductListInput({ name = "products" }: { name?: string }) {
           {/* Manual add button */}
           <Button
             type="button" variant="outline" size="sm"
-            onClick={() => append({ GTIN: "", SN: undefined, BN: undefined, XD: undefined, QUANTITY: undefined })}
+            onClick={() => isBatch
+              ? append({ GTIN: "", BN: undefined, XD: undefined, QUANTITY: 1 })
+              : append({ GTIN: "", SN: undefined, BN: undefined, XD: undefined, QUANTITY: undefined })}
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
@@ -183,8 +186,14 @@ export function ProductListInput({ name = "products" }: { name?: string }) {
         <div className="rounded-md border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground">
           <FileSpreadsheet className="h-6 w-6 mx-auto mb-2 opacity-50" />
           <p>يمكنك رفع ملف Excel أو CSV يحتوي على الأعمدة:</p>
-          <p dir="ltr" className="font-mono font-bold mt-1 tracking-wider">GTIN ; SN ; BN ; XD</p>
-          <p dir="ltr" className="font-mono font-bold tracking-wider text-muted-foreground">GTIN ; QUANTITY ; BN ; XD</p>
+          {isBatch ? (
+            <p dir="ltr" className="font-mono font-bold mt-1 tracking-wider">GTIN ; BN ; XD ; QUANTITY</p>
+          ) : (
+            <>
+              <p dir="ltr" className="font-mono font-bold mt-1 tracking-wider">GTIN ; SN ; BN ; XD</p>
+              <p dir="ltr" className="font-mono font-bold tracking-wider text-muted-foreground">GTIN ; QUANTITY ; BN ; XD</p>
+            </>
+          )}
           <p className="mt-1">الفاصل يمكن أن يكون <span className="font-mono">(;)</span> أو <span className="font-mono">(,)</span> — التاريخ بصيغة DD/MM/YYYY أو YYYY-MM-DD</p>
           <p className="mt-1">أو إضافة المنتجات يدوياً بالضغط على "إضافة يدوي"</p>
         </div>
@@ -206,7 +215,7 @@ export function ProductListInput({ name = "products" }: { name?: string }) {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className={`grid grid-cols-1 gap-4 ${isBatch ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-2 lg:grid-cols-5"}`}>
                 <FormField control={control} name={`${name}.${index}.GTIN`} render={({ field }) => (
                   <FormItem>
                     <FormLabel>GTIN</FormLabel>
@@ -214,16 +223,18 @@ export function ProductListInput({ name = "products" }: { name?: string }) {
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={control} name={`${name}.${index}.SN`} render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SN</FormLabel>
-                    <FormControl><Input dir="ltr" className="text-left" placeholder="Serial Number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || undefined)} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                {!isBatch && (
+                  <FormField control={control} name={`${name}.${index}.SN`} render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SN</FormLabel>
+                      <FormControl><Input dir="ltr" className="text-left" placeholder="Serial Number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || undefined)} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                )}
                 <FormField control={control} name={`${name}.${index}.BN`} render={({ field }) => (
                   <FormItem>
-                    <FormLabel>BN</FormLabel>
+                    <FormLabel>BN {isBatch && <span className="text-muted-foreground text-xs">(مطلوب)</span>}</FormLabel>
                     <FormControl><Input dir="ltr" className="text-left" placeholder="Batch Number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || undefined)} /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -237,10 +248,13 @@ export function ProductListInput({ name = "products" }: { name?: string }) {
                 )} />
                 <FormField control={control} name={`${name}.${index}.QUANTITY`} render={({ field }) => (
                   <FormItem>
-                    <FormLabel>الكمية (QUANTITY)</FormLabel>
+                    <FormLabel>
+                      الكمية (QUANTITY){isBatch && <span className="text-destructive ms-1">*</span>}
+                    </FormLabel>
                     <FormControl>
                       <Input
-                        dir="ltr" className="text-left font-semibold" type="number" placeholder="0" min="1"
+                        dir="ltr" className={`text-left font-semibold${isBatch ? " border-primary/50" : ""}`}
+                        type="number" placeholder={isBatch ? "1" : "0"} min="1"
                         value={field.value ?? ""}
                         onChange={(e) => field.onChange(e.target.value !== "" ? Number(e.target.value) : undefined)}
                         onBlur={field.onBlur}

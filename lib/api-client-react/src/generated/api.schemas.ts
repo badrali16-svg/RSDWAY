@@ -93,6 +93,31 @@ export interface Product {
   QUANTITY?: number | null;
 }
 
+/**
+ * Product for batch (quantity-based) operations — no SN, QUANTITY required
+ */
+export interface BatchProduct {
+  GTIN: string;
+  BN?: string;
+  XD?: string;
+  /** @minimum 1 */
+  QUANTITY: number;
+}
+
+export interface BatchProductListRequest {
+  products: BatchProduct[];
+}
+
+export interface ToGlnBatchProductListRequest {
+  toGLN: string;
+  products: BatchProduct[];
+}
+
+export interface FromGlnBatchProductListRequest {
+  fromGLN: string;
+  products: BatchProduct[];
+}
+
 export interface ProductListRequest {
   products: Product[];
 }

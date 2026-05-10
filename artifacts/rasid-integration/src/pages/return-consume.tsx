@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { 
   useReturnProducts, 
+  useReturnBatchProducts,
   useConsumeProducts, 
   useConsumeCancelProducts,
   SoapResponse
@@ -13,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, RotateCcw, Activity, Ban } from "lucide-react";
+import { Loader2, RotateCcw, Activity, Ban, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
@@ -26,6 +27,16 @@ const returnSchema = z.object({
     BN: z.string().optional(),
     XD: z.string().optional(),
     QUANTITY: z.coerce.number().optional()
+  })).min(1, "يجب إضافة منتج واحد على الأقل")
+});
+
+const returnBatchSchema = z.object({
+  toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),
+  products: z.array(z.object({
+    GTIN: z.string().min(1, "GTIN مطلوب"),
+    BN: z.string().optional(),
+    XD: z.string().optional(),
+    QUANTITY: z.coerce.number().min(1, "الكمية مطلوبة")
   })).min(1, "يجب إضافة منتج واحد على الأقل")
 });
 
@@ -44,11 +55,17 @@ export default function ReturnConsumePage() {
   const [response, setResponse] = useState<SoapResponse | null>(null);
 
   const returnMutation = useReturnProducts();
+  const returnBatchMutation = useReturnBatchProducts();
   const consumeMutation = useConsumeProducts();
   const consumeCancelMutation = useConsumeCancelProducts();
 
   const returnForm = useForm<z.infer<typeof returnSchema>>({
     resolver: zodResolver(returnSchema),
+    defaultValues: { toGLN: "", products: [] }
+  });
+
+  const returnBatchForm = useForm<z.infer<typeof returnBatchSchema>>({
+    resolver: zodResolver(returnBatchSchema),
     defaultValues: { toGLN: "", products: [] }
   });
 
@@ -62,26 +79,11 @@ export default function ReturnConsumePage() {
     defaultValues: { products: [] }
   });
 
-  const handleReturn = (values: z.infer<typeof returnSchema>) => {
-    returnMutation.mutate({ data: values }, {
-      onSuccess: (res) => {
-        setResponse(res);
-        toast({ title: "تمت العملية", description: "تم إرسال طلب الإرجاع بنجاح" });
-      },
-      onError: () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
-    });
+  const onSuccess = (res: SoapResponse, msg: string) => {
+    setResponse(res);
+    toast({ title: "تمت العملية", description: msg });
   };
-
-  const handleConsume = (values: z.infer<typeof consumeSchema>, isCancel: boolean) => {
-    const mutation = isCancel ? consumeCancelMutation : consumeMutation;
-    mutation.mutate({ data: values }, {
-      onSuccess: (res) => {
-        setResponse(res);
-        toast({ title: "تمت العملية", description: isCancel ? "تم إلغاء الاستهلاك بنجاح" : "تم تسجيل الاستهلاك بنجاح" });
-      },
-      onError: () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
-    });
-  };
+  const onError = () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -91,24 +93,26 @@ export default function ReturnConsumePage() {
       </div>
 
       <Tabs defaultValue="return" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-grid">
-          <TabsTrigger value="return">إرجاع (Return)</TabsTrigger>
+        <TabsList className="flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="return">إرجاع (SN)</TabsTrigger>
+          <TabsTrigger value="return-batch">إرجاع بالتشغيلة</TabsTrigger>
           <TabsTrigger value="consume">استهلاك (Consume)</TabsTrigger>
           <TabsTrigger value="consume-cancel">إلغاء استهلاك</TabsTrigger>
         </TabsList>
 
+        {/* ── Return SN ── */}
         <TabsContent value="return">
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
                 <RotateCcw className="h-5 w-5 text-primary" />
-                <CardTitle>عملية إرجاع</CardTitle>
+                <CardTitle>إرجاع بالرقم التسلسلي (SN)</CardTitle>
               </div>
-              <CardDescription>إرجاع المنتجات إلى المورد أو المصنع</CardDescription>
+              <CardDescription>إرجاع المنتجات بأرقامها التسلسلية إلى المورد أو المصنع — ReturnService</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...returnForm}>
-                <form onSubmit={returnForm.handleSubmit(handleReturn)} className="space-y-6">
+                <form onSubmit={returnForm.handleSubmit((v) => returnMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إرسال طلب الإرجاع بنجاح"), onError }))} className="space-y-6">
                   <FormField control={returnForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <FormLabel>GLN المستلم (toGLN)</FormLabel>
@@ -116,10 +120,10 @@ export default function ReturnConsumePage() {
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <ProductListInput />
+                  <ProductListInput mode="sn" />
                   <Button type="submit" disabled={returnMutation.isPending}>
                     {returnMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    تنفيذ الإرجاع
+                    تنفيذ الإرجاع (SN)
                   </Button>
                 </form>
               </Form>
@@ -127,6 +131,38 @@ export default function ReturnConsumePage() {
           </Card>
         </TabsContent>
 
+        {/* ── Return Batch ── */}
+        <TabsContent value="return-batch">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Layers className="h-5 w-5 text-primary" />
+                <CardTitle>إرجاع بالتشغيلة (Batch)</CardTitle>
+              </div>
+              <CardDescription>إرجاع المنتجات بالكمية باستخدام رقم التشغيلة — ReturnBatchService</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...returnBatchForm}>
+                <form onSubmit={returnBatchForm.handleSubmit((v) => returnBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم الإرجاع بالتشغيلة بنجاح"), onError }))} className="space-y-6">
+                  <FormField control={returnBatchForm.control} name="toGLN" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>GLN المستلم (toGLN)</FormLabel>
+                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <ProductListInput name="products" mode="batch" />
+                  <Button type="submit" disabled={returnBatchMutation.isPending}>
+                    {returnBatchMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    تنفيذ الإرجاع بالتشغيلة
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── Consume ── */}
         <TabsContent value="consume">
           <Card>
             <CardHeader>
@@ -134,12 +170,12 @@ export default function ReturnConsumePage() {
                 <Activity className="h-5 w-5 text-primary" />
                 <CardTitle>تسجيل استهلاك</CardTitle>
               </div>
-              <CardDescription>تسجيل استهلاك الأدوية (للمستشفيات والعيادات)</CardDescription>
+              <CardDescription>تسجيل استهلاك الأدوية (للمستشفيات والعيادات) — ConsumeService (SN فقط)</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...consumeForm}>
-                <form onSubmit={consumeForm.handleSubmit((v) => handleConsume(v, false))} className="space-y-6">
-                  <ProductListInput />
+                <form onSubmit={consumeForm.handleSubmit((v) => consumeMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم تسجيل الاستهلاك بنجاح"), onError }))} className="space-y-6">
+                  <ProductListInput mode="sn" />
                   <Button type="submit" disabled={consumeMutation.isPending}>
                     {consumeMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     تسجيل الاستهلاك
@@ -150,6 +186,7 @@ export default function ReturnConsumePage() {
           </Card>
         </TabsContent>
 
+        {/* ── Consume Cancel ── */}
         <TabsContent value="consume-cancel">
           <Card>
             <CardHeader>
@@ -157,12 +194,12 @@ export default function ReturnConsumePage() {
                 <Ban className="h-5 w-5 text-destructive" />
                 <CardTitle>إلغاء الاستهلاك</CardTitle>
               </div>
-              <CardDescription>إلغاء عملية استهلاك سابقة</CardDescription>
+              <CardDescription>إلغاء عملية استهلاك سابقة — ConsumeCancelService (SN فقط)</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...cancelForm}>
-                <form onSubmit={cancelForm.handleSubmit((v) => handleConsume(v, true))} className="space-y-6">
-                  <ProductListInput />
+                <form onSubmit={cancelForm.handleSubmit((v) => consumeCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء الاستهلاك بنجاح"), onError }))} className="space-y-6">
+                  <ProductListInput mode="sn" />
                   <Button type="submit" variant="destructive" disabled={consumeCancelMutation.isPending}>
                     {consumeCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     إلغاء الاستهلاك

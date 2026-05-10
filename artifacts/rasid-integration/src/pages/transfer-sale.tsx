@@ -5,6 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { 
   useTransferProducts, 
   useTransferCancelProducts, 
+  useTransferBatchProducts,
+  useTransferCancelBatchProducts,
   usePharmacySale, 
   usePharmacySaleCancel,
   SoapResponse
@@ -14,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Repeat, ShoppingCart, Ban } from "lucide-react";
+import { Loader2, Repeat, ShoppingCart, Ban, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
@@ -27,6 +29,16 @@ const transferSchema = z.object({
     BN: z.string().optional(),
     XD: z.string().optional(),
     QUANTITY: z.coerce.number().optional()
+  })).min(1, "يجب إضافة منتج واحد على الأقل")
+});
+
+const transferBatchSchema = z.object({
+  toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),
+  products: z.array(z.object({
+    GTIN: z.string().min(1, "GTIN مطلوب"),
+    BN: z.string().optional(),
+    XD: z.string().optional(),
+    QUANTITY: z.coerce.number().min(1, "الكمية مطلوبة")
   })).min(1, "يجب إضافة منتج واحد على الأقل")
 });
 
@@ -63,11 +75,18 @@ export default function TransferSalePage() {
 
   const transferMutation = useTransferProducts();
   const transferCancelMutation = useTransferCancelProducts();
+  const transferBatchMutation = useTransferBatchProducts();
+  const transferCancelBatchMutation = useTransferCancelBatchProducts();
   const pharmacySaleMutation = usePharmacySale();
   const pharmacySaleCancelMutation = usePharmacySaleCancel();
 
   const transferForm = useForm<z.infer<typeof transferSchema>>({
     resolver: zodResolver(transferSchema),
+    defaultValues: { toGLN: "", products: [] }
+  });
+
+  const transferBatchForm = useForm<z.infer<typeof transferBatchSchema>>({
+    resolver: zodResolver(transferBatchSchema),
     defaultValues: { toGLN: "", products: [] }
   });
 
@@ -81,36 +100,11 @@ export default function TransferSalePage() {
     defaultValues: { toGLN: "", prescriptionId: "", products: [] }
   });
 
-  const handleTransfer = (values: z.infer<typeof transferSchema>, isCancel: boolean) => {
-    const mutation = isCancel ? transferCancelMutation : transferMutation;
-    mutation.mutate({ data: values }, {
-      onSuccess: (res) => {
-        setResponse(res);
-        toast({ title: "تمت العملية", description: isCancel ? "تم إلغاء النقل بنجاح" : "تم نقل المنتجات بنجاح" });
-      },
-      onError: () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
-    });
+  const onSuccess = (res: SoapResponse, msg: string) => {
+    setResponse(res);
+    toast({ title: "تمت العملية", description: msg });
   };
-
-  const handlePharmacySale = (values: z.infer<typeof pharmacySaleSchema>) => {
-    pharmacySaleMutation.mutate({ data: values }, {
-      onSuccess: (res) => {
-        setResponse(res);
-        toast({ title: "تمت العملية", description: "تم صرف الأدوية بنجاح" });
-      },
-      onError: () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
-    });
-  };
-
-  const handlePharmacySaleCancel = (values: z.infer<typeof pharmacySaleCancelSchema>) => {
-    pharmacySaleCancelMutation.mutate({ data: values }, {
-      onSuccess: (res) => {
-        setResponse(res);
-        toast({ title: "تمت العملية", description: "تم إلغاء صرف الأدوية بنجاح" });
-      },
-      onError: () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
-    });
-  };
+  const onError = () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -120,25 +114,28 @@ export default function TransferSalePage() {
       </div>
 
       <Tabs defaultValue="transfer" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-grid">
-          <TabsTrigger value="transfer">نقل داخلي (Transfer)</TabsTrigger>
-          <TabsTrigger value="transfer-cancel">إلغاء النقل</TabsTrigger>
+        <TabsList className="flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="transfer">نقل (SN)</TabsTrigger>
+          <TabsTrigger value="transfer-batch">نقل بالتشغيلة</TabsTrigger>
+          <TabsTrigger value="transfer-cancel">إلغاء نقل (SN)</TabsTrigger>
+          <TabsTrigger value="transfer-cancel-batch">إلغاء نقل بالتشغيلة</TabsTrigger>
           <TabsTrigger value="sale">صرف دواء (Pharmacy Sale)</TabsTrigger>
           <TabsTrigger value="sale-cancel">إلغاء الصرف</TabsTrigger>
         </TabsList>
 
+        {/* ── Transfer SN ── */}
         <TabsContent value="transfer">
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Repeat className="h-5 w-5 text-primary" />
-                <CardTitle>عملية نقل بين الفروع</CardTitle>
+                <CardTitle>نقل بالرقم التسلسلي (SN)</CardTitle>
               </div>
-              <CardDescription>نقل المنتجات بين فروع نفس المنشأة (مستودع إلى صيدلية، الخ)</CardDescription>
+              <CardDescription>نقل المنتجات بأرقامها التسلسلية بين الفروع — TransferService</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...transferForm}>
-                <form onSubmit={transferForm.handleSubmit((v) => handleTransfer(v, false))} className="space-y-6">
+                <form onSubmit={transferForm.handleSubmit((v) => transferMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم نقل المنتجات بنجاح"), onError }))} className="space-y-6">
                   <FormField control={transferForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <FormLabel>GLN المستلم (toGLN)</FormLabel>
@@ -146,10 +143,10 @@ export default function TransferSalePage() {
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <ProductListInput />
+                  <ProductListInput mode="sn" />
                   <Button type="submit" disabled={transferMutation.isPending}>
                     {transferMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    تنفيذ عملية النقل
+                    تنفيذ النقل (SN)
                   </Button>
                 </form>
               </Form>
@@ -157,18 +154,50 @@ export default function TransferSalePage() {
           </Card>
         </TabsContent>
 
+        {/* ── Transfer Batch ── */}
+        <TabsContent value="transfer-batch">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Layers className="h-5 w-5 text-primary" />
+                <CardTitle>نقل بالتشغيلة (Batch)</CardTitle>
+              </div>
+              <CardDescription>نقل المنتجات بالكمية باستخدام رقم التشغيلة — TransferBatchService</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...transferBatchForm}>
+                <form onSubmit={transferBatchForm.handleSubmit((v) => transferBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم نقل المنتجات بالتشغيلة بنجاح"), onError }))} className="space-y-6">
+                  <FormField control={transferBatchForm.control} name="toGLN" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>GLN المستلم (toGLN)</FormLabel>
+                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <ProductListInput name="products" mode="batch" />
+                  <Button type="submit" disabled={transferBatchMutation.isPending}>
+                    {transferBatchMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    تنفيذ النقل بالتشغيلة
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── Transfer Cancel SN ── */}
         <TabsContent value="transfer-cancel">
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Ban className="h-5 w-5 text-destructive" />
-                <CardTitle>إلغاء عملية نقل</CardTitle>
+                <CardTitle>إلغاء نقل بالرقم التسلسلي (SN)</CardTitle>
               </div>
-              <CardDescription>إلغاء النقل الداخلي وإعادة المنتجات لعهدة الفرع المرسل</CardDescription>
+              <CardDescription>إلغاء النقل الداخلي قبل قبوله — TransferCancelService</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...transferForm}>
-                <form onSubmit={transferForm.handleSubmit((v) => handleTransfer(v, true))} className="space-y-6">
+                <form onSubmit={transferForm.handleSubmit((v) => transferCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء النقل بنجاح"), onError }))} className="space-y-6">
                   <FormField control={transferForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <FormLabel>GLN المستلم (toGLN)</FormLabel>
@@ -176,10 +205,10 @@ export default function TransferSalePage() {
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <ProductListInput />
+                  <ProductListInput mode="sn" />
                   <Button type="submit" variant="destructive" disabled={transferCancelMutation.isPending}>
                     {transferCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    إلغاء عملية النقل
+                    إلغاء النقل (SN)
                   </Button>
                 </form>
               </Form>
@@ -187,6 +216,38 @@ export default function TransferSalePage() {
           </Card>
         </TabsContent>
 
+        {/* ── Transfer Cancel Batch ── */}
+        <TabsContent value="transfer-cancel-batch">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Ban className="h-5 w-5 text-destructive" />
+                <CardTitle>إلغاء نقل بالتشغيلة (Batch)</CardTitle>
+              </div>
+              <CardDescription>إلغاء نقل بالتشغيلة قبل قبوله — TransferCancelBatchService</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...transferBatchForm}>
+                <form onSubmit={transferBatchForm.handleSubmit((v) => transferCancelBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء النقل بالتشغيلة بنجاح"), onError }))} className="space-y-6">
+                  <FormField control={transferBatchForm.control} name="toGLN" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>GLN المستلم (toGLN)</FormLabel>
+                      <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="Global Location Number" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <ProductListInput name="products" mode="batch" />
+                  <Button type="submit" variant="destructive" disabled={transferCancelBatchMutation.isPending}>
+                    {transferCancelBatchMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    إلغاء النقل بالتشغيلة
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── Pharmacy Sale ── */}
         <TabsContent value="sale">
           <Card>
             <CardHeader>
@@ -194,11 +255,11 @@ export default function TransferSalePage() {
                 <ShoppingCart className="h-5 w-5 text-primary" />
                 <CardTitle>صرف أدوية (بيع)</CardTitle>
               </div>
-              <CardDescription>صرف الأدوية للمريض من قبل الصيدلي</CardDescription>
+              <CardDescription>صرف الأدوية للمريض من قبل الصيدلي — PharmacySaleService (SN فقط)</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...pharmacySaleForm}>
-                <form onSubmit={pharmacySaleForm.handleSubmit(handlePharmacySale)} className="space-y-6">
+                <form onSubmit={pharmacySaleForm.handleSubmit((v) => pharmacySaleMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم صرف الأدوية بنجاح"), onError }))} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <FormField control={pharmacySaleForm.control} name="toGLN" render={({ field }) => (
                       <FormItem>
@@ -236,7 +297,7 @@ export default function TransferSalePage() {
                       </FormItem>
                     )} />
                   </div>
-                  <ProductListInput />
+                  <ProductListInput mode="sn" />
                   <Button type="submit" disabled={pharmacySaleMutation.isPending}>
                     {pharmacySaleMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     تنفيذ عملية الصرف
@@ -247,6 +308,7 @@ export default function TransferSalePage() {
           </Card>
         </TabsContent>
 
+        {/* ── Pharmacy Sale Cancel ── */}
         <TabsContent value="sale-cancel">
           <Card>
             <CardHeader>
@@ -254,11 +316,11 @@ export default function TransferSalePage() {
                 <Ban className="h-5 w-5 text-destructive" />
                 <CardTitle>إلغاء عملية صرف</CardTitle>
               </div>
-              <CardDescription>إلغاء عملية صرف أدوية سابقة وإعادة المنتجات لعهدة الصيدلية</CardDescription>
+              <CardDescription>إلغاء عملية صرف أدوية سابقة — PharmacySaleCancelService (SN فقط)</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...pharmacySaleCancelForm}>
-                <form onSubmit={pharmacySaleCancelForm.handleSubmit(handlePharmacySaleCancel)} className="space-y-6">
+                <form onSubmit={pharmacySaleCancelForm.handleSubmit((v) => pharmacySaleCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء صرف الأدوية بنجاح"), onError }))} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={pharmacySaleCancelForm.control} name="toGLN" render={({ field }) => (
                       <FormItem>
@@ -275,7 +337,7 @@ export default function TransferSalePage() {
                       </FormItem>
                     )} />
                   </div>
-                  <ProductListInput />
+                  <ProductListInput mode="sn" />
                   <Button type="submit" variant="destructive" disabled={pharmacySaleCancelMutation.isPending}>
                     {pharmacySaleCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     إلغاء عملية الصرف

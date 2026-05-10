@@ -10,9 +10,20 @@ const router: IRouter = Router();
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 // Build endpoint URL from user's stored baseUrl + service name
-// Pattern: {baseUrl}/{ServiceName}/{ServiceName}
-function svcEndpoint(baseUrl: string, svc: string): string {
-  return `${baseUrl.replace(/\/$/, "")}/${svc}/${svc}`;
+// Pattern: {baseUrl}/{ServiceFolder}/{ServiceOperation}
+function svcEndpoint(baseUrl: string, svc: string, op?: string): string {
+  return `${baseUrl.replace(/\/$/, "")}/${svc}/${op ?? svc}`;
+}
+
+// Build PRODUCTLIST XML for batch services (GTIN, BN, XD, QUANTITY — no SN)
+function buildBatchProductListXml(products: Array<{ GTIN: string; BN?: string; XD?: string; QUANTITY: number }>): string {
+  if (!products || products.length === 0) return "<PRODUCTLIST/>";
+  const items = products.map(p => {
+    const bn  = p.BN  ? `<BN>${p.BN}</BN>`   : "";
+    const xd  = p.XD  ? `<XD>${p.XD}</XD>`   : "";
+    return `<PRODUCT><GTIN>${p.GTIN}</GTIN>${bn}${xd}<QUANTITY>${p.QUANTITY}</QUANTITY></PRODUCT>`;
+  }).join("");
+  return `<PRODUCTLIST>${items}</PRODUCTLIST>`;
 }
 
 async function proxy(
@@ -324,6 +335,68 @@ router.post("/rasid/export-cancel", async (req, res): Promise<void> => {
   ${buildProductListXml(products)}
 </exp:ExportCancelServiceRequest>`;
   await proxy("ExportCancel", "ExportCancelService", body, req.body, req, res);
+});
+
+// ── DISPATCH BATCH ───────────────────────────────────────────────────────────
+router.post("/rasid/dispatch-batch", async (req, res): Promise<void> => {
+  const { toGLN, products } = req.body;
+  const body = `<dis:DispatchBatchServiceRequest xmlns:dis="http://dtts.sfda.gov.sa/DispatchBatchService">
+  <TOGLN>${toGLN}</TOGLN>${buildBatchProductListXml(products)}
+</dis:DispatchBatchServiceRequest>`;
+  await proxy("DispatchBatch", "DispatchBatchService", body, req.body, req, res);
+});
+
+router.post("/rasid/dispatch-cancel-batch", async (req, res): Promise<void> => {
+  const { toGLN, products } = req.body;
+  const body = `<dis:DispatchCancelBatchServiceRequest xmlns:dis="http://dtts.sfda.gov.sa/DispatchCancelBatchService">
+  <TOGLN>${toGLN}</TOGLN>${buildBatchProductListXml(products)}
+</dis:DispatchCancelBatchServiceRequest>`;
+  // Special endpoint: DispatchCancelService/DispatchCancelBatchService (folder ≠ operation)
+  const userId = req.session?.user?.id;
+  if (!userId) { res.status(401).json({ success: false, error: "Not logged in", rawXml: null, notificationId: null }); return; }
+  const creds = await getCredentialsForUser(userId);
+  if (!creds) { res.status(401).json({ success: false, error: "لم يتم ضبط بيانات اعتماد رصد.", rawXml: null, notificationId: null }); return; }
+  const baseUrl = creds.baseUrl ?? "https://tandttest.sfda.gov.sa/ws";
+  const endpoint = svcEndpoint(baseUrl, "DispatchCancelService", "DispatchCancelBatchService");
+  const result = await callSoap({ endpoint, action: "", body, username: creds.username, password: creds.password });
+  const notificationId = result.rawXml ? extractNotificationId(result.rawXml) : null;
+  await db.insert(operationLogsTable).values({ operation: "DispatchCancelBatch", requestPayload: JSON.stringify(req.body), responsePayload: result.rawXml, success: result.success, notificationId });
+  res.json({ success: result.success, rawXml: result.rawXml, error: result.error, notificationId });
+});
+
+// ── ACCEPT BATCH ─────────────────────────────────────────────────────────────
+router.post("/rasid/accept-batch", async (req, res): Promise<void> => {
+  const { fromGLN, products } = req.body;
+  const body = `<acc:AcceptBatchServiceRequest xmlns:acc="http://dtts.sfda.gov.sa/AcceptBatchService">
+  <FROMGLN>${fromGLN}</FROMGLN>${buildBatchProductListXml(products)}
+</acc:AcceptBatchServiceRequest>`;
+  await proxy("AcceptBatch", "AcceptBatchService", body, req.body, req, res);
+});
+
+// ── RETURN BATCH ─────────────────────────────────────────────────────────────
+router.post("/rasid/return-batch", async (req, res): Promise<void> => {
+  const { toGLN, products } = req.body;
+  const body = `<ret:ReturnBatchServiceRequest xmlns:ret="http://dtts.sfda.gov.sa/ReturnBatchService">
+  <TOGLN>${toGLN}</TOGLN>${buildBatchProductListXml(products)}
+</ret:ReturnBatchServiceRequest>`;
+  await proxy("ReturnBatch", "ReturnBatchService", body, req.body, req, res);
+});
+
+// ── TRANSFER BATCH ───────────────────────────────────────────────────────────
+router.post("/rasid/transfer-batch", async (req, res): Promise<void> => {
+  const { toGLN, products } = req.body;
+  const body = `<tran:TransferBatchServiceRequest xmlns:tran="http://dtts.sfda.gov.sa/TransferBatchService">
+  <TOGLN>${toGLN}</TOGLN>${buildBatchProductListXml(products)}
+</tran:TransferBatchServiceRequest>`;
+  await proxy("TransferBatch", "TransferBatchService", body, req.body, req, res);
+});
+
+router.post("/rasid/transfer-cancel-batch", async (req, res): Promise<void> => {
+  const { toGLN, products } = req.body;
+  const body = `<tran:TransferCancelBatchServiceRequest xmlns:tran="http://dtts.sfda.gov.sa/TransferCancelBatchService">
+  <TOGLN>${toGLN}</TOGLN>${buildBatchProductListXml(products)}
+</tran:TransferCancelBatchServiceRequest>`;
+  await proxy("TransferCancelBatch", "TransferCancelBatchService", body, req.body, req, res);
 });
 
 // ── PACKAGE TRANSFER ─────────────────────────────────────────────────────────

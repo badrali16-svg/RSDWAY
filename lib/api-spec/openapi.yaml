@@ -491,6 +491,121 @@ paths:
               schema:
                 $ref: "#/components/schemas/SoapResponse"
 
+  # ── DISPATCH BATCH ─────────────────────────────────────────────────────────
+  /rasid/dispatch-batch:
+    post:
+      operationId: dispatchBatchProducts
+      tags: [dispatch]
+      summary: Dispatch products by batch number (quantity-based)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToGlnBatchProductListRequest"
+      responses:
+        "200":
+          description: Dispatch batch response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/dispatch-cancel-batch:
+    post:
+      operationId: dispatchCancelBatchProducts
+      tags: [dispatch]
+      summary: Cancel a dispatch operation by batch number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToGlnBatchProductListRequest"
+      responses:
+        "200":
+          description: Cancel batch response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/accept-batch:
+    post:
+      operationId: acceptBatchProducts
+      tags: [accept]
+      summary: Accept products by batch number (quantity-based)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FromGlnBatchProductListRequest"
+      responses:
+        "200":
+          description: Accept batch response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/return-batch:
+    post:
+      operationId: returnBatchProducts
+      tags: [return]
+      summary: Return products by batch number (quantity-based)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToGlnBatchProductListRequest"
+      responses:
+        "200":
+          description: Return batch response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/transfer-batch:
+    post:
+      operationId: transferBatchProducts
+      tags: [transfer]
+      summary: Transfer products by batch number (quantity-based)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToGlnBatchProductListRequest"
+      responses:
+        "200":
+          description: Transfer batch response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
+  /rasid/transfer-cancel-batch:
+    post:
+      operationId: transferCancelBatchProducts
+      tags: [transfer]
+      summary: Cancel a transfer operation by batch number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToGlnBatchProductListRequest"
+      responses:
+        "200":
+          description: Cancel batch response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoapResponse"
+
   # ── PHARMACY SALE ──────────────────────────────────────────────────────────
   /rasid/pharmacy-sale:
     post:
@@ -941,6 +1056,59 @@ components:
           type: ["integer", "null"]
       required:
         - GTIN
+
+    BatchProduct:
+      type: object
+      description: Product for batch (quantity-based) operations — no SN, QUANTITY required
+      properties:
+        GTIN:
+          type: string
+        BN:
+          type: string
+        XD:
+          type: string
+        QUANTITY:
+          type: integer
+          minimum: 1
+      required:
+        - GTIN
+        - QUANTITY
+
+    BatchProductListRequest:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchProduct"
+      required:
+        - products
+
+    ToGlnBatchProductListRequest:
+      type: object
+      properties:
+        toGLN:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchProduct"
+      required:
+        - toGLN
+        - products
+
+    FromGlnBatchProductListRequest:
+      type: object
+      properties:
+        fromGLN:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchProduct"
+      required:
+        - fromGLN
+        - products
 
     ProductListRequest:
       type: object

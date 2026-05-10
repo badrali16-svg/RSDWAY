@@ -26,6 +26,7 @@ import type {
   DispatchDetailRequest,
   DrugListRequest,
   ExportRequest,
+  FromGlnBatchProductListRequest,
   FromGlnProductListRequest,
   HealthStatus,
   ImportRequest,
@@ -42,6 +43,7 @@ import type {
   SessionUser,
   SoapResponse,
   StakeholderListRequest,
+  ToGlnBatchProductListRequest,
   ToGlnProductListRequest,
   UnlockSettingsRequest,
   UpdateUserRequest,
@@ -2142,6 +2144,528 @@ export const useTransferCancelProducts = <
   TContext
 > => {
   return useMutation(getTransferCancelProductsMutationOptions(options));
+};
+
+/**
+ * @summary Dispatch products by batch number (quantity-based)
+ */
+export const getDispatchBatchProductsUrl = () => {
+  return `/api/rasid/dispatch-batch`;
+};
+
+export const dispatchBatchProducts = async (
+  toGlnBatchProductListRequest: ToGlnBatchProductListRequest,
+  options?: RequestInit,
+): Promise<SoapResponse> => {
+  return customFetch<SoapResponse>(getDispatchBatchProductsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(toGlnBatchProductListRequest),
+  });
+};
+
+export const getDispatchBatchProductsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof dispatchBatchProducts>>,
+    TError,
+    { data: BodyType<ToGlnBatchProductListRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof dispatchBatchProducts>>,
+  TError,
+  { data: BodyType<ToGlnBatchProductListRequest> },
+  TContext
+> => {
+  const mutationKey = ["dispatchBatchProducts"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof dispatchBatchProducts>>,
+    { data: BodyType<ToGlnBatchProductListRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return dispatchBatchProducts(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DispatchBatchProductsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof dispatchBatchProducts>>
+>;
+export type DispatchBatchProductsMutationBody =
+  BodyType<ToGlnBatchProductListRequest>;
+export type DispatchBatchProductsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Dispatch products by batch number (quantity-based)
+ */
+export const useDispatchBatchProducts = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof dispatchBatchProducts>>,
+    TError,
+    { data: BodyType<ToGlnBatchProductListRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof dispatchBatchProducts>>,
+  TError,
+  { data: BodyType<ToGlnBatchProductListRequest> },
+  TContext
+> => {
+  return useMutation(getDispatchBatchProductsMutationOptions(options));
+};
+
+/**
+ * @summary Cancel a dispatch operation by batch number
+ */
+export const getDispatchCancelBatchProductsUrl = () => {
+  return `/api/rasid/dispatch-cancel-batch`;
+};
+
+export const dispatchCancelBatchProducts = async (
+  toGlnBatchProductListRequest: ToGlnBatchProductListRequest,
+  options?: RequestInit,
+): Promise<SoapResponse> => {
+  return customFetch<SoapResponse>(getDispatchCancelBatchProductsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(toGlnBatchProductListRequest),
+  });
+};
+
+export const getDispatchCancelBatchProductsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof dispatchCancelBatchProducts>>,
+    TError,
+    { data: BodyType<ToGlnBatchProductListRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof dispatchCancelBatchProducts>>,
+  TError,
+  { data: BodyType<ToGlnBatchProductListRequest> },
+  TContext
+> => {
+  const mutationKey = ["dispatchCancelBatchProducts"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof dispatchCancelBatchProducts>>,
+    { data: BodyType<ToGlnBatchProductListRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return dispatchCancelBatchProducts(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DispatchCancelBatchProductsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof dispatchCancelBatchProducts>>
+>;
+export type DispatchCancelBatchProductsMutationBody =
+  BodyType<ToGlnBatchProductListRequest>;
+export type DispatchCancelBatchProductsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Cancel a dispatch operation by batch number
+ */
+export const useDispatchCancelBatchProducts = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof dispatchCancelBatchProducts>>,
+    TError,
+    { data: BodyType<ToGlnBatchProductListRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof dispatchCancelBatchProducts>>,
+  TError,
+  { data: BodyType<ToGlnBatchProductListRequest> },
+  TContext
+> => {
+  return useMutation(getDispatchCancelBatchProductsMutationOptions(options));
+};
+
+/**
+ * @summary Accept products by batch number (quantity-based)
+ */
+export const getAcceptBatchProductsUrl = () => {
+  return `/api/rasid/accept-batch`;
+};
+
+export const acceptBatchProducts = async (
+  fromGlnBatchProductListRequest: FromGlnBatchProductListRequest,
+  options?: RequestInit,
+): Promise<SoapResponse> => {
+  return customFetch<SoapResponse>(getAcceptBatchProductsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(fromGlnBatchProductListRequest),
+  });
+};
+
+export const getAcceptBatchProductsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof acceptBatchProducts>>,
+    TError,
+    { data: BodyType<FromGlnBatchProductListRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof acceptBatchProducts>>,
+  TError,
+  { data: BodyType<FromGlnBatchProductListRequest> },
+  TContext
+> => {
+  const mutationKey = ["acceptBatchProducts"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof acceptBatchProducts>>,
+    { data: BodyType<FromGlnBatchProductListRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return acceptBatchProducts(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AcceptBatchProductsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof acceptBatchProducts>>
+>;
+export type AcceptBatchProductsMutationBody =
+  BodyType<FromGlnBatchProductListRequest>;
+export type AcceptBatchProductsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Accept products by batch number (quantity-based)
+ */
+export const useAcceptBatchProducts = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof acceptBatchProducts>>,
+    TError,
+    { data: BodyType<FromGlnBatchProductListRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof acceptBatchProducts>>,
+  TError,
+  { data: BodyType<FromGlnBatchProductListRequest> },
+  TContext
+> => {
+  return useMutation(getAcceptBatchProductsMutationOptions(options));
+};
+
+/**
+ * @summary Return products by batch number (quantity-based)
+ */
+export const getReturnBatchProductsUrl = () => {
+  return `/api/rasid/return-batch`;
+};
+
+export const returnBatchProducts = async (
+  toGlnBatchProductListRequest: ToGlnBatchProductListRequest,
+  options?: RequestInit,
+): Promise<SoapResponse> => {
+  return customFetch<SoapResponse>(getReturnBatchProductsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(toGlnBatchProductListRequest),
+  });
+};
+
+export const getReturnBatchProductsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof returnBatchProducts>>,
+    TError,
+    { data: BodyType<ToGlnBatchProductListRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof returnBatchProducts>>,
+  TError,
+  { data: BodyType<ToGlnBatchProductListRequest> },
+  TContext
+> => {
+  const mutationKey = ["returnBatchProducts"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof returnBatchProducts>>,
+    { data: BodyType<ToGlnBatchProductListRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return returnBatchProducts(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReturnBatchProductsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof returnBatchProducts>>
+>;
+export type ReturnBatchProductsMutationBody =
+  BodyType<ToGlnBatchProductListRequest>;
+export type ReturnBatchProductsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Return products by batch number (quantity-based)
+ */
+export const useReturnBatchProducts = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof returnBatchProducts>>,
+    TError,
+    { data: BodyType<ToGlnBatchProductListRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof returnBatchProducts>>,
+  TError,
+  { data: BodyType<ToGlnBatchProductListRequest> },
+  TContext
+> => {
+  return useMutation(getReturnBatchProductsMutationOptions(options));
+};
+
+/**
+ * @summary Transfer products by batch number (quantity-based)
+ */
+export const getTransferBatchProductsUrl = () => {
+  return `/api/rasid/transfer-batch`;
+};
+
+export const transferBatchProducts = async (
+  toGlnBatchProductListRequest: ToGlnBatchProductListRequest,
+  options?: RequestInit,
+): Promise<SoapResponse> => {
+  return customFetch<SoapResponse>(getTransferBatchProductsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(toGlnBatchProductListRequest),
+  });
+};
+
+export const getTransferBatchProductsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof transferBatchProducts>>,
+    TError,
+    { data: BodyType<ToGlnBatchProductListRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof transferBatchProducts>>,
+  TError,
+  { data: BodyType<ToGlnBatchProductListRequest> },
+  TContext
+> => {
+  const mutationKey = ["transferBatchProducts"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof transferBatchProducts>>,
+    { data: BodyType<ToGlnBatchProductListRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return transferBatchProducts(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TransferBatchProductsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof transferBatchProducts>>
+>;
+export type TransferBatchProductsMutationBody =
+  BodyType<ToGlnBatchProductListRequest>;
+export type TransferBatchProductsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Transfer products by batch number (quantity-based)
+ */
+export const useTransferBatchProducts = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof transferBatchProducts>>,
+    TError,
+    { data: BodyType<ToGlnBatchProductListRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof transferBatchProducts>>,
+  TError,
+  { data: BodyType<ToGlnBatchProductListRequest> },
+  TContext
+> => {
+  return useMutation(getTransferBatchProductsMutationOptions(options));
+};
+
+/**
+ * @summary Cancel a transfer operation by batch number
+ */
+export const getTransferCancelBatchProductsUrl = () => {
+  return `/api/rasid/transfer-cancel-batch`;
+};
+
+export const transferCancelBatchProducts = async (
+  toGlnBatchProductListRequest: ToGlnBatchProductListRequest,
+  options?: RequestInit,
+): Promise<SoapResponse> => {
+  return customFetch<SoapResponse>(getTransferCancelBatchProductsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(toGlnBatchProductListRequest),
+  });
+};
+
+export const getTransferCancelBatchProductsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof transferCancelBatchProducts>>,
+    TError,
+    { data: BodyType<ToGlnBatchProductListRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof transferCancelBatchProducts>>,
+  TError,
+  { data: BodyType<ToGlnBatchProductListRequest> },
+  TContext
+> => {
+  const mutationKey = ["transferCancelBatchProducts"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof transferCancelBatchProducts>>,
+    { data: BodyType<ToGlnBatchProductListRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return transferCancelBatchProducts(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TransferCancelBatchProductsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof transferCancelBatchProducts>>
+>;
+export type TransferCancelBatchProductsMutationBody =
+  BodyType<ToGlnBatchProductListRequest>;
+export type TransferCancelBatchProductsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Cancel a transfer operation by batch number
+ */
+export const useTransferCancelBatchProducts = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof transferCancelBatchProducts>>,
+    TError,
+    { data: BodyType<ToGlnBatchProductListRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof transferCancelBatchProducts>>,
+  TError,
+  { data: BodyType<ToGlnBatchProductListRequest> },
+  TContext
+> => {
+  return useMutation(getTransferCancelBatchProductsMutationOptions(options));
 };
 
 /**

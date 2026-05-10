@@ -447,6 +447,174 @@ export const TransferCancelProductsResponse = zod.object({
 });
 
 /**
+ * @summary Dispatch products by batch number (quantity-based)
+ */
+
+export const DispatchBatchProductsBody = zod.object({
+  toGLN: zod.string(),
+  products: zod.array(
+    zod
+      .object({
+        GTIN: zod.string(),
+        BN: zod.string().optional(),
+        XD: zod.string().optional(),
+        QUANTITY: zod.number().min(1),
+      })
+      .describe(
+        "Product for batch (quantity-based) operations — no SN, QUANTITY required",
+      ),
+  ),
+});
+
+export const DispatchBatchProductsResponse = zod.object({
+  success: zod.boolean(),
+  rawXml: zod.string().nullish(),
+  parsed: zod.unknown().optional().describe("Parsed response object"),
+  error: zod.string().nullish(),
+  notificationId: zod.string().nullish(),
+});
+
+/**
+ * @summary Cancel a dispatch operation by batch number
+ */
+
+export const DispatchCancelBatchProductsBody = zod.object({
+  toGLN: zod.string(),
+  products: zod.array(
+    zod
+      .object({
+        GTIN: zod.string(),
+        BN: zod.string().optional(),
+        XD: zod.string().optional(),
+        QUANTITY: zod.number().min(1),
+      })
+      .describe(
+        "Product for batch (quantity-based) operations — no SN, QUANTITY required",
+      ),
+  ),
+});
+
+export const DispatchCancelBatchProductsResponse = zod.object({
+  success: zod.boolean(),
+  rawXml: zod.string().nullish(),
+  parsed: zod.unknown().optional().describe("Parsed response object"),
+  error: zod.string().nullish(),
+  notificationId: zod.string().nullish(),
+});
+
+/**
+ * @summary Accept products by batch number (quantity-based)
+ */
+
+export const AcceptBatchProductsBody = zod.object({
+  fromGLN: zod.string(),
+  products: zod.array(
+    zod
+      .object({
+        GTIN: zod.string(),
+        BN: zod.string().optional(),
+        XD: zod.string().optional(),
+        QUANTITY: zod.number().min(1),
+      })
+      .describe(
+        "Product for batch (quantity-based) operations — no SN, QUANTITY required",
+      ),
+  ),
+});
+
+export const AcceptBatchProductsResponse = zod.object({
+  success: zod.boolean(),
+  rawXml: zod.string().nullish(),
+  parsed: zod.unknown().optional().describe("Parsed response object"),
+  error: zod.string().nullish(),
+  notificationId: zod.string().nullish(),
+});
+
+/**
+ * @summary Return products by batch number (quantity-based)
+ */
+
+export const ReturnBatchProductsBody = zod.object({
+  toGLN: zod.string(),
+  products: zod.array(
+    zod
+      .object({
+        GTIN: zod.string(),
+        BN: zod.string().optional(),
+        XD: zod.string().optional(),
+        QUANTITY: zod.number().min(1),
+      })
+      .describe(
+        "Product for batch (quantity-based) operations — no SN, QUANTITY required",
+      ),
+  ),
+});
+
+export const ReturnBatchProductsResponse = zod.object({
+  success: zod.boolean(),
+  rawXml: zod.string().nullish(),
+  parsed: zod.unknown().optional().describe("Parsed response object"),
+  error: zod.string().nullish(),
+  notificationId: zod.string().nullish(),
+});
+
+/**
+ * @summary Transfer products by batch number (quantity-based)
+ */
+
+export const TransferBatchProductsBody = zod.object({
+  toGLN: zod.string(),
+  products: zod.array(
+    zod
+      .object({
+        GTIN: zod.string(),
+        BN: zod.string().optional(),
+        XD: zod.string().optional(),
+        QUANTITY: zod.number().min(1),
+      })
+      .describe(
+        "Product for batch (quantity-based) operations — no SN, QUANTITY required",
+      ),
+  ),
+});
+
+export const TransferBatchProductsResponse = zod.object({
+  success: zod.boolean(),
+  rawXml: zod.string().nullish(),
+  parsed: zod.unknown().optional().describe("Parsed response object"),
+  error: zod.string().nullish(),
+  notificationId: zod.string().nullish(),
+});
+
+/**
+ * @summary Cancel a transfer operation by batch number
+ */
+
+export const TransferCancelBatchProductsBody = zod.object({
+  toGLN: zod.string(),
+  products: zod.array(
+    zod
+      .object({
+        GTIN: zod.string(),
+        BN: zod.string().optional(),
+        XD: zod.string().optional(),
+        QUANTITY: zod.number().min(1),
+      })
+      .describe(
+        "Product for batch (quantity-based) operations — no SN, QUANTITY required",
+      ),
+  ),
+});
+
+export const TransferCancelBatchProductsResponse = zod.object({
+  success: zod.boolean(),
+  rawXml: zod.string().nullish(),
+  parsed: zod.unknown().optional().describe("Parsed response object"),
+  error: zod.string().nullish(),
+  notificationId: zod.string().nullish(),
+});
+
+/**
  * @summary Pharmacy sale to patient or reimbursement agency
  */
 export const PharmacySaleBody = zod.object({
