@@ -351,17 +351,7 @@ router.post("/rasid/dispatch-cancel-batch", async (req, res): Promise<void> => {
   const body = `<dis:DispatchCancelBatchServiceRequest xmlns:dis="http://dtts.sfda.gov.sa/DispatchCancelBatchService">
   <TOGLN>${toGLN}</TOGLN>${buildBatchProductListXml(products)}
 </dis:DispatchCancelBatchServiceRequest>`;
-  // Special endpoint: DispatchCancelService/DispatchCancelBatchService (folder ≠ operation)
-  const userId = req.session?.user?.id;
-  if (!userId) { res.status(401).json({ success: false, error: "Not logged in", rawXml: null, notificationId: null }); return; }
-  const creds = await getCredentialsForUser(userId);
-  if (!creds) { res.status(401).json({ success: false, error: "لم يتم ضبط بيانات اعتماد رصد.", rawXml: null, notificationId: null }); return; }
-  const baseUrl = creds.baseUrl ?? "https://tandttest.sfda.gov.sa/ws";
-  const endpoint = svcEndpoint(baseUrl, "DispatchCancelService", "DispatchCancelBatchService");
-  const result = await callSoap({ endpoint, action: "", body, username: creds.username, password: creds.password });
-  const notificationId = result.rawXml ? extractNotificationId(result.rawXml) : null;
-  await db.insert(operationLogsTable).values({ operation: "DispatchCancelBatch", requestPayload: JSON.stringify(req.body), responsePayload: result.rawXml, success: result.success, notificationId });
-  res.json({ success: result.success, rawXml: result.rawXml, error: result.error, notificationId });
+  await proxy("DispatchCancelBatch", "DispatchCancelBatchService", body, req.body, req, res);
 });
 
 // ── ACCEPT BATCH ─────────────────────────────────────────────────────────────
