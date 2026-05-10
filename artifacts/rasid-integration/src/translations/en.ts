@@ -439,6 +439,18 @@ export const en: Record<string, string> = {
   "users.deletedTitle": "Deleted",
   "users.deleteErrDesc": "Failed to delete account",
 
+  // Users — DTTS credentials section (create form, admin only)
+  "users.dttsTitle": "Rasid System (DTTS) Credentials",
+  "users.dttsDesc": "Enter the user's SFDA account credentials to link them with the Production environment. Password is stored securely.",
+  "users.dttsOptionalHint": "Optional — if left empty, the user will need to configure credentials from Settings",
+  "users.dttsCustomUrl": "Custom URL",
+  "users.dttsTesting": "Testing...",
+  "users.dttsMustTest": "Please test the connection before creating the account",
+  "users.dttsTestFailed": "Connection test failed — cannot create account",
+  "users.dttsPartialFill": "Please fill in all DTTS credential fields or leave them all empty",
+  "users.dttsConnOk": "Connection successful ✓",
+  "users.dttsConnFail": "Connection failed ✗",
+
   // Product List Input
   "products.listLabel": "Product List",
   "products.count": "products",

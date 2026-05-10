@@ -82,6 +82,45 @@ async function proxy(
 }
 
 // ── AUTH CONFIG (per logged-in user) ─────────────────────────────────────────
+
+// Test connection using credentials provided directly in the request body (admin only)
+router.post("/auth/test-connection-direct", async (req, res): Promise<void> => {
+  const user = req.session?.user;
+  if (!user) {
+    res.status(401).json({ success: false, message: "غير مسجّل الدخول", testedAt: new Date().toISOString() });
+    return;
+  }
+  if (user.role !== "admin") {
+    res.status(403).json({ success: false, message: "هذه العملية للمدير فقط", testedAt: new Date().toISOString() });
+    return;
+  }
+  const { username, password, baseUrl } = req.body as { username?: string; password?: string; baseUrl?: string };
+  if (!username || !password) {
+    res.status(400).json({ success: false, message: "اسم المستخدم وكلمة المرور مطلوبان", testedAt: new Date().toISOString() });
+    return;
+  }
+  const finalBaseUrl = baseUrl || "https://rsd.sfda.gov.sa/ws";
+  const isProd = finalBaseUrl.includes("rsd.sfda.gov.sa") && !finalBaseUrl.includes("tandttest");
+  const environment = isProd ? "بيئة الإنتاج (Production)" : "بيئة الاختبار (Test)";
+
+  const testEndpoint = svcEndpoint(finalBaseUrl, "ErrorCodeListService");
+  const soapBody = `<err:ErrorCodeListServiceRequest xmlns:err="http://dtts.sfda.gov.sa/ErrorCodeListService"/>`;
+
+  const result = await callSoap({ endpoint: testEndpoint, action: "", body: soapBody, username, password });
+
+  if (result.success) {
+    res.json({ success: true, message: "تم الاتصال بنجاح بنظام رصد ✓", environment, baseUrl: finalBaseUrl, testedAt: new Date().toISOString() });
+  } else {
+    const faultHint = result.faultCode === "80000" || result.faultCode === "80001"
+      ? " — يرجى التحقق من صحة اسم المستخدم وكلمة المرور"
+      : result.faultCode === "401"
+      ? " — بيانات الاعتماد مفقودة أو غير صحيحة"
+      : "";
+    const message = (result.error ?? "فشل الاتصال بنظام رصد") + faultHint;
+    res.json({ success: false, message, environment, baseUrl: finalBaseUrl, testedAt: new Date().toISOString() });
+  }
+});
+
 router.post("/auth/test-connection", async (req, res): Promise<void> => {
   const userId = req.session?.user?.id;
   if (!userId) {

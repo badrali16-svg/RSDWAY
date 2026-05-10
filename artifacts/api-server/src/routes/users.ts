@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable } from "@workspace/db";
+import { db, usersTable, authConfigTable } from "@workspace/db";
 import { eq, asc } from "drizzle-orm";
 import { hashPassword, ALL_PERMISSIONS } from "../lib/sessionAuth";
 import { requireAdmin } from "../middlewares/requireAuth";
@@ -28,10 +28,11 @@ router.get("/users", requireAdmin, async (_req, res): Promise<void> => {
 });
 
 router.post("/users", requireAdmin, async (req, res): Promise<void> => {
-  const { username, password, permissions } = req.body as {
+  const { username, password, permissions, dttsConfig } = req.body as {
     username?: string;
     password?: string;
     permissions?: unknown;
+    dttsConfig?: { username?: string; password?: string; baseUrl?: string };
   };
   if (!username || !password) {
     res.status(400).json({ error: "username and password are required" });
@@ -52,6 +53,17 @@ router.post("/users", requireAdmin, async (req, res): Promise<void> => {
       permissions: sanitisePermissions(permissions),
     })
     .returning();
+
+  // Save DTTS credentials for the new user if provided
+  if (dttsConfig?.username && dttsConfig?.password) {
+    await db.insert(authConfigTable).values({
+      userId: row.id,
+      username: dttsConfig.username,
+      passwordEncrypted: dttsConfig.password,
+      baseUrl: dttsConfig.baseUrl || "https://rsd.sfda.gov.sa/ws",
+    });
+  }
+
   res.json(toSummary(row));
 });
 

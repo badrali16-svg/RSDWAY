@@ -5,9 +5,11 @@
  * SFDA DTTS (Rasid) Integration API - Proxy for SOAP web services
  * OpenAPI spec version: 0.1.0
  */
+import type { AuthConfigInput } from "./authConfigInput";
 
 export interface CreateUserRequest {
   username: string;
   password: string;
   permissions: string[];
+  dttsConfig?: AuthConfigInput;
 }

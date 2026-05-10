@@ -1609,6 +1609,92 @@ export const useTestConnection = <
 };
 
 /**
+ * @summary Test DTTS connection using provided credentials directly (admin only)
+ */
+export const getTestConnectionDirectUrl = () => {
+  return `/api/auth/test-connection-direct`;
+};
+
+export const testConnectionDirect = async (
+  authConfigInput: AuthConfigInput,
+  options?: RequestInit,
+): Promise<ConnectionTestResult> => {
+  return customFetch<ConnectionTestResult>(getTestConnectionDirectUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(authConfigInput),
+  });
+};
+
+export const getTestConnectionDirectMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof testConnectionDirect>>,
+    TError,
+    { data: BodyType<AuthConfigInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof testConnectionDirect>>,
+  TError,
+  { data: BodyType<AuthConfigInput> },
+  TContext
+> => {
+  const mutationKey = ["testConnectionDirect"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof testConnectionDirect>>,
+    { data: BodyType<AuthConfigInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return testConnectionDirect(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TestConnectionDirectMutationResult = NonNullable<
+  Awaited<ReturnType<typeof testConnectionDirect>>
+>;
+export type TestConnectionDirectMutationBody = BodyType<AuthConfigInput>;
+export type TestConnectionDirectMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Test DTTS connection using provided credentials directly (admin only)
+ */
+export const useTestConnectionDirect = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof testConnectionDirect>>,
+    TError,
+    { data: BodyType<AuthConfigInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof testConnectionDirect>>,
+  TError,
+  { data: BodyType<AuthConfigInput> },
+  TContext
+> => {
+  return useMutation(getTestConnectionDirectMutationOptions(options));
+};
+
+/**
  * @summary Import products into DTTS
  */
 export const getImportProductsUrl = () => {

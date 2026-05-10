@@ -4,6 +4,7 @@ import {
   useCreateUser,
   useUpdateUser,
   useDeleteUser,
+  useTestConnectionDirect,
   getListUsersQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,7 +14,11 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, UserPlus, Trash2, Save, Users as UsersIcon, LayoutDashboard, Cog } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import {
+  Loader2, UserPlus, Trash2, Save, Users as UsersIcon,
+  LayoutDashboard, Cog, ShieldCheck, Globe, CheckCircle2, XCircle, Wifi,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -28,6 +33,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { OP_PERMISSION_GROUPS, ALL_OP_SLUGS } from "@/lib/op-permissions";
 import { useLanguage } from "@/lib/language-context";
+
+const PROD_URL = "https://rsd.sfda.gov.sa/ws";
+
+type DttsTestStatus = "idle" | "testing" | "success" | "failed";
 
 const NAV_PERMISSION_OPTIONS: { slug: string }[] = [
   { slug: "dashboard" },
@@ -74,12 +83,57 @@ export default function UsersPage() {
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
+  const testConnectionDirect = useTestConnectionDirect();
 
   const invalidate = () => qc.invalidateQueries({ queryKey: getListUsersQueryKey() });
 
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPermissions, setNewPermissions] = useState<string[]>(ALL_DEFAULT_PERMS);
+
+  // DTTS credentials state
+  const [dttsUsername, setDttsUsername] = useState("");
+  const [dttsPassword, setDttsPassword] = useState("");
+  const [dttsUseCustomUrl, setDttsUseCustomUrl] = useState(false);
+  const [dttsCustomUrl, setDttsCustomUrl] = useState("");
+  const [dttsTestStatus, setDttsTestStatus] = useState<DttsTestStatus>("idle");
+  const [dttsTestMessage, setDttsTestMessage] = useState("");
+
+  const dttsBaseUrl = dttsUseCustomUrl ? dttsCustomUrl : PROD_URL;
+  const dttsIsFilled = !!dttsUsername && !!dttsPassword && !!dttsBaseUrl;
+  const dttsIsPartial = (!!dttsUsername || !!dttsPassword) && !dttsIsFilled;
+  const canCreate =
+    !createUser.isPending &&
+    !dttsIsPartial &&
+    (!dttsIsFilled || dttsTestStatus === "success");
+
+  const resetDtts = () => {
+    setDttsUsername("");
+    setDttsPassword("");
+    setDttsUseCustomUrl(false);
+    setDttsCustomUrl("");
+    setDttsTestStatus("idle");
+    setDttsTestMessage("");
+  };
+
+  const handleDttsTest = () => {
+    if (!dttsIsFilled) return;
+    setDttsTestStatus("testing");
+    setDttsTestMessage("");
+    testConnectionDirect.mutate(
+      { data: { username: dttsUsername, password: dttsPassword, baseUrl: dttsBaseUrl } },
+      {
+        onSuccess: (data) => {
+          setDttsTestStatus(data.success ? "success" : "failed");
+          setDttsTestMessage(data.message ?? "");
+        },
+        onError: () => {
+          setDttsTestStatus("failed");
+          setDttsTestMessage(t("settings.connErrMsg"));
+        },
+      },
+    );
+  };
 
   const toggleNewPerm = (slug: string) => {
     setNewPermissions((prev) => {
@@ -99,14 +153,31 @@ export default function UsersPage() {
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUsername || !newPassword) return;
+    if (dttsIsPartial) {
+      toast({ title: t("common.error"), description: t("users.dttsPartialFill"), variant: "destructive" });
+      return;
+    }
+    if (dttsIsFilled && dttsTestStatus !== "success") {
+      toast({ title: t("common.error"), description: t("users.dttsMustTest"), variant: "destructive" });
+      return;
+    }
+    const payload: Parameters<typeof createUser.mutate>[0]["data"] = {
+      username: newUsername,
+      password: newPassword,
+      permissions: newPermissions,
+      ...(dttsIsFilled && dttsTestStatus === "success"
+        ? { dttsConfig: { username: dttsUsername, password: dttsPassword, baseUrl: dttsBaseUrl } }
+        : {}),
+    };
     createUser.mutate(
-      { data: { username: newUsername, password: newPassword, permissions: newPermissions } },
+      { data: payload },
       {
         onSuccess: () => {
           toast({ title: t("users.createdTitle"), description: `${t("users.createdDesc")} — ${newUsername}` });
           setNewUsername("");
           setNewPassword("");
           setNewPermissions(ALL_DEFAULT_PERMS);
+          resetDtts();
           invalidate();
         },
         onError: (err: unknown) => {
@@ -213,7 +284,138 @@ export default function UsersPage() {
               </div>
             </div>
 
-            <Button type="submit" disabled={createUser.isPending}>
+            {/* ── DTTS Credentials Section (Admin only, create mode) ── */}
+            <Separator />
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-base">{t("users.dttsTitle")}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">{t("users.dttsDesc")}</p>
+                  <p className="text-xs text-muted-foreground mt-1 italic">{t("users.dttsOptionalHint")}</p>
+                </div>
+              </div>
+
+              {/* Production env indicator */}
+              <div className="flex items-center gap-3 rounded-lg border-2 border-primary bg-primary/5 p-3">
+                <Globe className="h-5 w-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm text-primary">{t("settings.prodEnvName")}</span>
+                    <Badge variant="default" className="text-xs">{t("settings.selected")}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground font-mono mt-0.5 break-all">
+                    {dttsUseCustomUrl ? (dttsCustomUrl || PROD_URL) : PROD_URL}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDttsUseCustomUrl((v) => !v);
+                    setDttsTestStatus("idle");
+                    setDttsTestMessage("");
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 shrink-0"
+                >
+                  {dttsUseCustomUrl ? t("settings.prodEnvName") : t("users.dttsCustomUrl")}
+                </button>
+              </div>
+
+              {/* Custom URL input */}
+              {dttsUseCustomUrl && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="dtts-base-url">{t("settings.baseUrlLabel")}</Label>
+                  <Input
+                    id="dtts-base-url"
+                    dir="ltr"
+                    value={dttsCustomUrl}
+                    onChange={(e) => {
+                      setDttsCustomUrl(e.target.value);
+                      setDttsTestStatus("idle");
+                      setDttsTestMessage("");
+                    }}
+                    placeholder="https://rsd.sfda.gov.sa/ws"
+                  />
+                  <p className="text-xs text-muted-foreground">{t("settings.baseUrlDesc")}</p>
+                </div>
+              )}
+
+              {/* Username + Password */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="dtts-username">{t("settings.usernameLabel")}</Label>
+                  <Input
+                    id="dtts-username"
+                    dir="ltr"
+                    value={dttsUsername}
+                    onChange={(e) => {
+                      setDttsUsername(e.target.value);
+                      setDttsTestStatus("idle");
+                      setDttsTestMessage("");
+                    }}
+                    placeholder="GLN_..."
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="dtts-password">{t("settings.passwordLabel")}</Label>
+                  <Input
+                    id="dtts-password"
+                    type="password"
+                    dir="ltr"
+                    value={dttsPassword}
+                    onChange={(e) => {
+                      setDttsPassword(e.target.value);
+                      setDttsTestStatus("idle");
+                      setDttsTestMessage("");
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Test connection row */}
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!dttsIsFilled || dttsTestStatus === "testing"}
+                  onClick={handleDttsTest}
+                >
+                  {dttsTestStatus === "testing" ? (
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Wifi className="me-2 h-4 w-4" />
+                  )}
+                  {dttsTestStatus === "testing" ? t("users.dttsTesting") : t("settings.testConn")}
+                </Button>
+
+                {/* Status badge */}
+                {dttsTestStatus === "success" && (
+                  <div className="flex items-center gap-1.5 text-sm text-green-700">
+                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                    <span className="font-medium">{t("users.dttsConnOk")}</span>
+                  </div>
+                )}
+                {dttsTestStatus === "failed" && (
+                  <div className="flex items-center gap-1.5 text-sm text-destructive">
+                    <XCircle className="h-4 w-4 shrink-0" />
+                    <span>{dttsTestMessage || t("users.dttsConnFail")}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Inline hints when create is blocked due to DTTS */}
+              {dttsIsPartial && (
+                <p className="text-xs text-destructive">{t("users.dttsPartialFill")}</p>
+              )}
+              {dttsIsFilled && dttsTestStatus === "idle" && (
+                <p className="text-xs text-amber-600">{t("users.dttsMustTest")}</p>
+              )}
+              {dttsIsFilled && dttsTestStatus === "failed" && (
+                <p className="text-xs text-destructive">{t("users.dttsTestFailed")}</p>
+              )}
+            </div>
+
+            <Button type="submit" disabled={!canCreate}>
               {createUser.isPending ? (
                 <Loader2 className="ml-2 h-4 w-4 animate-spin" />
               ) : (

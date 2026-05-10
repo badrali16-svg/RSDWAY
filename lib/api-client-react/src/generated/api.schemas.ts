@@ -57,10 +57,17 @@ export interface UserSummary {
   createdAt: string;
 }
 
+export interface AuthConfigInput {
+  username: string;
+  password: string;
+  baseUrl: string;
+}
+
 export interface CreateUserRequest {
   username: string;
   password: string;
   permissions: string[];
+  dttsConfig?: AuthConfigInput;
 }
 
 export interface UpdateUserRequest {
@@ -72,12 +79,6 @@ export interface UpdateUserRequest {
 export interface AuthConfig {
   username: string;
   hasPassword: boolean;
-  baseUrl: string;
-}
-
-export interface AuthConfigInput {
-  username: string;
-  password: string;
   baseUrl: string;
 }
 

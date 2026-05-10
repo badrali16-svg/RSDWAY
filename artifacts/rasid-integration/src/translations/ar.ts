@@ -439,6 +439,18 @@ export const ar: Record<string, string> = {
   "users.deletedTitle": "تم الحذف",
   "users.deleteErrDesc": "فشل حذف الحساب",
 
+  // Users — قسم بيانات اعتماد رصد (نموذج الإنشاء، للمدير فقط)
+  "users.dttsTitle": "بيانات اعتماد نظام رصد (DTTS)",
+  "users.dttsDesc": "أدخل بيانات حساب الهيئة العامة للغذاء والدواء لربط المستخدم ببيئة الإنتاج. يتم تخزين كلمة المرور بشكل مشفر وآمن.",
+  "users.dttsOptionalHint": "اختياري — إذا تُرك فارغاً، سيحتاج المستخدم إلى ضبط بيانات الاعتماد من الإعدادات",
+  "users.dttsCustomUrl": "رابط مخصص",
+  "users.dttsTesting": "جارٍ الاختبار...",
+  "users.dttsMustTest": "يرجى اختبار الاتصال قبل إنشاء الحساب",
+  "users.dttsTestFailed": "فشل اختبار الاتصال — لا يمكن إنشاء الحساب",
+  "users.dttsPartialFill": "يرجى إدخال جميع حقول بيانات رصد أو تركها فارغة بالكامل",
+  "users.dttsConnOk": "الاتصال ناجح ✓",
+  "users.dttsConnFail": "فشل الاتصال ✗",
+
   // Product List Input
   "products.listLabel": "قائمة المنتجات (Products)",
   "products.count": "منتج",

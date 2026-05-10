@@ -125,6 +125,13 @@ export const CreateUserBody = zod.object({
   username: zod.string(),
   password: zod.string(),
   permissions: zod.array(zod.string()),
+  dttsConfig: zod
+    .object({
+      username: zod.string(),
+      password: zod.string(),
+      baseUrl: zod.string(),
+    })
+    .optional(),
 });
 
 export const CreateUserResponse = zod.object({
@@ -258,6 +265,23 @@ export const SaveAuthConfigResponse = zod.object({
  * @summary Test the current DTTS connection using stored credentials
  */
 export const TestConnectionResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string(),
+  environment: zod.string().optional(),
+  baseUrl: zod.string().optional(),
+  testedAt: zod.string(),
+});
+
+/**
+ * @summary Test DTTS connection using provided credentials directly (admin only)
+ */
+export const TestConnectionDirectBody = zod.object({
+  username: zod.string(),
+  password: zod.string(),
+  baseUrl: zod.string(),
+});
+
+export const TestConnectionDirectResponse = zod.object({
   success: zod.boolean(),
   message: zod.string(),
   environment: zod.string().optional(),

@@ -370,6 +370,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/ConnectionTestResult"
 
+  /auth/test-connection-direct:
+    post:
+      operationId: testConnectionDirect
+      tags: [auth]
+      summary: Test DTTS connection using provided credentials directly (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthConfigInput"
+      responses:
+        "200":
+          description: Connection test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionTestResult"
+
   # ── IMPORT ─────────────────────────────────────────────────────────────────
   /rasid/import:
     post:
@@ -1133,6 +1152,8 @@ components:
           type: array
           items:
             type: string
+        dttsConfig:
+          $ref: "#/components/schemas/AuthConfigInput"
       required: [username, password, permissions]
 
     UpdateUserRequest:
