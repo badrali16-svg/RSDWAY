@@ -12,9 +12,9 @@ const router: IRouter = Router();
 // ── Excel template download ─────────────────────────────────────────────────
 router.get("/clients/template", requireAuth, (_req, res): void => {
   const wb = XLSX.utils.book_new();
-  const headers = ["اسم العميل *", "رقم GLN *", "اسم صاحب GLN (اختياري)"];
+  const headers = ["اسم العميل *", "رقم GLN *", "الجوال (اختياري)"];
   const example = [
-    ["شركة الأمل للأدوية", "1234567890123", "محمد أحمد"],
+    ["شركة الأمل للأدوية", "1234567890123", "0512345678"],
     ["مستشفى النور", "9876543210987", ""],
   ];
   const ws = XLSX.utils.aoa_to_sheet([headers, ...example]);
