@@ -193,8 +193,7 @@ export default function UsersPage() {
                     <div key={group.group}>
                       <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer mb-2">
                         <Checkbox
-                          checked={allChecked}
-                          data-state={someChecked && !allChecked ? "indeterminate" : undefined}
+                          checked={someChecked}
                           onCheckedChange={(c) => toggleGroupOps(groupSlugs, !!c, setNewPermissions)}
                         />
                         <span className="text-primary">{group.group}</span>
@@ -405,8 +404,7 @@ function UserRow({
                   <div key={group.group}>
                     <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer mb-1.5">
                       <Checkbox
-                        checked={allChecked}
-                        data-state={someChecked && !allChecked ? "indeterminate" : undefined}
+                        checked={someChecked}
                         onCheckedChange={(c) => toggleGroup(groupSlugs, !!c)}
                       />
                       <span className="text-primary">{group.group}</span>
