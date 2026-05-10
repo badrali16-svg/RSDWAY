@@ -866,6 +866,180 @@ export const useCreateUser = <
 };
 
 /**
+ * @summary Get DTTS credentials for a specific user (admin only)
+ */
+export const getGetUserAuthConfigUrl = (id: number) => {
+  return `/api/users/${id}/auth-config`;
+};
+
+export const getUserAuthConfig = async (
+  id: number,
+  options?: RequestInit,
+): Promise<AuthConfig> => {
+  return customFetch<AuthConfig>(getGetUserAuthConfigUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetUserAuthConfigQueryKey = (id: number) => {
+  return [`/api/users/${id}/auth-config`] as const;
+};
+
+export const getGetUserAuthConfigQueryOptions = <
+  TData = Awaited<ReturnType<typeof getUserAuthConfig>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getUserAuthConfig>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetUserAuthConfigQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getUserAuthConfig>>
+  > = ({ signal }) => getUserAuthConfig(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getUserAuthConfig>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetUserAuthConfigQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getUserAuthConfig>>
+>;
+export type GetUserAuthConfigQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get DTTS credentials for a specific user (admin only)
+ */
+
+export function useGetUserAuthConfig<
+  TData = Awaited<ReturnType<typeof getUserAuthConfig>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getUserAuthConfig>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetUserAuthConfigQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Save DTTS credentials for a specific user (admin only)
+ */
+export const getSaveUserAuthConfigUrl = (id: number) => {
+  return `/api/users/${id}/auth-config`;
+};
+
+export const saveUserAuthConfig = async (
+  id: number,
+  authConfigInput: AuthConfigInput,
+  options?: RequestInit,
+): Promise<AuthConfig> => {
+  return customFetch<AuthConfig>(getSaveUserAuthConfigUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(authConfigInput),
+  });
+};
+
+export const getSaveUserAuthConfigMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveUserAuthConfig>>,
+    TError,
+    { id: number; data: BodyType<AuthConfigInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof saveUserAuthConfig>>,
+  TError,
+  { id: number; data: BodyType<AuthConfigInput> },
+  TContext
+> => {
+  const mutationKey = ["saveUserAuthConfig"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof saveUserAuthConfig>>,
+    { id: number; data: BodyType<AuthConfigInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return saveUserAuthConfig(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SaveUserAuthConfigMutationResult = NonNullable<
+  Awaited<ReturnType<typeof saveUserAuthConfig>>
+>;
+export type SaveUserAuthConfigMutationBody = BodyType<AuthConfigInput>;
+export type SaveUserAuthConfigMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Save DTTS credentials for a specific user (admin only)
+ */
+export const useSaveUserAuthConfig = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveUserAuthConfig>>,
+    TError,
+    { id: number; data: BodyType<AuthConfigInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof saveUserAuthConfig>>,
+  TError,
+  { id: number; data: BodyType<AuthConfigInput> },
+  TContext
+> => {
+  return useMutation(getSaveUserAuthConfigMutationOptions(options));
+};
+
+/**
  * @summary Update a user's permissions or password (admin only)
  */
 export const getUpdateUserUrl = (id: number) => {

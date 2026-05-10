@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useListUsers,
   useCreateUser,
   useUpdateUser,
   useDeleteUser,
   useTestConnectionDirect,
+  useGetUserAuthConfig,
+  useSaveUserAuthConfig,
   getListUsersQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -494,6 +496,210 @@ export default function UsersPage() {
   );
 }
 
+// ── UserDttsSection ──────────────────────────────────────────────────────────
+
+function UserDttsSection({ userId }: { userId: number }) {
+  const { t } = useLanguage();
+  const { toast } = useToast();
+
+  const { data: config, isLoading: configLoading } = useGetUserAuthConfig(userId);
+  const saveConfig = useSaveUserAuthConfig();
+  const testDirect = useTestConnectionDirect();
+
+  const [dttsUsername, setDttsUsername] = useState("");
+  const [dttsPassword, setDttsPassword] = useState("");
+  const [dttsUseCustomUrl, setDttsUseCustomUrl] = useState(false);
+  const [dttsCustomUrl, setDttsCustomUrl] = useState("");
+  const [testStatus, setTestStatus] = useState<DttsTestStatus>("idle");
+  const [testMessage, setTestMessage] = useState("");
+
+  // Pre-fill when config loads
+  useEffect(() => {
+    if (config) {
+      setDttsUsername(config.username || "");
+      const url = config.baseUrl || PROD_URL;
+      const isCustom = url !== PROD_URL && url !== "https://tandttest.sfda.gov.sa/ws";
+      setDttsUseCustomUrl(isCustom);
+      if (isCustom) setDttsCustomUrl(url);
+    }
+  }, [config]);
+
+  const effectiveBaseUrl = dttsUseCustomUrl ? dttsCustomUrl : PROD_URL;
+  const canSave = !!dttsUsername && !!dttsPassword && !!effectiveBaseUrl;
+  const canTest = canSave;
+
+  const resetTestStatus = () => {
+    setTestStatus("idle");
+    setTestMessage("");
+  };
+
+  const handleSave = () => {
+    if (!canSave) return;
+    saveConfig.mutate(
+      { id: userId, data: { username: dttsUsername, password: dttsPassword, baseUrl: effectiveBaseUrl } },
+      {
+        onSuccess: () => {
+          toast({ title: t("users.dttsSavedOk"), description: dttsUsername });
+          setDttsPassword("");
+          resetTestStatus();
+        },
+        onError: () =>
+          toast({ title: t("common.error"), description: t("users.dttsSaveErr"), variant: "destructive" }),
+      },
+    );
+  };
+
+  const handleTest = () => {
+    if (!canTest) return;
+    setTestStatus("testing");
+    setTestMessage("");
+    testDirect.mutate(
+      { data: { username: dttsUsername, password: dttsPassword, baseUrl: effectiveBaseUrl } },
+      {
+        onSuccess: (data) => {
+          setTestStatus(data.success ? "success" : "failed");
+          setTestMessage(data.message ?? "");
+        },
+        onError: () => {
+          setTestStatus("failed");
+          setTestMessage(t("settings.connErrMsg"));
+        },
+      },
+    );
+  };
+
+  if (configLoading) {
+    return (
+      <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 rounded-lg border-2 border-primary/30 bg-primary/5 p-4">
+      {/* Header */}
+      <div className="flex items-start gap-2">
+        <ShieldCheck className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+        <div>
+          <p className="font-semibold text-sm">{t("users.dttsTitle")}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{t("users.dttsDesc")}</p>
+        </div>
+      </div>
+
+      {/* Base URL row */}
+      <div className="space-y-1">
+        <Label className="text-xs">{t("settings.baseUrlLabel")}</Label>
+        <div className="flex gap-2 items-center">
+          <Input
+            dir="ltr"
+            className={`text-sm ${!dttsUseCustomUrl ? "bg-muted text-muted-foreground cursor-default" : ""}`}
+            value={dttsUseCustomUrl ? dttsCustomUrl : effectiveBaseUrl}
+            readOnly={!dttsUseCustomUrl}
+            onChange={(e) => {
+              if (dttsUseCustomUrl) {
+                setDttsCustomUrl(e.target.value);
+                resetTestStatus();
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setDttsUseCustomUrl((v) => !v);
+              resetTestStatus();
+            }}
+            className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 shrink-0 whitespace-nowrap"
+          >
+            {dttsUseCustomUrl ? t("settings.prodEnvName") : t("users.dttsCustomUrl")}
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground">{t("settings.baseUrlDesc")}</p>
+      </div>
+
+      {/* Username + Password */}
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="space-y-1">
+          <Label className="text-xs">{t("settings.usernameLabel")}</Label>
+          <Input
+            dir="ltr"
+            className="text-sm"
+            value={dttsUsername}
+            onChange={(e) => {
+              setDttsUsername(e.target.value);
+              resetTestStatus();
+            }}
+            placeholder="GLN_..."
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">{t("settings.passwordLabel")}</Label>
+          <Input
+            type="password"
+            dir="ltr"
+            className="text-sm"
+            value={dttsPassword}
+            onChange={(e) => {
+              setDttsPassword(e.target.value);
+              resetTestStatus();
+            }}
+            placeholder={config?.hasPassword ? "••••••••" : ""}
+          />
+          {config?.hasPassword && !dttsPassword && (
+            <p className="text-xs text-green-700">{t("users.dttsPwdSaved")}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Buttons + test status */}
+      <div className="flex flex-wrap items-center gap-2 pt-0.5">
+        <Button
+          size="sm"
+          disabled={!canSave || saveConfig.isPending}
+          onClick={handleSave}
+        >
+          {saveConfig.isPending ? (
+            <Loader2 className="me-1.5 h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Save className="me-1.5 h-3.5 w-3.5" />
+          )}
+          {saveConfig.isPending ? t("settings.saving") : t("settings.saveBtn")}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={!canTest || testStatus === "testing"}
+          onClick={handleTest}
+        >
+          {testStatus === "testing" ? (
+            <Loader2 className="me-1.5 h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Wifi className="me-1.5 h-3.5 w-3.5" />
+          )}
+          {testStatus === "testing" ? t("users.dttsTesting") : t("settings.testConn")}
+        </Button>
+
+        {testStatus === "success" && (
+          <div className="flex items-center gap-1 text-green-700">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            <span className="text-xs font-medium">{t("users.dttsConnOk")}</span>
+          </div>
+        )}
+        {testStatus === "failed" && (
+          <div className="flex items-center gap-1 text-destructive">
+            <XCircle className="h-3.5 w-3.5" />
+            <span className="text-xs">{testMessage || t("users.dttsConnFail")}</span>
+          </div>
+        )}
+      </div>
+
+      {!canSave && dttsUsername && !dttsPassword && (
+        <p className="text-xs text-muted-foreground italic">{t("users.dttsEnterPwdToSave")}</p>
+      )}
+    </div>
+  );
+}
+
 interface UserRowUser {
   id: number;
   username: string;
@@ -625,6 +831,9 @@ function UserRow({
               })}
             </div>
           </div>
+
+          {/* DTTS Credentials section */}
+          <UserDttsSection userId={user.id} />
 
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1 flex-1 min-w-[200px]">

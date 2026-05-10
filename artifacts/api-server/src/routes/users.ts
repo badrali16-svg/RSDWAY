@@ -67,6 +67,52 @@ router.post("/users", requireAdmin, async (req, res): Promise<void> => {
   res.json(toSummary(row));
 });
 
+// ── Per-user DTTS auth config (admin only) ───────────────────────────────────
+
+router.get("/users/:id/auth-config", requireAdmin, async (req, res): Promise<void> => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const rows = await db.select().from(authConfigTable).where(eq(authConfigTable.userId, id)).limit(1);
+  if (rows.length === 0) {
+    res.json({ username: "", hasPassword: false, baseUrl: "https://rsd.sfda.gov.sa/ws" });
+    return;
+  }
+  const row = rows[0];
+  res.json({ username: row.username, hasPassword: !!row.passwordEncrypted, baseUrl: row.baseUrl });
+});
+
+router.post("/users/:id/auth-config", requireAdmin, async (req, res): Promise<void> => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const userRows = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+  if (userRows.length === 0) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  const { username, password, baseUrl } = req.body as { username: string; password: string; baseUrl: string };
+  if (!username || !password) {
+    res.status(400).json({ error: "username and password are required" });
+    return;
+  }
+  const finalBaseUrl = baseUrl || "https://rsd.sfda.gov.sa/ws";
+  const existing = await db.select().from(authConfigTable).where(eq(authConfigTable.userId, id)).limit(1);
+  if (existing.length > 0) {
+    await db
+      .update(authConfigTable)
+      .set({ username, passwordEncrypted: password, baseUrl: finalBaseUrl, updatedAt: new Date() })
+      .where(eq(authConfigTable.userId, id));
+  } else {
+    await db.insert(authConfigTable).values({ userId: id, username, passwordEncrypted: password, baseUrl: finalBaseUrl });
+  }
+  res.json({ username, hasPassword: true, baseUrl: finalBaseUrl });
+});
+
 router.patch("/users/:id", requireAdmin, async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) {

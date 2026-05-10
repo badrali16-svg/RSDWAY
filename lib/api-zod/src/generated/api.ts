@@ -143,6 +143,38 @@ export const CreateUserResponse = zod.object({
 });
 
 /**
+ * @summary Get DTTS credentials for a specific user (admin only)
+ */
+export const GetUserAuthConfigParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetUserAuthConfigResponse = zod.object({
+  username: zod.string(),
+  hasPassword: zod.boolean(),
+  baseUrl: zod.string(),
+});
+
+/**
+ * @summary Save DTTS credentials for a specific user (admin only)
+ */
+export const SaveUserAuthConfigParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const SaveUserAuthConfigBody = zod.object({
+  username: zod.string(),
+  password: zod.string(),
+  baseUrl: zod.string(),
+});
+
+export const SaveUserAuthConfigResponse = zod.object({
+  username: zod.string(),
+  hasPassword: zod.boolean(),
+  baseUrl: zod.string(),
+});
+
+/**
  * @summary Update a user's permissions or password (admin only)
  */
 export const UpdateUserParams = zod.object({

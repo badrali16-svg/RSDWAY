@@ -450,6 +450,10 @@ export const en: Record<string, string> = {
   "users.dttsPartialFill": "Please fill in all DTTS credential fields or leave them all empty",
   "users.dttsConnOk": "Connection successful ✓",
   "users.dttsConnFail": "Connection failed ✗",
+  "users.dttsSavedOk": "Credentials saved",
+  "users.dttsSaveErr": "Failed to save credentials",
+  "users.dttsPwdSaved": "Password is saved ✓ — enter a new one to update",
+  "users.dttsEnterPwdToSave": "Enter password to save settings",
 
   // Product List Input
   "products.listLabel": "Product List",

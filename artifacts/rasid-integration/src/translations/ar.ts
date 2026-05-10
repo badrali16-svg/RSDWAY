@@ -450,6 +450,10 @@ export const ar: Record<string, string> = {
   "users.dttsPartialFill": "يرجى إدخال جميع حقول بيانات رصد أو تركها فارغة بالكامل",
   "users.dttsConnOk": "الاتصال ناجح ✓",
   "users.dttsConnFail": "فشل الاتصال ✗",
+  "users.dttsSavedOk": "تم حفظ بيانات الاعتماد",
+  "users.dttsSaveErr": "فشل حفظ بيانات الاعتماد",
+  "users.dttsPwdSaved": "كلمة المرور محفوظة ✓ — أدخل جديدة للتغيير",
+  "users.dttsEnterPwdToSave": "يجب إدخال كلمة المرور للحفظ",
 
   // Product List Input
   "products.listLabel": "قائمة المنتجات (Products)",

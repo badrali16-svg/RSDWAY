@@ -209,6 +209,48 @@ paths:
               schema:
                 $ref: "#/components/schemas/UserSummary"
 
+  /users/{id}/auth-config:
+    get:
+      operationId: getUserAuthConfig
+      tags: [users]
+      summary: Get DTTS credentials for a specific user (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User's current DTTS config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthConfig"
+    post:
+      operationId: saveUserAuthConfig
+      tags: [users]
+      summary: Save DTTS credentials for a specific user (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthConfigInput"
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthConfig"
+
   /users/{id}:
     patch:
       operationId: updateUser
