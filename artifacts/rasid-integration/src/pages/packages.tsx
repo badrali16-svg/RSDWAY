@@ -98,13 +98,14 @@ export default function PackagesPage() {
         <p className="text-muted-foreground mt-1">رفع وتنزيل حزم البيانات الكبيرة والاستعلام عنها</p>
       </div>
 
-      <Tabs defaultValue="upload" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-grid">
-          <TabsTrigger value="upload">رفع حزمة (Upload)</TabsTrigger>
-          <TabsTrigger value="download">تنزيل حزمة (Download)</TabsTrigger>
-          <TabsTrigger value="query">استعلام الحزم (Query)</TabsTrigger>
+      <Tabs defaultValue={canDo("op:package-upload") ? "upload" : canDo("op:package-download") ? "download" : "query"} className="space-y-6">
+        <TabsList className="flex flex-wrap h-auto gap-1">
+          {canDo("op:package-upload") && <TabsTrigger value="upload">رفع حزمة (Upload)</TabsTrigger>}
+          {canDo("op:package-download") && <TabsTrigger value="download">تنزيل حزمة (Download)</TabsTrigger>}
+          {canDo("op:package-query") && <TabsTrigger value="query">استعلام الحزم (Query)</TabsTrigger>}
         </TabsList>
 
+        {canDo("op:package-upload") && (
         <TabsContent value="upload">
           <Card>
             <CardHeader>
@@ -140,7 +141,9 @@ export default function PackagesPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
+        {canDo("op:package-download") && (
         <TabsContent value="download">
           <Card>
             <CardHeader>
@@ -169,7 +172,9 @@ export default function PackagesPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
+        {canDo("op:package-query") && (
         <TabsContent value="query">
           <Card>
             <CardHeader>
@@ -232,6 +237,7 @@ export default function PackagesPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
       </Tabs>
 
       <SoapResponseViewer response={response} />

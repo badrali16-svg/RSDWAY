@@ -133,14 +133,15 @@ export default function DeactivationExportPage() {
         <p className="text-muted-foreground mt-1">إتلاف أو تعطيل المنتجات، وعمليات التصدير لخارج المملكة</p>
       </div>
 
-      <Tabs defaultValue="deactivation" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-grid">
-          <TabsTrigger value="deactivation">تعطيل (Deactivate)</TabsTrigger>
-          <TabsTrigger value="deactivation-cancel">إلغاء التعطيل</TabsTrigger>
-          <TabsTrigger value="export">تصدير (Export)</TabsTrigger>
-          <TabsTrigger value="export-cancel">إلغاء تصدير</TabsTrigger>
+      <Tabs defaultValue={["deactivation","deactivation-cancel","export","export-cancel"].find(t => canDo(`op:${t}`)) ?? "deactivation"} className="space-y-6">
+        <TabsList className="flex flex-wrap h-auto gap-1">
+          {canDo("op:deactivation") && <TabsTrigger value="deactivation">تعطيل (Deactivate)</TabsTrigger>}
+          {canDo("op:deactivation-cancel") && <TabsTrigger value="deactivation-cancel">إلغاء التعطيل</TabsTrigger>}
+          {canDo("op:export") && <TabsTrigger value="export">تصدير (Export)</TabsTrigger>}
+          {canDo("op:export-cancel") && <TabsTrigger value="export-cancel">إلغاء تصدير</TabsTrigger>}
         </TabsList>
 
+        {canDo("op:deactivation") && (
         <TabsContent value="deactivation">
           <Card>
             <CardHeader>
@@ -193,7 +194,9 @@ export default function DeactivationExportPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
+        {canDo("op:deactivation-cancel") && (
         <TabsContent value="deactivation-cancel">
           <Card>
             <CardHeader>
@@ -216,7 +219,9 @@ export default function DeactivationExportPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
+        {canDo("op:export") && (
         <TabsContent value="export">
           <Card>
             <CardHeader>
@@ -246,7 +251,9 @@ export default function DeactivationExportPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
+        {canDo("op:export-cancel") && (
         <TabsContent value="export-cancel">
           <Card>
             <CardHeader>
@@ -269,6 +276,7 @@ export default function DeactivationExportPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
       </Tabs>
 
       <SoapResponseViewer response={response} />

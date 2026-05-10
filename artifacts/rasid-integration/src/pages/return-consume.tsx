@@ -95,15 +95,15 @@ export default function ReturnConsumePage() {
         <p className="text-muted-foreground mt-1">عمليات إرجاع الأدوية للمورد أو تسجيل استهلاكها (للمستشفيات)</p>
       </div>
 
-      <Tabs defaultValue="return" className="space-y-6">
+      <Tabs defaultValue={["return","return-batch","consume","consume-cancel"].find(t => canDo(`op:${t}`)) ?? "return"} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
-          <TabsTrigger value="return">إرجاع (SN)</TabsTrigger>
-          <TabsTrigger value="return-batch">إرجاع بالتشغيلة</TabsTrigger>
-          <TabsTrigger value="consume">استهلاك (Consume)</TabsTrigger>
-          <TabsTrigger value="consume-cancel">إلغاء استهلاك</TabsTrigger>
+          {canDo("op:return") && <TabsTrigger value="return">إرجاع (SN)</TabsTrigger>}
+          {canDo("op:return-batch") && <TabsTrigger value="return-batch">إرجاع بالتشغيلة</TabsTrigger>}
+          {canDo("op:consume") && <TabsTrigger value="consume">استهلاك (Consume)</TabsTrigger>}
+          {canDo("op:consume-cancel") && <TabsTrigger value="consume-cancel">إلغاء استهلاك</TabsTrigger>}
         </TabsList>
 
-        {/* ── Return SN ── */}
+        {canDo("op:return") && (
         <TabsContent value="return">
           <Card>
             <CardHeader>
@@ -124,8 +124,8 @@ export default function ReturnConsumePage() {
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={returnMutation.isPending || !canDo("op:return")} title={!canDo("op:return") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {returnMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:return") ? <Lock className="mr-2 h-4 w-4" /> : null}
+                  <Button type="submit" disabled={returnMutation.isPending}>
+                    {returnMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     تنفيذ الإرجاع (SN)
                   </Button>
                 </form>
@@ -133,8 +133,9 @@ export default function ReturnConsumePage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
-        {/* ── Return Batch ── */}
+        {canDo("op:return-batch") && (
         <TabsContent value="return-batch">
           <Card>
             <CardHeader>
@@ -155,8 +156,8 @@ export default function ReturnConsumePage() {
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" disabled={returnBatchMutation.isPending || !canDo("op:return-batch")} title={!canDo("op:return-batch") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {returnBatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:return-batch") ? <Lock className="mr-2 h-4 w-4" /> : null}
+                  <Button type="submit" disabled={returnBatchMutation.isPending}>
+                    {returnBatchMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     تنفيذ الإرجاع بالتشغيلة
                   </Button>
                 </form>
@@ -164,8 +165,9 @@ export default function ReturnConsumePage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
-        {/* ── Consume ── */}
+        {canDo("op:consume") && (
         <TabsContent value="consume">
           <Card>
             <CardHeader>
@@ -179,8 +181,8 @@ export default function ReturnConsumePage() {
               <Form {...consumeForm}>
                 <form onSubmit={consumeForm.handleSubmit((v) => consumeMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم تسجيل الاستهلاك بنجاح"), onError }))} className="space-y-6">
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={consumeMutation.isPending || !canDo("op:consume")} title={!canDo("op:consume") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {consumeMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:consume") ? <Lock className="mr-2 h-4 w-4" /> : null}
+                  <Button type="submit" disabled={consumeMutation.isPending}>
+                    {consumeMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     تسجيل الاستهلاك
                   </Button>
                 </form>
@@ -188,8 +190,9 @@ export default function ReturnConsumePage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
-        {/* ── Consume Cancel ── */}
+        {canDo("op:consume-cancel") && (
         <TabsContent value="consume-cancel">
           <Card>
             <CardHeader>
@@ -203,8 +206,8 @@ export default function ReturnConsumePage() {
               <Form {...cancelForm}>
                 <form onSubmit={cancelForm.handleSubmit((v) => consumeCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء الاستهلاك بنجاح"), onError }))} className="space-y-6">
                   <ProductListInput mode="sn" />
-                  <Button type="submit" variant="destructive" disabled={consumeCancelMutation.isPending || !canDo("op:consume-cancel")} title={!canDo("op:consume-cancel") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {consumeCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:consume-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
+                  <Button type="submit" variant="destructive" disabled={consumeCancelMutation.isPending}>
+                    {consumeCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     إلغاء الاستهلاك
                   </Button>
                 </form>
@@ -212,6 +215,7 @@ export default function ReturnConsumePage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
       </Tabs>
 
       <SoapResponseViewer response={response} />

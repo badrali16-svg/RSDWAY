@@ -121,18 +121,19 @@ export default function DispatchAcceptPage() {
         <p className="text-muted-foreground mt-1">عمليات الإرسال والاستلام بين الجهات في سلسلة التوريد</p>
       </div>
 
-      <Tabs defaultValue="dispatch" className="space-y-6">
+      <Tabs defaultValue={["dispatch","dispatch-batch","dispatch-cancel","dispatch-cancel-batch","accept","accept-batch","accept-dispatch"].find(t => canDo(`op:${t}`)) ?? "dispatch"} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
-          <TabsTrigger value="dispatch">إرسال (SN)</TabsTrigger>
-          <TabsTrigger value="dispatch-batch">إرسال بالتشغيلة</TabsTrigger>
-          <TabsTrigger value="dispatch-cancel">إلغاء إرسال (SN)</TabsTrigger>
-          <TabsTrigger value="dispatch-cancel-batch">إلغاء إرسال بالتشغيلة</TabsTrigger>
-          <TabsTrigger value="accept">استلام (SN)</TabsTrigger>
-          <TabsTrigger value="accept-batch">استلام بالتشغيلة</TabsTrigger>
-          <TabsTrigger value="accept-dispatch">استلام عبر الإشعار</TabsTrigger>
+          {canDo("op:dispatch") && <TabsTrigger value="dispatch">إرسال (SN)</TabsTrigger>}
+          {canDo("op:dispatch-batch") && <TabsTrigger value="dispatch-batch">إرسال بالتشغيلة</TabsTrigger>}
+          {canDo("op:dispatch-cancel") && <TabsTrigger value="dispatch-cancel">إلغاء إرسال (SN)</TabsTrigger>}
+          {canDo("op:dispatch-cancel-batch") && <TabsTrigger value="dispatch-cancel-batch">إلغاء إرسال بالتشغيلة</TabsTrigger>}
+          {canDo("op:accept") && <TabsTrigger value="accept">استلام (SN)</TabsTrigger>}
+          {canDo("op:accept-batch") && <TabsTrigger value="accept-batch">استلام بالتشغيلة</TabsTrigger>}
+          {canDo("op:accept-dispatch") && <TabsTrigger value="accept-dispatch">استلام عبر الإشعار</TabsTrigger>}
         </TabsList>
 
         {/* ── Dispatch SN ── */}
+        {canDo("op:dispatch") && (
         <TabsContent value="dispatch">
           <Card>
             <CardHeader>
@@ -162,8 +163,10 @@ export default function DispatchAcceptPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* ── Dispatch Batch ── */}
+        {canDo("op:dispatch-batch") && (
         <TabsContent value="dispatch-batch">
           <Card>
             <CardHeader>
@@ -193,8 +196,10 @@ export default function DispatchAcceptPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* ── Dispatch Cancel SN ── */}
+        {canDo("op:dispatch-cancel") && (
         <TabsContent value="dispatch-cancel">
           <Card>
             <CardHeader>
@@ -224,8 +229,10 @@ export default function DispatchAcceptPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* ── Dispatch Cancel Batch ── */}
+        {canDo("op:dispatch-cancel-batch") && (
         <TabsContent value="dispatch-cancel-batch">
           <Card>
             <CardHeader>
@@ -255,8 +262,10 @@ export default function DispatchAcceptPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* ── Accept SN ── */}
+        {canDo("op:accept") && (
         <TabsContent value="accept">
           <Card>
             <CardHeader>
@@ -286,8 +295,10 @@ export default function DispatchAcceptPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* ── Accept Batch ── */}
+        {canDo("op:accept-batch") && (
         <TabsContent value="accept-batch">
           <Card>
             <CardHeader>
@@ -317,8 +328,10 @@ export default function DispatchAcceptPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* ── Accept Dispatch ── */}
+        {canDo("op:accept-dispatch") && (
         <TabsContent value="accept-dispatch">
           <Card>
             <CardHeader>
@@ -347,6 +360,7 @@ export default function DispatchAcceptPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
       </Tabs>
 
       <SoapResponseViewer response={response} />

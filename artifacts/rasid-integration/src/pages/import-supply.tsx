@@ -352,15 +352,15 @@ export default function ImportSupplyPage() {
         <p className="text-muted-foreground mt-1">عمليات تسجيل الأدوية المستوردة أو المصنعة محلياً في نظام رصد</p>
       </div>
 
-      <Tabs defaultValue="import" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-grid">
-          <TabsTrigger value="import">استيراد (Import)</TabsTrigger>
-          <TabsTrigger value="import-cancel">إلغاء استيراد (Cancel Import)</TabsTrigger>
-          <TabsTrigger value="supply">تصنيع (Supply)</TabsTrigger>
-          <TabsTrigger value="supply-cancel">إلغاء تصنيع (Cancel Supply)</TabsTrigger>
+      <Tabs defaultValue={canDo("op:import") ? "import" : canDo("op:import-cancel") ? "import-cancel" : canDo("op:supply") ? "supply" : "supply-cancel"} className="space-y-6">
+        <TabsList className="flex flex-wrap h-auto gap-1">
+          {canDo("op:import") && <TabsTrigger value="import">استيراد (Import)</TabsTrigger>}
+          {canDo("op:import-cancel") && <TabsTrigger value="import-cancel">إلغاء استيراد (Cancel Import)</TabsTrigger>}
+          {canDo("op:supply") && <TabsTrigger value="supply">تصنيع (Supply)</TabsTrigger>}
+          {canDo("op:supply-cancel") && <TabsTrigger value="supply-cancel">إلغاء تصنيع (Cancel Supply)</TabsTrigger>}
         </TabsList>
 
-        {/* Import Tab */}
+        {canDo("op:import") && (
         <TabsContent value="import">
           <Card>
             <CardHeader>
@@ -375,8 +375,9 @@ export default function ImportSupplyPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
-        {/* Import Cancel Tab */}
+        {canDo("op:import-cancel") && (
         <TabsContent value="import-cancel">
           <Card>
             <CardHeader>
@@ -390,8 +391,8 @@ export default function ImportSupplyPage() {
               <Form {...cancelForm}>
                 <form onSubmit={cancelForm.handleSubmit((v) => handleCancelSubmit(v, false))} className="space-y-6">
                   <ProductListInput />
-                  <Button type="submit" variant="destructive" disabled={importCancelMutation.isPending || !canDo("op:import-cancel")} title={!canDo("op:import-cancel") ? "غير مصرّح بهذه العملية" : undefined} className="w-full sm:w-auto">
-                    {importCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:import-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
+                  <Button type="submit" variant="destructive" disabled={importCancelMutation.isPending} className="w-full sm:w-auto">
+                    {importCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     تنفيذ الإلغاء
                   </Button>
                 </form>
@@ -399,8 +400,9 @@ export default function ImportSupplyPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
-        {/* Supply Tab */}
+        {canDo("op:supply") && (
         <TabsContent value="supply">
           <Card>
             <CardHeader>
@@ -415,8 +417,9 @@ export default function ImportSupplyPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
-        {/* Supply Cancel Tab */}
+        {canDo("op:supply-cancel") && (
         <TabsContent value="supply-cancel">
           <Card>
             <CardHeader>
@@ -430,8 +433,8 @@ export default function ImportSupplyPage() {
               <Form {...cancelForm}>
                 <form onSubmit={cancelForm.handleSubmit((v) => handleCancelSubmit(v, true))} className="space-y-6">
                   <ProductListInput />
-                  <Button type="submit" variant="destructive" disabled={supplyCancelMutation.isPending || !canDo("op:supply-cancel")} title={!canDo("op:supply-cancel") ? "غير مصرّح بهذه العملية" : undefined} className="w-full sm:w-auto">
-                    {supplyCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:supply-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
+                  <Button type="submit" variant="destructive" disabled={supplyCancelMutation.isPending} className="w-full sm:w-auto">
+                    {supplyCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     تنفيذ الإلغاء
                   </Button>
                 </form>
@@ -439,6 +442,7 @@ export default function ImportSupplyPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
       </Tabs>
 
       <SoapResponseViewer response={response} />

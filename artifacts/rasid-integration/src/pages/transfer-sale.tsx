@@ -116,17 +116,18 @@ export default function TransferSalePage() {
         <p className="text-muted-foreground mt-1">عمليات النقل بين الفروع وصرف الأدوية للمرضى عبر الصيدليات</p>
       </div>
 
-      <Tabs defaultValue="transfer" className="space-y-6">
+      <Tabs defaultValue={["transfer","transfer-batch","transfer-cancel","transfer-cancel-batch","pharmacy-sale","pharmacy-sale-cancel"].find(t => canDo(`op:${t}`))?.replace("pharmacy-sale-cancel","sale-cancel").replace("pharmacy-sale","sale") ?? "transfer"} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
-          <TabsTrigger value="transfer">نقل (SN)</TabsTrigger>
-          <TabsTrigger value="transfer-batch">نقل بالتشغيلة</TabsTrigger>
-          <TabsTrigger value="transfer-cancel">إلغاء نقل (SN)</TabsTrigger>
-          <TabsTrigger value="transfer-cancel-batch">إلغاء نقل بالتشغيلة</TabsTrigger>
-          <TabsTrigger value="sale">صرف دواء (Pharmacy Sale)</TabsTrigger>
-          <TabsTrigger value="sale-cancel">إلغاء الصرف</TabsTrigger>
+          {canDo("op:transfer") && <TabsTrigger value="transfer">نقل (SN)</TabsTrigger>}
+          {canDo("op:transfer-batch") && <TabsTrigger value="transfer-batch">نقل بالتشغيلة</TabsTrigger>}
+          {canDo("op:transfer-cancel") && <TabsTrigger value="transfer-cancel">إلغاء نقل (SN)</TabsTrigger>}
+          {canDo("op:transfer-cancel-batch") && <TabsTrigger value="transfer-cancel-batch">إلغاء نقل بالتشغيلة</TabsTrigger>}
+          {canDo("op:pharmacy-sale") && <TabsTrigger value="sale">صرف دواء (Pharmacy Sale)</TabsTrigger>}
+          {canDo("op:pharmacy-sale-cancel") && <TabsTrigger value="sale-cancel">إلغاء الصرف</TabsTrigger>}
         </TabsList>
 
         {/* ── Transfer SN ── */}
+        {canDo("op:transfer") && (
         <TabsContent value="transfer">
           <Card>
             <CardHeader>
@@ -156,8 +157,10 @@ export default function TransferSalePage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* ── Transfer Batch ── */}
+        {canDo("op:transfer-batch") && (
         <TabsContent value="transfer-batch">
           <Card>
             <CardHeader>
@@ -187,8 +190,10 @@ export default function TransferSalePage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* ── Transfer Cancel SN ── */}
+        {canDo("op:transfer-cancel") && (
         <TabsContent value="transfer-cancel">
           <Card>
             <CardHeader>
@@ -218,8 +223,10 @@ export default function TransferSalePage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* ── Transfer Cancel Batch ── */}
+        {canDo("op:transfer-cancel-batch") && (
         <TabsContent value="transfer-cancel-batch">
           <Card>
             <CardHeader>
@@ -249,8 +256,10 @@ export default function TransferSalePage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* ── Pharmacy Sale ── */}
+        {canDo("op:pharmacy-sale") && (
         <TabsContent value="sale">
           <Card>
             <CardHeader>
@@ -310,8 +319,10 @@ export default function TransferSalePage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* ── Pharmacy Sale Cancel ── */}
+        {canDo("op:pharmacy-sale-cancel") && (
         <TabsContent value="sale-cancel">
           <Card>
             <CardHeader>
@@ -350,6 +361,7 @@ export default function TransferSalePage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
       </Tabs>
 
       <SoapResponseViewer response={response} />
