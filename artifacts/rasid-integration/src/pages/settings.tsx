@@ -464,9 +464,8 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
         </Card>
       )}
 
-      {/* ── Environment Selector — admin only ────────────────────────────── */}
-      {isAdmin && (
-        <Card>
+      {/* ── Environment Selector ────────────────────────────────────────── */}
+      <Card>
           <CardHeader>
             <CardTitle className="text-lg">{t("settings.envTitle")}</CardTitle>
             <CardDescription>
@@ -543,13 +542,12 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
             </div>
           </CardContent>
         </Card>
-      )}
 
       {/* ── External Integration / API Keys ──────────────────────────────── */}
       <ApiKeysSection toast={toast} />
 
-      {/* ── Credentials Form — admin only ────────────────────────────────── */}
-      {isAdmin && <Card className="max-w-2xl">
+      {/* ── Credentials Form ─────────────────────────────────────────────── */}
+      <Card className="max-w-2xl">
         <CardHeader>
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-primary" />
@@ -660,7 +658,7 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
             </Form>
           )}
         </CardContent>
-      </Card>}
+      </Card>
     </div>
   );
 }
