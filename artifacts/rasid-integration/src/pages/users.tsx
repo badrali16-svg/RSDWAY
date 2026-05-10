@@ -40,6 +40,27 @@ const NAV_PERMISSION_OPTIONS: { slug: string; label: string }[] = [
   { slug: "history", label: "سجل العمليات" },
 ];
 
+// Nav slugs that are auto-derived from op groups (not manually controlled)
+const AUTO_NAV_SLUGS = new Set(OP_PERMISSION_GROUPS.map((g) => g.navSlug));
+// Only these nav items are shown in the manual nav section
+const MANUAL_NAV_OPTIONS = NAV_PERMISSION_OPTIONS.filter((opt) => !AUTO_NAV_SLUGS.has(opt.slug));
+
+// After any op toggle, auto-sync the corresponding navSlug:
+// - if any op in a group is enabled → add navSlug
+// - if all ops in a group are disabled → remove navSlug
+function syncNavSlugs(perms: string[]): string[] {
+  let result = [...perms];
+  for (const group of OP_PERMISSION_GROUPS) {
+    const anyEnabled = group.ops.some((o) => result.includes(o.slug));
+    if (anyEnabled && !result.includes(group.navSlug)) {
+      result = [...result, group.navSlug];
+    } else if (!anyEnabled) {
+      result = result.filter((s) => s !== group.navSlug);
+    }
+  }
+  return result;
+}
+
 const ALL_NAV_SLUGS = NAV_PERMISSION_OPTIONS.map((p) => p.slug);
 const ALL_DEFAULT_PERMS = [...ALL_NAV_SLUGS, ...ALL_OP_SLUGS];
 
@@ -58,16 +79,18 @@ export default function UsersPage() {
   const [newPermissions, setNewPermissions] = useState<string[]>(ALL_DEFAULT_PERMS);
 
   const toggleNewPerm = (slug: string) => {
-    setNewPermissions((prev) =>
-      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
-    );
+    setNewPermissions((prev) => {
+      const next = prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug];
+      return syncNavSlugs(next);
+    });
   };
 
-  // Toggle all ops in a group
+  // Toggle all ops in a group (also syncs navSlug automatically)
   const toggleGroupOps = (slugs: string[], checked: boolean, setter: (fn: (p: string[]) => string[]) => void) => {
-    setter((prev) =>
-      checked ? [...new Set([...prev, ...slugs])] : prev.filter((s) => !slugs.includes(s))
-    );
+    setter((prev) => {
+      const next = checked ? [...new Set([...prev, ...slugs])] : prev.filter((s) => !slugs.includes(s));
+      return syncNavSlugs(next);
+    });
   };
 
   const handleCreate = (e: React.FormEvent) => {
@@ -135,14 +158,15 @@ export default function UsersPage() {
               </div>
             </div>
 
-            {/* Nav permissions */}
+            {/* Nav permissions — only manually-controlled items */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <LayoutDashboard className="h-4 w-4 text-primary" />
                 العناصر الجانبية المسموح بها
               </Label>
+              <p className="text-xs text-muted-foreground">الصفحات المرتبطة بالعمليات (مثل الاستيراد والإرسال) تظهر تلقائياً عند تفعيل أي عملية منها.</p>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3 rounded-md border p-4">
-                {NAV_PERMISSION_OPTIONS.map((opt) => (
+                {MANUAL_NAV_OPTIONS.map((opt) => (
                   <label key={opt.slug} className="flex items-center gap-2 text-sm cursor-pointer">
                     <Checkbox
                       checked={newPermissions.includes(opt.slug)}
@@ -296,13 +320,17 @@ function UserRow({
   const isAdmin = user.role === "admin";
 
   const toggle = (slug: string) => {
-    setPerms((prev) => (prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]));
+    setPerms((prev) => {
+      const next = prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug];
+      return syncNavSlugs(next);
+    });
   };
 
   const toggleGroup = (slugs: string[], checked: boolean) => {
-    setPerms((prev) =>
-      checked ? [...new Set([...prev, ...slugs])] : prev.filter((s) => !slugs.includes(s))
-    );
+    setPerms((prev) => {
+      const next = checked ? [...new Set([...prev, ...slugs])] : prev.filter((s) => !slugs.includes(s));
+      return syncNavSlugs(next);
+    });
   };
 
   return (
@@ -342,14 +370,15 @@ function UserRow({
 
       {!isAdmin && (
         <>
-          {/* Nav permissions */}
+          {/* Nav permissions — only manually-controlled items */}
           <div className="space-y-1.5">
             <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
               <LayoutDashboard className="h-3.5 w-3.5" />
               العناصر الجانبية
             </p>
+            <p className="text-xs text-muted-foreground">الصفحات المرتبطة بالعمليات تظهر تلقائياً عند تفعيل أي عملية منها.</p>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 rounded-md bg-muted/30 border p-3">
-              {NAV_PERMISSION_OPTIONS.map((opt) => (
+              {MANUAL_NAV_OPTIONS.map((opt) => (
                 <label key={opt.slug} className="flex items-center gap-2 text-sm cursor-pointer">
                   <Checkbox
                     checked={perms.includes(opt.slug)}
