@@ -141,11 +141,23 @@ export default function ClientsPage() {
     );
   };
 
-  const handleDownloadTemplate = () => {
-    const a = document.createElement("a");
-    a.href = "/api/clients/template";
-    a.download = "clients-template.xlsx";
-    a.click();
+  const handleDownloadTemplate = async () => {
+    try {
+      const resp = await fetch("/api/clients/template");
+      if (!resp.ok) throw new Error("Failed to download template");
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "clients-template.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : t("common.error");
+      toast({ title: t("common.error"), description: msg, variant: "destructive" });
+    }
   };
 
   const handleImportOpen = () => {
