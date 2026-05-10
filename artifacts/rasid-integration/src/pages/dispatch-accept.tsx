@@ -142,9 +142,9 @@ export default function DispatchAcceptPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Truck className="h-5 w-5 text-primary" />
-                <CardTitle>إرسال بالرقم التسلسلي (SN)</CardTitle>
+                <CardTitle>{t("dispatch.tabDispatch")}</CardTitle>
               </div>
-              <CardDescription>إرسال منتجات محددة بأرقامها التسلسلية إلى جهة أخرى — DispatchService</CardDescription>
+              <CardDescription>{t("dispatch.descDispatch")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...dispatchForm}>
@@ -174,9 +174,9 @@ export default function DispatchAcceptPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-primary" />
-                <CardTitle>إرسال بالتشغيلة (Batch)</CardTitle>
+                <CardTitle>{t("dispatch.tabDispatchBatch")}</CardTitle>
               </div>
-              <CardDescription>إرسال منتجات بالكمية باستخدام رقم التشغيلة (BN) بدلاً من الرقم التسلسلي — DispatchBatchService</CardDescription>
+              <CardDescription>{t("dispatch.descDispatchBatch")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...dispatchBatchForm}>
@@ -206,9 +206,9 @@ export default function DispatchAcceptPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Ban className="h-5 w-5 text-destructive" />
-                <CardTitle>إلغاء إرسال بالرقم التسلسلي (SN)</CardTitle>
+                <CardTitle>{t("dispatch.tabDispatchCancel")}</CardTitle>
               </div>
-              <CardDescription>إلغاء عملية إرسال سابقة لم يتم استلامها — DispatchCancelService</CardDescription>
+              <CardDescription>{t("dispatch.descDispatchCancel")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...dispatchForm}>
@@ -238,9 +238,9 @@ export default function DispatchAcceptPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Ban className="h-5 w-5 text-destructive" />
-                <CardTitle>إلغاء إرسال بالتشغيلة (Batch)</CardTitle>
+                <CardTitle>{t("dispatch.tabDispatchCancelBatch")}</CardTitle>
               </div>
-              <CardDescription>إلغاء عملية إرسال بالتشغيلة لم يتم استلامها — DispatchCancelBatchService</CardDescription>
+              <CardDescription>{t("dispatch.descDispatchCancelBatch")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...dispatchBatchForm}>
@@ -270,9 +270,9 @@ export default function DispatchAcceptPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Check className="h-5 w-5 text-primary" />
-                <CardTitle>استلام بالرقم التسلسلي (SN)</CardTitle>
+                <CardTitle>{t("dispatch.cardAccept")}</CardTitle>
               </div>
-              <CardDescription>تسجيل استلام منتجات محددة بأرقامها التسلسلية — AcceptService</CardDescription>
+              <CardDescription>{t("dispatch.descAccept")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...acceptForm}>
@@ -302,9 +302,9 @@ export default function DispatchAcceptPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-primary" />
-                <CardTitle>استلام بالتشغيلة (Batch)</CardTitle>
+                <CardTitle>{t("dispatch.cardAcceptBatch")}</CardTitle>
               </div>
-              <CardDescription>تسجيل استلام منتجات بالكمية باستخدام رقم التشغيلة — AcceptBatchService</CardDescription>
+              <CardDescription>{t("dispatch.descAcceptBatch")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...acceptBatchForm}>
@@ -334,9 +334,9 @@ export default function DispatchAcceptPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Check className="h-5 w-5 text-primary" />
-                <CardTitle>استلام عبر إشعار الإرسال</CardTitle>
+                <CardTitle>{t("dispatch.cardAcceptDispatch")}</CardTitle>
               </div>
-              <CardDescription>قبول كافة المنتجات الموجودة في إشعار إرسال مسبق — AcceptDispatchService</CardDescription>
+              <CardDescription>{t("dispatch.descAcceptDispatch")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...acceptDispatchForm}>

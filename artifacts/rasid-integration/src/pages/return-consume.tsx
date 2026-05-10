@@ -111,9 +111,9 @@ export default function ReturnConsumePage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <RotateCcw className="h-5 w-5 text-primary" />
-                <CardTitle>إرجاع بالرقم التسلسلي (SN)</CardTitle>
+                <CardTitle>{t("return.tabReturn")}</CardTitle>
               </div>
-              <CardDescription>إرجاع المنتجات بأرقامها التسلسلية إلى المورد أو المصنع — ReturnService</CardDescription>
+              <CardDescription>{t("return.descReturn")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...returnForm}>
@@ -142,9 +142,9 @@ export default function ReturnConsumePage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-primary" />
-                <CardTitle>إرجاع بالتشغيلة (Batch)</CardTitle>
+                <CardTitle>{t("return.tabReturnBatch")}</CardTitle>
               </div>
-              <CardDescription>إرجاع المنتجات بالكمية باستخدام رقم التشغيلة — ReturnBatchService</CardDescription>
+              <CardDescription>{t("return.descReturnBatch")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...returnBatchForm}>
@@ -173,9 +173,9 @@ export default function ReturnConsumePage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Activity className="h-5 w-5 text-primary" />
-                <CardTitle>تسجيل استهلاك</CardTitle>
+                <CardTitle>{t("return.cardConsume")}</CardTitle>
               </div>
-              <CardDescription>تسجيل استهلاك الأدوية (للمستشفيات والعيادات) — ConsumeService (SN فقط)</CardDescription>
+              <CardDescription>{t("return.descConsume")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...consumeForm}>
@@ -198,9 +198,9 @@ export default function ReturnConsumePage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Ban className="h-5 w-5 text-destructive" />
-                <CardTitle>إلغاء الاستهلاك</CardTitle>
+                <CardTitle>{t("return.cardConsumeCancel")}</CardTitle>
               </div>
-              <CardDescription>إلغاء عملية استهلاك سابقة — ConsumeCancelService (SN فقط)</CardDescription>
+              <CardDescription>{t("return.descConsumeCancel")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...cancelForm}>

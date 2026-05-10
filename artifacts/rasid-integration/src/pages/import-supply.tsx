@@ -368,9 +368,9 @@ export default function ImportSupplyPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <PackagePlus className="h-5 w-5 text-primary" />
-                <CardTitle>عملية استيراد جديدة</CardTitle>
+                <CardTitle>{t("import.importCardTitle")}</CardTitle>
               </div>
-              <CardDescription>تسجيل منتجات تم استيرادها مؤخراً مع تحديد الأرقام التسلسلية</CardDescription>
+              <CardDescription>{t("import.importCardDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <ImportFormFields form={importForm} isSupply={false} />
@@ -385,9 +385,9 @@ export default function ImportSupplyPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Ban className="h-5 w-5 text-destructive" />
-                <CardTitle>إلغاء عملية استيراد</CardTitle>
+                <CardTitle>{t("import.importCancelCardTitle")}</CardTitle>
               </div>
-              <CardDescription>إلغاء تسجيل منتجات تم استيرادها بالخطأ</CardDescription>
+              <CardDescription>{t("import.importCancelCardDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...cancelForm}>
@@ -410,9 +410,9 @@ export default function ImportSupplyPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <PackagePlus className="h-5 w-5 text-primary" />
-                <CardTitle>عملية تصنيع جديدة</CardTitle>
+                <CardTitle>{t("import.supplyCardTitle")}</CardTitle>
               </div>
-              <CardDescription>تسجيل منتجات تم تصنيعها محلياً</CardDescription>
+              <CardDescription>{t("import.supplyCardDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <ImportFormFields form={supplyForm} isSupply={true} />
@@ -427,9 +427,9 @@ export default function ImportSupplyPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Ban className="h-5 w-5 text-destructive" />
-                <CardTitle>إلغاء عملية تصنيع</CardTitle>
+                <CardTitle>{t("import.supplyCancelCardTitle")}</CardTitle>
               </div>
-              <CardDescription>إلغاء تسجيل منتجات تم تصنيعها بالخطأ</CardDescription>
+              <CardDescription>{t("import.supplyCancelCardDesc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...cancelForm}>

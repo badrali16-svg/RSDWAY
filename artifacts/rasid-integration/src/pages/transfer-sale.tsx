@@ -136,9 +136,9 @@ export default function TransferSalePage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Repeat className="h-5 w-5 text-primary" />
-                <CardTitle>نقل بالرقم التسلسلي (SN)</CardTitle>
+                <CardTitle>{t("transfer.tabTransfer")}</CardTitle>
               </div>
-              <CardDescription>نقل المنتجات بأرقامها التسلسلية بين الفروع — TransferService</CardDescription>
+              <CardDescription>{t("transfer.descTransfer")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...transferForm}>
@@ -168,9 +168,9 @@ export default function TransferSalePage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-primary" />
-                <CardTitle>نقل بالتشغيلة (Batch)</CardTitle>
+                <CardTitle>{t("transfer.tabTransferBatch")}</CardTitle>
               </div>
-              <CardDescription>نقل المنتجات بالكمية باستخدام رقم التشغيلة — TransferBatchService</CardDescription>
+              <CardDescription>{t("transfer.descTransferBatch")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...transferBatchForm}>
@@ -200,9 +200,9 @@ export default function TransferSalePage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Ban className="h-5 w-5 text-destructive" />
-                <CardTitle>إلغاء نقل بالرقم التسلسلي (SN)</CardTitle>
+                <CardTitle>{t("transfer.tabTransferCancel")}</CardTitle>
               </div>
-              <CardDescription>إلغاء النقل الداخلي قبل قبوله — TransferCancelService</CardDescription>
+              <CardDescription>{t("transfer.descTransferCancel")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...transferForm}>
@@ -232,9 +232,9 @@ export default function TransferSalePage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Ban className="h-5 w-5 text-destructive" />
-                <CardTitle>إلغاء نقل بالتشغيلة (Batch)</CardTitle>
+                <CardTitle>{t("transfer.tabTransferCancelBatch")}</CardTitle>
               </div>
-              <CardDescription>إلغاء نقل بالتشغيلة قبل قبوله — TransferCancelBatchService</CardDescription>
+              <CardDescription>{t("transfer.descTransferCancelBatch")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...transferBatchForm}>
@@ -264,9 +264,9 @@ export default function TransferSalePage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5 text-primary" />
-                <CardTitle>صرف أدوية (بيع)</CardTitle>
+                <CardTitle>{t("transfer.cardSale")}</CardTitle>
               </div>
-              <CardDescription>صرف الأدوية للمريض من قبل الصيدلي — PharmacySaleService (SN فقط)</CardDescription>
+              <CardDescription>{t("transfer.descSale")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...pharmacySaleForm}>
@@ -280,28 +280,28 @@ export default function TransferSalePage() {
                     )} />
                     <FormField control={pharmacySaleForm.control} name="prescriptionId" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>رقم الوصفة (Prescription ID)</FormLabel>
-                        <FormControl><Input dir="ltr" className="text-left" placeholder="رقم الوصفة الطبية" {...field} /></FormControl>
+                        <FormLabel>{t("transfer.prescriptionId")}</FormLabel>
+                        <FormControl><Input dir="ltr" className="text-left" placeholder={t("transfer.prescriptionIdPlaceholder")} {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={pharmacySaleForm.control} name="prescriptionDate" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>تاريخ الوصفة (Prescription Date)</FormLabel>
+                        <FormLabel>{t("transfer.prescriptionDate")}</FormLabel>
                         <FormControl><Input dir="ltr" className="text-left" type="date" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={pharmacySaleForm.control} name="doctorId" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>رقم الطبيب (اختياري)</FormLabel>
+                        <FormLabel>{t("transfer.doctorId")}</FormLabel>
                         <FormControl><Input dir="ltr" className="text-left" placeholder="Doctor ID" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={pharmacySaleForm.control} name="patientNationalId" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>رقم هوية المريض (اختياري)</FormLabel>
+                        <FormLabel>{t("transfer.patientNationalId")}</FormLabel>
                         <FormControl><Input dir="ltr" className="text-left" placeholder="National ID" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
@@ -326,9 +326,9 @@ export default function TransferSalePage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Ban className="h-5 w-5 text-destructive" />
-                <CardTitle>إلغاء عملية صرف</CardTitle>
+                <CardTitle>{t("transfer.cardSaleCancel")}</CardTitle>
               </div>
-              <CardDescription>إلغاء عملية صرف أدوية سابقة — PharmacySaleCancelService (SN فقط)</CardDescription>
+              <CardDescription>{t("transfer.descSaleCancel")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...pharmacySaleCancelForm}>
@@ -342,8 +342,8 @@ export default function TransferSalePage() {
                     )} />
                     <FormField control={pharmacySaleCancelForm.control} name="prescriptionId" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>رقم الوصفة (Prescription ID)</FormLabel>
-                        <FormControl><Input dir="ltr" className="text-left" placeholder="رقم الوصفة الطبية" {...field} /></FormControl>
+                        <FormLabel>{t("transfer.prescriptionId")}</FormLabel>
+                        <FormControl><Input dir="ltr" className="text-left" placeholder={t("transfer.prescriptionIdPlaceholder")} {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
