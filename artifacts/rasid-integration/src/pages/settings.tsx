@@ -40,7 +40,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
-const PROD_URL = "https://rsd.sfda.gov.sa/ws/dtws";
+const PROD_URL = "https://rsd.sfda.gov.sa/ws";
 const TEST_URL = "https://tandttest.sfda.gov.sa/ws";
 
 const formSchema = z.object({

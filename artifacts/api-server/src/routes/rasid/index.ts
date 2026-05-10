@@ -9,15 +9,15 @@ import { eq } from "drizzle-orm";
 const router: IRouter = Router();
 
 // ── helpers ─────────────────────────────────────────────────────────────────
-const BASE_URL = "https://tandttest.sfda.gov.sa/ws";
-
-function svcUrl(svc: string): string {
-  return `${BASE_URL}/${svc}/${svc}`;
+// Build endpoint URL from user's stored baseUrl + service name
+// Pattern: {baseUrl}/{ServiceName}/{ServiceName}
+function svcEndpoint(baseUrl: string, svc: string): string {
+  return `${baseUrl.replace(/\/$/, "")}/${svc}/${svc}`;
 }
 
 async function proxy(
   operation: string,
-  endpoint: string,
+  svcName: string,
   soapBody: string,
   requestPayload: object,
   req: import("express").Request,
@@ -33,6 +33,8 @@ async function proxy(
     res.status(401).json({ success: false, error: "لم يتم ضبط بيانات اعتماد رصد. يرجى الذهاب إلى الإعدادات وحفظ اسم المستخدم وكلمة المرور.", rawXml: null, notificationId: null });
     return;
   }
+
+  const endpoint = svcEndpoint(creds.baseUrl ?? "https://tandttest.sfda.gov.sa/ws", svcName);
 
   const result = await callSoap({
     endpoint,
@@ -74,10 +76,10 @@ router.post("/auth/test-connection", async (req, res): Promise<void> => {
   }
 
   const baseUrl = creds.baseUrl ?? "https://tandttest.sfda.gov.sa/ws";
-  const isTest = baseUrl.includes("tandttest") || baseUrl.includes("test");
-  const environment = isTest ? "بيئة الاختبار (Test)" : "بيئة الإنتاج (Production)";
+  const isProd = baseUrl.includes("rsd.sfda.gov.sa") && !baseUrl.includes("tandttest");
+  const environment = isProd ? "بيئة الإنتاج (Production)" : "بيئة الاختبار (Test)";
 
-  const testEndpoint = `${baseUrl.replace(/\/$/, "")}/ErrorCodeListService/ErrorCodeListService`;
+  const testEndpoint = svcEndpoint(baseUrl, "ErrorCodeListService");
   const soapBody = `<err:ErrorCodeListServiceRequest xmlns:err="http://dtts.sfda.gov.sa/ErrorCodeListService"/>`;
 
   const result = await callSoap({ endpoint: testEndpoint, action: "", body: soapBody, username: creds.username, password: creds.password });
@@ -101,7 +103,7 @@ router.get("/auth/config", async (req, res): Promise<void> => {
     .where(eq(authConfigTable.userId, userId))
     .limit(1);
   if (rows.length === 0) {
-    res.json({ username: "", hasPassword: false, baseUrl: "https://tandttest.sfda.gov.sa" });
+    res.json({ username: "", hasPassword: false, baseUrl: "https://tandttest.sfda.gov.sa/ws" });
     return;
   }
   const row = rows[0];
@@ -119,7 +121,7 @@ router.post("/auth/config", async (req, res): Promise<void> => {
     res.status(400).json({ error: "username and password are required" });
     return;
   }
-  const finalBaseUrl = baseUrl || "https://tandttest.sfda.gov.sa";
+  const finalBaseUrl = baseUrl || "https://tandttest.sfda.gov.sa/ws";
   const existing = await db
     .select()
     .from(authConfigTable)
@@ -151,7 +153,7 @@ router.post("/rasid/import", async (req, res): Promise<void> => {
   <MD>${MD}</MD><GTIN>${GTIN}</GTIN><XD>${XD}</XD><BN>${BN}</BN>
   <SNREQUESTLIST>${snList}</SNREQUESTLIST>
 </imp:ImportServiceRequest>`;
-  await proxy("Import", svcUrl("ImportService"), body, req.body, req, res);
+  await proxy("Import", "ImportService", body, req.body, req, res);
 });
 
 router.post("/rasid/import-cancel", async (req, res): Promise<void> => {
@@ -159,7 +161,7 @@ router.post("/rasid/import-cancel", async (req, res): Promise<void> => {
   const body = `<imp:ImportCancelServiceRequest xmlns:imp="http://dtts.sfda.gov.sa/ImportCancelService">
   ${buildProductListXml(products)}
 </imp:ImportCancelServiceRequest>`;
-  await proxy("ImportCancel", svcUrl("ImportCancelService"), body, req.body, req, res);
+  await proxy("ImportCancel", "ImportCancelService", body, req.body, req, res);
 });
 
 // ── SUPPLY ───────────────────────────────────────────────────────────────────
@@ -170,7 +172,7 @@ router.post("/rasid/supply", async (req, res): Promise<void> => {
   <MD>${MD}</MD><GTIN>${GTIN}</GTIN><XD>${XD}</XD><BN>${BN}</BN>
   <SNREQUESTLIST>${snList}</SNREQUESTLIST>
 </sup:SupplyServiceRequest>`;
-  await proxy("Supply", svcUrl("SupplyService"), body, req.body, req, res);
+  await proxy("Supply", "SupplyService", body, req.body, req, res);
 });
 
 router.post("/rasid/supply-cancel", async (req, res): Promise<void> => {
@@ -178,7 +180,7 @@ router.post("/rasid/supply-cancel", async (req, res): Promise<void> => {
   const body = `<sup:SupplyCancelServiceRequest xmlns:sup="http://dtts.sfda.gov.sa/SupplyCancelService">
   ${buildProductListXml(products)}
 </sup:SupplyCancelServiceRequest>`;
-  await proxy("SupplyCancel", svcUrl("SupplyCancelService"), body, req.body, req, res);
+  await proxy("SupplyCancel", "SupplyCancelService", body, req.body, req, res);
 });
 
 // ── DISPATCH ─────────────────────────────────────────────────────────────────
@@ -187,7 +189,7 @@ router.post("/rasid/dispatch", async (req, res): Promise<void> => {
   const body = `<dis:DispatchServiceRequest xmlns:dis="http://dtts.sfda.gov.sa/DispatchService">
   <TOGLN>${toGLN}</TOGLN>${buildProductListXml(products)}
 </dis:DispatchServiceRequest>`;
-  await proxy("Dispatch", svcUrl("DispatchService"), body, req.body, req, res);
+  await proxy("Dispatch", "DispatchService", body, req.body, req, res);
 });
 
 router.post("/rasid/dispatch-cancel", async (req, res): Promise<void> => {
@@ -195,7 +197,7 @@ router.post("/rasid/dispatch-cancel", async (req, res): Promise<void> => {
   const body = `<dis:DispatchCancelServiceRequest xmlns:dis="http://dtts.sfda.gov.sa/DispatchCancelService">
   <TOGLN>${toGLN}</TOGLN>${buildProductListXml(products)}
 </dis:DispatchCancelServiceRequest>`;
-  await proxy("DispatchCancel", svcUrl("DispatchCancelService"), body, req.body, req, res);
+  await proxy("DispatchCancel", "DispatchCancelService", body, req.body, req, res);
 });
 
 // ── ACCEPT ───────────────────────────────────────────────────────────────────
@@ -204,7 +206,7 @@ router.post("/rasid/accept", async (req, res): Promise<void> => {
   const body = `<acc:AcceptServiceRequest xmlns:acc="http://dtts.sfda.gov.sa/AcceptService">
   <FROMGLN>${fromGLN}</FROMGLN>${buildProductListXml(products)}
 </acc:AcceptServiceRequest>`;
-  await proxy("Accept", svcUrl("AcceptService"), body, req.body, req, res);
+  await proxy("Accept", "AcceptService", body, req.body, req, res);
 });
 
 router.post("/rasid/accept-dispatch", async (req, res): Promise<void> => {
@@ -212,7 +214,7 @@ router.post("/rasid/accept-dispatch", async (req, res): Promise<void> => {
   const body = `<acc:AcceptDispatchServiceRequest xmlns:acc="http://dtts.sfda.gov.sa/AcceptDispatchService">
   <DISPATCHNOTIFICATIONID>${dispatchNotificationId}</DISPATCHNOTIFICATIONID>
 </acc:AcceptDispatchServiceRequest>`;
-  await proxy("AcceptDispatch", svcUrl("AcceptDispatchService"), body, req.body, req, res);
+  await proxy("AcceptDispatch", "AcceptDispatchService", body, req.body, req, res);
 });
 
 // ── RETURN ───────────────────────────────────────────────────────────────────
@@ -221,7 +223,7 @@ router.post("/rasid/return", async (req, res): Promise<void> => {
   const body = `<ret:ReturnServiceRequest xmlns:ret="http://dtts.sfda.gov.sa/ReturnService">
   <TOGLN>${toGLN}</TOGLN>${buildProductListXml(products)}
 </ret:ReturnServiceRequest>`;
-  await proxy("Return", svcUrl("ReturnService"), body, req.body, req, res);
+  await proxy("Return", "ReturnService", body, req.body, req, res);
 });
 
 // ── CONSUME ──────────────────────────────────────────────────────────────────
@@ -230,7 +232,7 @@ router.post("/rasid/consume", async (req, res): Promise<void> => {
   const body = `<con:ConsumeServiceRequest xmlns:con="http://dtts.sfda.gov.sa/ConsumeService">
   ${buildProductListXml(products)}
 </con:ConsumeServiceRequest>`;
-  await proxy("Consume", svcUrl("ConsumeService"), body, req.body, req, res);
+  await proxy("Consume", "ConsumeService", body, req.body, req, res);
 });
 
 router.post("/rasid/consume-cancel", async (req, res): Promise<void> => {
@@ -238,7 +240,7 @@ router.post("/rasid/consume-cancel", async (req, res): Promise<void> => {
   const body = `<con:ConsumeCancelServiceRequest xmlns:con="http://dtts.sfda.gov.sa/ConsumeCancelService">
   ${buildProductListXml(products)}
 </con:ConsumeCancelServiceRequest>`;
-  await proxy("ConsumeCancel", svcUrl("ConsumeCancelService"), body, req.body, req, res);
+  await proxy("ConsumeCancel", "ConsumeCancelService", body, req.body, req, res);
 });
 
 // ── TRANSFER ─────────────────────────────────────────────────────────────────
@@ -247,7 +249,7 @@ router.post("/rasid/transfer", async (req, res): Promise<void> => {
   const body = `<tran:TransferServiceRequest xmlns:tran="http://dtts.sfda.gov.sa/TransferService">
   <TOGLN>${toGLN}</TOGLN>${buildProductListXml(products)}
 </tran:TransferServiceRequest>`;
-  await proxy("Transfer", svcUrl("TransferService"), body, req.body, req, res);
+  await proxy("Transfer", "TransferService", body, req.body, req, res);
 });
 
 router.post("/rasid/transfer-cancel", async (req, res): Promise<void> => {
@@ -255,7 +257,7 @@ router.post("/rasid/transfer-cancel", async (req, res): Promise<void> => {
   const body = `<tran:TransferCancelServiceRequest xmlns:tran="http://dtts.sfda.gov.sa/TransferCancelService">
   <TOGLN>${toGLN}</TOGLN>${buildProductListXml(products)}
 </tran:TransferCancelServiceRequest>`;
-  await proxy("TransferCancel", svcUrl("TransferCancelService"), body, req.body, req, res);
+  await proxy("TransferCancel", "TransferCancelService", body, req.body, req, res);
 });
 
 // ── PHARMACY SALE ────────────────────────────────────────────────────────────
@@ -269,7 +271,7 @@ router.post("/rasid/pharmacy-sale", async (req, res): Promise<void> => {
   <PRESCRIPTIONDATE>${prescriptionDate}</PRESCRIPTIONDATE>
   ${buildProductListXml(products)}
 </phar:PharmacySaleServiceRequest>`;
-  await proxy("PharmacySale", svcUrl("PharmacySaleService"), body, req.body, req, res);
+  await proxy("PharmacySale", "PharmacySaleService", body, req.body, req, res);
 });
 
 router.post("/rasid/pharmacy-sale-cancel", async (req, res): Promise<void> => {
@@ -279,7 +281,7 @@ router.post("/rasid/pharmacy-sale-cancel", async (req, res): Promise<void> => {
   <PRESCRIPTIONID>${prescriptionId}</PRESCRIPTIONID>
   ${buildProductListXml(products)}
 </phar:PharmacySaleCancelServiceRequest>`;
-  await proxy("PharmacySaleCancel", svcUrl("PharmacySaleCancelService"), body, req.body, req, res);
+  await proxy("PharmacySaleCancel", "PharmacySaleCancelService", body, req.body, req, res);
 });
 
 // ── DEACTIVATION ─────────────────────────────────────────────────────────────
@@ -289,7 +291,7 @@ router.post("/rasid/deactivation", async (req, res): Promise<void> => {
   <DR>${DR}</DR><EXPLANATION>${explanation}</EXPLANATION>
   ${buildProductListXml(products)}
 </deac:DeactivationServiceRequest>`;
-  await proxy("Deactivation", svcUrl("DeactivationService"), body, req.body, req, res);
+  await proxy("Deactivation", "DeactivationService", body, req.body, req, res);
 });
 
 router.post("/rasid/deactivation-cancel", async (req, res): Promise<void> => {
@@ -297,7 +299,7 @@ router.post("/rasid/deactivation-cancel", async (req, res): Promise<void> => {
   const body = `<deac:DeactivationCancelServiceRequest xmlns:deac="http://dtts.sfda.gov.sa/DeactivationCancelService">
   ${buildProductListXml(products)}
 </deac:DeactivationCancelServiceRequest>`;
-  await proxy("DeactivationCancel", svcUrl("DeactivationCancelService"), body, req.body, req, res);
+  await proxy("DeactivationCancel", "DeactivationCancelService", body, req.body, req, res);
 });
 
 // ── EXPORT ───────────────────────────────────────────────────────────────────
@@ -307,7 +309,7 @@ router.post("/rasid/export", async (req, res): Promise<void> => {
   <COUNTRYCODE>${countryCode}</COUNTRYCODE>
   ${buildProductListXml(products)}
 </exp:ExportServiceRequest>`;
-  await proxy("Export", svcUrl("ExportService"), body, req.body, req, res);
+  await proxy("Export", "ExportService", body, req.body, req, res);
 });
 
 router.post("/rasid/export-cancel", async (req, res): Promise<void> => {
@@ -315,7 +317,7 @@ router.post("/rasid/export-cancel", async (req, res): Promise<void> => {
   const body = `<exp:ExportCancelServiceRequest xmlns:exp="http://dtts.sfda.gov.sa/ExportCancelService">
   ${buildProductListXml(products)}
 </exp:ExportCancelServiceRequest>`;
-  await proxy("ExportCancel", svcUrl("ExportCancelService"), body, req.body, req, res);
+  await proxy("ExportCancel", "ExportCancelService", body, req.body, req, res);
 });
 
 // ── PACKAGE TRANSFER ─────────────────────────────────────────────────────────
@@ -324,7 +326,7 @@ router.post("/rasid/package-upload", async (req, res): Promise<void> => {
   const body = `<pac:PackageUploadServiceRequest xmlns:pac="http://dtts.sfda.gov.sa/PackageUploadService">
   <TOGLN>${toGLN}</TOGLN><FILE>${fileBase64}</FILE>
 </pac:PackageUploadServiceRequest>`;
-  await proxy("PackageUpload", svcUrl("PackageUploadService"), body, req.body, req, res);
+  await proxy("PackageUpload", "PackageUploadService", body, req.body, req, res);
 });
 
 router.post("/rasid/package-download", async (req, res): Promise<void> => {
@@ -332,7 +334,7 @@ router.post("/rasid/package-download", async (req, res): Promise<void> => {
   const body = `<pac:PackageDownloadServiceRequest xmlns:pac="http://dtts.sfda.gov.sa/PackageDownloadService">
   <TRANSFERID>${transferId}</TRANSFERID>
 </pac:PackageDownloadServiceRequest>`;
-  await proxy("PackageDownload", svcUrl("PackageDownloadService"), body, req.body, req, res);
+  await proxy("PackageDownload", "PackageDownloadService", body, req.body, req, res);
 });
 
 router.post("/rasid/package-query", async (req, res): Promise<void> => {
@@ -344,7 +346,7 @@ router.post("/rasid/package-query", async (req, res): Promise<void> => {
   ${startDate ? `<STARTDATE>${startDate}</STARTDATE>` : ""}
   ${endDate ? `<ENDDATE>${endDate}</ENDDATE>` : ""}
 </pac:PackageQueryServiceRequest>`;
-  await proxy("PackageQuery", svcUrl("PackageQueryService"), body, req.body, req, res);
+  await proxy("PackageQuery", "PackageQueryService", body, req.body, req, res);
 });
 
 // ── QUERY UTILITIES ──────────────────────────────────────────────────────────
@@ -353,7 +355,7 @@ router.post("/rasid/check-status", async (req, res): Promise<void> => {
   const body = `<chec:CheckStatusServiceRequest xmlns:chec="http://dtts.sfda.gov.sa/CheckStatusService">
   ${buildProductListXml(products)}
 </chec:CheckStatusServiceRequest>`;
-  await proxy("CheckStatus", svcUrl("CheckStatusService"), body, req.body, req, res);
+  await proxy("CheckStatus", "CheckStatusService", body, req.body, req, res);
 });
 
 router.post("/rasid/dispatch-detail", async (req, res): Promise<void> => {
@@ -361,17 +363,17 @@ router.post("/rasid/dispatch-detail", async (req, res): Promise<void> => {
   const body = `<dis:DispatchDetailServiceRequest xmlns:dis="http://dtts.sfda.gov.sa/DispatchDetailService">
   <DISPATCHNOTIFICATIONID>${dispatchNotificationId}</DISPATCHNOTIFICATIONID>
 </dis:DispatchDetailServiceRequest>`;
-  await proxy("DispatchDetail", svcUrl("DispatchDetailService"), body, req.body, req, res);
+  await proxy("DispatchDetail", "DispatchDetailService", body, req.body, req, res);
 });
 
 router.post("/rasid/country-list", async (req, res): Promise<void> => {
   const body = `<coun:CountryListServiceRequest xmlns:coun="http://dtts.sfda.gov.sa/CountryListService"/>`;
-  await proxy("CountryList", svcUrl("CountryListService"), body, {}, req, res);
+  await proxy("CountryList", "CountryListService", body, {}, req, res);
 });
 
 router.post("/rasid/city-list", async (req, res): Promise<void> => {
   const body = `<cit:CityListServiceRequest xmlns:cit="http://dtts.sfda.gov.sa/CityListService"/>`;
-  await proxy("CityList", svcUrl("CityListService"), body, {}, req, res);
+  await proxy("CityList", "CityListService", body, {}, req, res);
 });
 
 router.post("/rasid/drug-list", async (req, res): Promise<void> => {
@@ -379,12 +381,12 @@ router.post("/rasid/drug-list", async (req, res): Promise<void> => {
   const body = `<drug:DrugListServiceRequest xmlns:drug="http://dtts.sfda.gov.sa/DrugListService">
   ${drugStatus != null ? `<DRUGSTATUS>${drugStatus}</DRUGSTATUS>` : ""}
 </drug:DrugListServiceRequest>`;
-  await proxy("DrugList", svcUrl("DrugListService"), body, req.body ?? {}, req, res);
+  await proxy("DrugList", "DrugListService", body, req.body ?? {}, req, res);
 });
 
 router.post("/rasid/error-code-list", async (req, res): Promise<void> => {
   const body = `<err:ErrorCodeListServiceRequest xmlns:err="http://dtts.sfda.gov.sa/ErrorCodeListService"/>`;
-  await proxy("ErrorCodeList", svcUrl("ErrorCodeListService"), body, {}, req, res);
+  await proxy("ErrorCodeList", "ErrorCodeListService", body, {}, req, res);
 });
 
 router.post("/rasid/stakeholder-list", async (req, res): Promise<void> => {
@@ -394,7 +396,7 @@ router.post("/rasid/stakeholder-list", async (req, res): Promise<void> => {
   <GETALL>${getAll ? "true" : "false"}</GETALL>
   ${cityId != null ? `<CITYID>${cityId}</CITYID>` : "<CITYID/>"}
 </stak:StakeholderListServiceRequest>`;
-  await proxy("StakeholderList", svcUrl("StakeholderListService"), body, req.body ?? {}, req, res);
+  await proxy("StakeholderList", "StakeholderListService", body, req.body ?? {}, req, res);
 });
 
 // ── HISTORY ──────────────────────────────────────────────────────────────────
