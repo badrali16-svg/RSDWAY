@@ -285,6 +285,7 @@ export const ar: Record<string, string> = {
   "dispatch.successAccept": "تم استلام المنتجات بنجاح",
   "dispatch.successAcceptBatch": "تم استلام المنتجات بالتشغيلة بنجاح",
   "dispatch.successAcceptDispatch": "تم قبول إشعار الإرسال بنجاح",
+  "dispatch.downloadData": "تحميل البيانات",
 
   // Return/Consume
   "return.title": "الإرجاع والاستهلاك",

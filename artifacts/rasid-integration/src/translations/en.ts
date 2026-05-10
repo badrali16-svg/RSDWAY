@@ -285,6 +285,7 @@ export const en: Record<string, string> = {
   "dispatch.successAccept": "Products accepted successfully",
   "dispatch.successAcceptBatch": "Products (batch) accepted successfully",
   "dispatch.successAcceptDispatch": "Dispatch notification accepted successfully",
+  "dispatch.downloadData": "Download Data",
 
   // Return/Consume
   "return.title": "Return & Consume",

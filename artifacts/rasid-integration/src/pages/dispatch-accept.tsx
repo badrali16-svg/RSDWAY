@@ -17,7 +17,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Truck, Check, Ban, Layers, Lock } from "lucide-react";
+import { Loader2, Truck, Check, Ban, Layers, Lock, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
@@ -70,6 +71,45 @@ const acceptBatchSchema = z.object({
 const acceptDispatchSchema = z.object({
   dispatchNotificationId: z.string().min(1, "رقم إشعار الإرسال مطلوب")
 });
+
+type SnProduct = { GTIN: string; SN?: string; BN?: string; XD?: string; QUANTITY?: number };
+type BatchProduct = { GTIN: string; BN?: string; XD?: string; QUANTITY?: number };
+
+function exportSnFormToExcel(opName: string, glnHeader: string, glnValue: string, products: SnProduct[]) {
+  const rows = products.map((p) => ({
+    [glnHeader]: glnValue,
+    "GTIN": p.GTIN ?? "",
+    "SN": p.SN ?? "",
+    "BN": p.BN ?? "",
+    "XD": p.XD ?? "",
+    "QUANTITY": p.QUANTITY ?? "",
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ [glnHeader]: glnValue, GTIN: "", SN: "", BN: "", XD: "", QUANTITY: "" }]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, opName.slice(0, 31));
+  XLSX.writeFile(wb, `${opName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+
+function exportBatchFormToExcel(opName: string, glnHeader: string, glnValue: string, products: BatchProduct[]) {
+  const rows = products.map((p) => ({
+    [glnHeader]: glnValue,
+    "GTIN": p.GTIN ?? "",
+    "BN": p.BN ?? "",
+    "XD": p.XD ?? "",
+    "QUANTITY": p.QUANTITY ?? "",
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ [glnHeader]: glnValue, GTIN: "", BN: "", XD: "", QUANTITY: "" }]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, opName.slice(0, 31));
+  XLSX.writeFile(wb, `${opName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+
+function exportNotifToExcel(notifId: string) {
+  const ws = XLSX.utils.json_to_sheet([{ "Notification ID": notifId }]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "AcceptDispatch");
+  XLSX.writeFile(wb, `AcceptDispatch_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
 
 export default function DispatchAcceptPage() {
   const { toast } = useToast();
@@ -156,10 +196,16 @@ export default function DispatchAcceptPage() {
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={dispatchMutation.isPending || !canDo("op:dispatch")} title={!canDo("op:dispatch") ? t("common.noPermission") : undefined}>
-                    {dispatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("dispatch.executeDispatch")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={dispatchMutation.isPending || !canDo("op:dispatch")} title={!canDo("op:dispatch") ? t("common.noPermission") : undefined}>
+                      {dispatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("dispatch.executeDispatch")}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => exportSnFormToExcel("إرسال-SN", "GLN المستلم", dispatchForm.getValues("toGLN"), dispatchForm.getValues("products") as SnProduct[])}>
+                      <Download className="me-2 h-4 w-4" />
+                      {t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -188,10 +234,16 @@ export default function DispatchAcceptPage() {
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" disabled={dispatchBatchMutation.isPending || !canDo("op:dispatch-batch")} title={!canDo("op:dispatch-batch") ? t("common.noPermission") : undefined}>
-                    {dispatchBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("dispatch.executeDispatchBatch")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={dispatchBatchMutation.isPending || !canDo("op:dispatch-batch")} title={!canDo("op:dispatch-batch") ? t("common.noPermission") : undefined}>
+                      {dispatchBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("dispatch.executeDispatchBatch")}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => exportBatchFormToExcel("إرسال-Batch", "GLN المستلم", dispatchBatchForm.getValues("toGLN"), dispatchBatchForm.getValues("products") as BatchProduct[])}>
+                      <Download className="me-2 h-4 w-4" />
+                      {t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -220,10 +272,16 @@ export default function DispatchAcceptPage() {
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" variant="destructive" disabled={dispatchCancelMutation.isPending || !canDo("op:dispatch-cancel")} title={!canDo("op:dispatch-cancel") ? t("common.noPermission") : undefined}>
-                    {dispatchCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("dispatch.executeDispatchCancel")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" variant="destructive" disabled={dispatchCancelMutation.isPending || !canDo("op:dispatch-cancel")} title={!canDo("op:dispatch-cancel") ? t("common.noPermission") : undefined}>
+                      {dispatchCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("dispatch.executeDispatchCancel")}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => exportSnFormToExcel("إلغاء-إرسال-SN", "GLN المستلم", dispatchForm.getValues("toGLN"), dispatchForm.getValues("products") as SnProduct[])}>
+                      <Download className="me-2 h-4 w-4" />
+                      {t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -252,10 +310,16 @@ export default function DispatchAcceptPage() {
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" variant="destructive" disabled={dispatchCancelBatchMutation.isPending || !canDo("op:dispatch-cancel-batch")} title={!canDo("op:dispatch-cancel-batch") ? t("common.noPermission") : undefined}>
-                    {dispatchCancelBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-cancel-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("dispatch.executeDispatchCancelBatch")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" variant="destructive" disabled={dispatchCancelBatchMutation.isPending || !canDo("op:dispatch-cancel-batch")} title={!canDo("op:dispatch-cancel-batch") ? t("common.noPermission") : undefined}>
+                      {dispatchCancelBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-cancel-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("dispatch.executeDispatchCancelBatch")}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => exportBatchFormToExcel("إلغاء-إرسال-Batch", "GLN المستلم", dispatchBatchForm.getValues("toGLN"), dispatchBatchForm.getValues("products") as BatchProduct[])}>
+                      <Download className="me-2 h-4 w-4" />
+                      {t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -284,10 +348,16 @@ export default function DispatchAcceptPage() {
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={acceptMutation.isPending || !canDo("op:accept")} title={!canDo("op:accept") ? t("common.noPermission") : undefined}>
-                    {acceptMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:accept") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("dispatch.executeAccept")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={acceptMutation.isPending || !canDo("op:accept")} title={!canDo("op:accept") ? t("common.noPermission") : undefined}>
+                      {acceptMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:accept") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("dispatch.executeAccept")}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => exportSnFormToExcel("استلام-SN", "GLN المرسل", acceptForm.getValues("fromGLN"), acceptForm.getValues("products") as SnProduct[])}>
+                      <Download className="me-2 h-4 w-4" />
+                      {t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -316,10 +386,16 @@ export default function DispatchAcceptPage() {
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" disabled={acceptBatchMutation.isPending || !canDo("op:accept-batch")} title={!canDo("op:accept-batch") ? t("common.noPermission") : undefined}>
-                    {acceptBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:accept-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("dispatch.executeAcceptBatch")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={acceptBatchMutation.isPending || !canDo("op:accept-batch")} title={!canDo("op:accept-batch") ? t("common.noPermission") : undefined}>
+                      {acceptBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:accept-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("dispatch.executeAcceptBatch")}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => exportBatchFormToExcel("استلام-Batch", "GLN المرسل", acceptBatchForm.getValues("fromGLN"), acceptBatchForm.getValues("products") as BatchProduct[])}>
+                      <Download className="me-2 h-4 w-4" />
+                      {t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -348,10 +424,16 @@ export default function DispatchAcceptPage() {
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <Button type="submit" disabled={acceptDispatchMutation.isPending || !canDo("op:accept-dispatch")} title={!canDo("op:accept-dispatch") ? t("common.noPermission") : undefined}>
-                    {acceptDispatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:accept-dispatch") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("dispatch.executeAcceptDispatch")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={acceptDispatchMutation.isPending || !canDo("op:accept-dispatch")} title={!canDo("op:accept-dispatch") ? t("common.noPermission") : undefined}>
+                      {acceptDispatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:accept-dispatch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("dispatch.executeAcceptDispatch")}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => exportNotifToExcel(acceptDispatchForm.getValues("dispatchNotificationId"))}>
+                      <Download className="me-2 h-4 w-4" />
+                      {t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
