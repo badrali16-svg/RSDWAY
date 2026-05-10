@@ -169,7 +169,7 @@ export function ProductListInput({ name = "products" }: { name?: string }) {
           {/* Manual add button */}
           <Button
             type="button" variant="outline" size="sm"
-            onClick={() => append({ GTIN: "", SN: "", BN: "", XD: "", QUANTITY: undefined })}
+            onClick={() => append({ GTIN: "", SN: undefined, BN: undefined, XD: undefined, QUANTITY: undefined })}
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
@@ -217,32 +217,35 @@ export function ProductListInput({ name = "products" }: { name?: string }) {
                 <FormField control={control} name={`${name}.${index}.SN`} render={({ field }) => (
                   <FormItem>
                     <FormLabel>SN</FormLabel>
-                    <FormControl><Input dir="ltr" className="text-left" placeholder="Serial Number" {...field} value={field.value || ""} /></FormControl>
+                    <FormControl><Input dir="ltr" className="text-left" placeholder="Serial Number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || undefined)} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={control} name={`${name}.${index}.BN`} render={({ field }) => (
                   <FormItem>
                     <FormLabel>BN</FormLabel>
-                    <FormControl><Input dir="ltr" className="text-left" placeholder="Batch Number" {...field} value={field.value || ""} /></FormControl>
+                    <FormControl><Input dir="ltr" className="text-left" placeholder="Batch Number" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || undefined)} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={control} name={`${name}.${index}.XD`} render={({ field }) => (
                   <FormItem>
                     <FormLabel>XD</FormLabel>
-                    <FormControl><Input dir="ltr" className="text-left" type="date" placeholder="YYYY-MM-DD" {...field} value={field.value || ""} /></FormControl>
+                    <FormControl><Input dir="ltr" className="text-left" type="date" placeholder="YYYY-MM-DD" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || undefined)} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={control} name={`${name}.${index}.QUANTITY`} render={({ field }) => (
                   <FormItem>
-                    <FormLabel>QUANTITY</FormLabel>
+                    <FormLabel>الكمية (QUANTITY)</FormLabel>
                     <FormControl>
                       <Input
-                        dir="ltr" className="text-left" type="number" placeholder="Quantity"
-                        {...field} value={field.value || ""}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                        dir="ltr" className="text-left font-semibold" type="number" placeholder="0" min="1"
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value !== "" ? Number(e.target.value) : undefined)}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
                       />
                     </FormControl>
                     <FormMessage />

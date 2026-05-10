@@ -29,7 +29,7 @@ const deactivationSchema = z.object({
     SN: z.string().optional(),
     BN: z.string().optional(),
     XD: z.string().optional(),
-    QUANTITY: z.number().optional()
+    QUANTITY: z.coerce.number().optional()
   })).min(1, "يجب إضافة منتج واحد على الأقل")
 });
 
@@ -39,7 +39,7 @@ const deactivationCancelSchema = z.object({
     SN: z.string().optional(),
     BN: z.string().optional(),
     XD: z.string().optional(),
-    QUANTITY: z.number().optional()
+    QUANTITY: z.coerce.number().optional()
   })).min(1, "يجب إضافة منتج واحد على الأقل")
 });
 
@@ -50,7 +50,7 @@ const exportSchema = z.object({
     SN: z.string().optional(),
     BN: z.string().optional(),
     XD: z.string().optional(),
-    QUANTITY: z.number().optional()
+    QUANTITY: z.coerce.number().optional()
   })).min(1, "يجب إضافة منتج واحد على الأقل")
 });
 

@@ -91,13 +91,13 @@ export async function callSoap(opts: SoapCallOptions): Promise<SoapResult> {
 }
 
 export function buildProductListXml(products: Array<{ GTIN: string; SN?: string | null; BN?: string | null; XD?: string | null; QUANTITY?: number | null }>): string {
-  return `<PRODUCTLIST>${products.map(p => `<PRODUCT>
-  <GTIN>${p.GTIN}</GTIN>
-  ${p.SN != null ? `<SN>${p.SN}</SN>` : ""}
-  ${p.BN != null ? `<BN>${p.BN}</BN>` : ""}
-  ${p.XD != null ? `<XD>${p.XD}</XD>` : ""}
-  ${p.QUANTITY != null ? `<QUANTITY>${p.QUANTITY}</QUANTITY>` : ""}
-</PRODUCT>`).join("")}</PRODUCTLIST>`;
+  return `<PRODUCTLIST>${products.map(p => {
+    const sn = p.SN != null && p.SN !== "" ? `<SN>${p.SN}</SN>` : "";
+    const bn = p.BN != null && p.BN !== "" ? `<BN>${p.BN}</BN>` : "";
+    const xd = p.XD != null && p.XD !== "" ? `<XD>${p.XD}</XD>` : "";
+    const qty = p.QUANTITY != null && Number(p.QUANTITY) > 0 ? `<QUANTITY>${p.QUANTITY}</QUANTITY>` : "";
+    return `<PRODUCT><GTIN>${p.GTIN}</GTIN>${sn}${bn}${xd}${qty}</PRODUCT>`;
+  }).join("")}</PRODUCTLIST>`;
 }
 
 export function extractNotificationId(xml: string): string | null {
