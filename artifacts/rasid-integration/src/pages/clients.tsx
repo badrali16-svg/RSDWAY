@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   useListClients,
   useCreateClient,
@@ -26,6 +26,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -38,9 +39,29 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Loader2, UserPlus, Pencil, Trash2, Users2, Search } from "lucide-react";
+import {
+  Loader2,
+  UserPlus,
+  Pencil,
+  Trash2,
+  Users2,
+  Search,
+  Download,
+  Upload,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertCircle,
+  SkipForward,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/language-context";
+
+interface ImportResult {
+  added: number;
+  skipped: number;
+  errors: number;
+  errorDetails: string[];
+}
 
 export default function ClientsPage() {
   const { toast } = useToast();
@@ -54,6 +75,11 @@ export default function ClientsPage() {
   const [search, setSearch] = useState("");
   const [editClient, setEditClient] = useState<Client | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: getListClientsQueryKey() });
 
@@ -115,6 +141,50 @@ export default function ClientsPage() {
     );
   };
 
+  const handleDownloadTemplate = () => {
+    const a = document.createElement("a");
+    a.href = "/api/clients/template";
+    a.download = "clients-template.xlsx";
+    a.click();
+  };
+
+  const handleImportOpen = () => {
+    setImportFile(null);
+    setImportResult(null);
+    setShowImport(true);
+  };
+
+  const handleImportUpload = async () => {
+    if (!importFile) {
+      toast({ title: t("clients.importNoFile"), variant: "destructive" });
+      return;
+    }
+    setImporting(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", importFile);
+      const resp = await fetch("/api/clients/import", { method: "POST", body: fd });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({})) as { error?: string };
+        throw new Error(err.error ?? t("clients.importFailed"));
+      }
+      const result = await resp.json() as ImportResult;
+      setImportResult(result);
+      if (result.added > 0) invalidate();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : t("clients.importFailed");
+      toast({ title: t("clients.importFailed"), description: msg, variant: "destructive" });
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleImportClose = () => {
+    setShowImport(false);
+    setImportFile(null);
+    setImportResult(null);
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
@@ -132,6 +202,14 @@ export default function ClientsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <Button variant="outline" onClick={handleDownloadTemplate} className="gap-2">
+          <Download className="h-4 w-4" />
+          {t("clients.templateBtn")}
+        </Button>
+        <Button variant="outline" onClick={handleImportOpen} className="gap-2">
+          <Upload className="h-4 w-4" />
+          {t("clients.importBtn")}
+        </Button>
         <Button onClick={() => setShowCreate(true)} className="gap-2">
           <UserPlus className="h-4 w-4" />
           {t("clients.add")}
@@ -243,6 +321,118 @@ export default function ClientsPage() {
         onSave={handleUpdate}
         saving={updateClient.isPending}
       />
+
+      {/* ── Import Dialog ─────────────────────────────────────────────────── */}
+      <Dialog open={showImport} onOpenChange={(v) => { if (!v) handleImportClose(); }}>
+        <DialogContent dir={dir} className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5 text-primary" />
+              {t("clients.importDialogTitle")}
+            </DialogTitle>
+            <DialogDescription>{t("clients.importDialogDesc")}</DialogDescription>
+          </DialogHeader>
+
+          {!importResult ? (
+            <div className="space-y-4 mt-2">
+              {/* Template hint */}
+              <div className="rounded-md bg-muted px-4 py-3 text-sm text-muted-foreground">
+                {t("clients.templateCols")}
+              </div>
+
+              {/* Download template shortcut */}
+              <Button variant="outline" className="w-full gap-2" onClick={handleDownloadTemplate}>
+                <Download className="h-4 w-4" />
+                {t("clients.templateBtn")}
+              </Button>
+
+              {/* File picker */}
+              <div className="space-y-1.5">
+                <Label htmlFor="import-file">{t("clients.importSelectFile")}</Label>
+                <Input
+                  id="import-file"
+                  type="file"
+                  accept=".xlsx,.xls"
+                  ref={fileInputRef}
+                  onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
+                  className="cursor-pointer"
+                />
+                {importFile && (
+                  <p className="text-xs text-muted-foreground" dir="ltr">
+                    {importFile.name} ({(importFile.size / 1024).toFixed(1)} KB)
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-2 justify-end pt-1">
+                <Button variant="ghost" onClick={handleImportClose}>
+                  {t("common.cancel")}
+                </Button>
+                <Button
+                  onClick={handleImportUpload}
+                  disabled={importing || !importFile}
+                  className="gap-2"
+                >
+                  {importing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  {importing ? t("clients.importProcessing") : t("clients.importUploadBtn")}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* ── Result panel ───────────────────────────────────────────── */
+            <div className="space-y-4 mt-2">
+              <h3 className="font-semibold text-sm">{t("clients.importResultTitle")}</h3>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 rounded-md bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 px-4 py-2.5">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                  <span className="text-sm font-medium text-green-800 dark:text-green-300">
+                    {importResult.added} {t("clients.importAdded")}
+                  </span>
+                </div>
+
+                {importResult.skipped > 0 && (
+                  <div className="flex items-center gap-3 rounded-md bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 px-4 py-2.5">
+                    <SkipForward className="h-5 w-5 text-yellow-600 shrink-0" />
+                    <span className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                      {importResult.skipped} {t("clients.importSkipped")}
+                    </span>
+                  </div>
+                )}
+
+                {importResult.errors > 0 && (
+                  <div className="rounded-md bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 px-4 py-2.5 space-y-1.5">
+                    <div className="flex items-center gap-3">
+                      <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
+                      <span className="text-sm font-medium text-red-800 dark:text-red-300">
+                        {importResult.errors} {t("clients.importErrors")}
+                      </span>
+                    </div>
+                    {importResult.errorDetails.length > 0 && (
+                      <ul className="ms-8 space-y-0.5">
+                        {importResult.errorDetails.map((d, i) => (
+                          <li key={i} className="text-xs text-red-700 dark:text-red-400">{d}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2 justify-end pt-1">
+                <Button onClick={handleImportClose} className="gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {t("common.close") ?? "إغلاق"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

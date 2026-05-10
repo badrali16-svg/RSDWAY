@@ -2,8 +2,84 @@ import { Router, type IRouter } from "express";
 import { db, clientsTable } from "@workspace/db";
 import { eq, and, asc } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
+import multer from "multer";
+import * as XLSX from "xlsx";
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 const router: IRouter = Router();
+
+// ── Excel template download ─────────────────────────────────────────────────
+router.get("/clients/template", requireAuth, (_req, res): void => {
+  const wb = XLSX.utils.book_new();
+  const headers = ["اسم العميل *", "رقم GLN *", "اسم صاحب GLN (اختياري)"];
+  const example = [
+    ["شركة الأمل للأدوية", "1234567890123", "محمد أحمد"],
+    ["مستشفى النور", "9876543210987", ""],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...example]);
+  ws["!cols"] = [{ wch: 35 }, { wch: 20 }, { wch: 30 }];
+  XLSX.utils.book_append_sheet(wb, ws, "العملاء");
+  const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader("Content-Disposition", 'attachment; filename="clients-template.xlsx"');
+  res.send(buf);
+});
+
+// ── Excel bulk import ────────────────────────────────────────────────────────
+router.post("/clients/import", requireAuth, upload.single("file"), async (req, res): Promise<void> => {
+  if (!req.file) {
+    res.status(400).json({ error: "No file uploaded" });
+    return;
+  }
+  const userId = req.session!.user!.id;
+  const wb = XLSX.read(req.file.buffer, { type: "buffer" });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, defval: "" }) as unknown[][];
+
+  let added = 0;
+  let skipped = 0;
+  let errors = 0;
+  const errorDetails: string[] = [];
+
+  // skip header row (index 0)
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i] as unknown[];
+    const name = String(row[0] ?? "").trim();
+    const gln = String(row[1] ?? "").trim();
+    const glnOwnerName = String(row[2] ?? "").trim() || null;
+
+    // skip fully blank rows
+    if (!name && !gln) continue;
+
+    if (!name || !gln) {
+      errors++;
+      errorDetails.push(`الصف ${i + 1}: اسم العميل ورقم GLN مطلوبان`);
+      continue;
+    }
+
+    const existing = await db
+      .select()
+      .from(clientsTable)
+      .where(and(eq(clientsTable.userId, userId), eq(clientsTable.gln, gln)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      skipped++;
+      continue;
+    }
+
+    try {
+      await db.insert(clientsTable).values({ userId, name, gln, glnOwnerName });
+      added++;
+    } catch {
+      errors++;
+      errorDetails.push(`الصف ${i + 1}: خطأ أثناء الإضافة`);
+    }
+  }
+
+  res.json({ added, skipped, errors, errorDetails });
+});
 
 router.get("/clients", requireAuth, async (req, res): Promise<void> => {
   const userId = req.session!.user!.id;

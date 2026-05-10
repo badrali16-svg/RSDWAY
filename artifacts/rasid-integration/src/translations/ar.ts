@@ -50,6 +50,7 @@ export const ar: Record<string, string> = {
   "common.noPermissionPage": "لا تملك صلاحية الوصول إلى هذه الصفحة.",
   "common.adminOnly": "هذه الصفحة متاحة للمدير فقط.",
   "common.execute": "تنفيذ",
+  "common.close": "إغلاق",
 
   // Dashboard
   "dashboard.title": "لوحة القيادة",
@@ -107,6 +108,21 @@ export const ar: Record<string, string> = {
   "clients.deletedMsg": "تم حذف العميل",
   "clients.searchPlaceholder": "بحث بالاسم أو رقم GLN أو صاحب GLN...",
   "clients.failDelete": "فشل حذف العميل",
+  "clients.importBtn": "استيراد من Excel",
+  "clients.templateBtn": "تنزيل نموذج Excel",
+  "clients.importDialogTitle": "استيراد العملاء من Excel",
+  "clients.importDialogDesc": "قم بتنزيل النموذج أولاً، أدخل بيانات عملائك، ثم ارفع الملف لإضافتهم دفعةً واحدة.",
+  "clients.importSelectFile": "اختر ملف Excel (.xlsx)",
+  "clients.importUploadBtn": "رفع واستيراد",
+  "clients.importResultTitle": "نتيجة الاستيراد",
+  "clients.importAdded": "عملاء تمت إضافتهم",
+  "clients.importSkipped": "عملاء تجاهلهم (GLN مكرر)",
+  "clients.importErrors": "صفوف بها خطأ",
+  "clients.importSuccess": "اكتمل الاستيراد",
+  "clients.importFailed": "فشل الاستيراد",
+  "clients.importNoFile": "يرجى اختيار ملف أولاً",
+  "clients.importProcessing": "جارٍ المعالجة...",
+  "clients.templateCols": "الأعمدة المطلوبة: اسم العميل، رقم GLN، اسم صاحب GLN (اختياري)",
 
   // GLN Input
   "gln.searchBtn": "بحث",

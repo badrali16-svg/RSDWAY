@@ -50,6 +50,7 @@ export const en: Record<string, string> = {
   "common.noPermissionPage": "You do not have permission to access this page.",
   "common.adminOnly": "This page is for admins only.",
   "common.execute": "Execute",
+  "common.close": "Close",
 
   // Dashboard
   "dashboard.title": "Dashboard",
@@ -107,6 +108,21 @@ export const en: Record<string, string> = {
   "clients.deletedMsg": "Client deleted",
   "clients.searchPlaceholder": "Search by name, GLN, or GLN owner...",
   "clients.failDelete": "Failed to delete client",
+  "clients.importBtn": "Import from Excel",
+  "clients.templateBtn": "Download Excel Template",
+  "clients.importDialogTitle": "Import Clients from Excel",
+  "clients.importDialogDesc": "Download the template first, fill in your client data, then upload the file to add them all at once.",
+  "clients.importSelectFile": "Choose Excel file (.xlsx)",
+  "clients.importUploadBtn": "Upload & Import",
+  "clients.importResultTitle": "Import Result",
+  "clients.importAdded": "clients added",
+  "clients.importSkipped": "clients skipped (duplicate GLN)",
+  "clients.importErrors": "rows with errors",
+  "clients.importSuccess": "Import completed",
+  "clients.importFailed": "Import failed",
+  "clients.importNoFile": "Please select a file first",
+  "clients.importProcessing": "Processing...",
+  "clients.templateCols": "Required columns: Client Name, GLN Number, GLN Owner Name (optional)",
 
   // GLN Input
   "gln.searchBtn": "Search",
