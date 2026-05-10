@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Loader2, UserPlus, Pencil, Trash2, Users2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/language-context";
 
 export default function ClientsPage() {
   const { toast } = useToast();
@@ -48,6 +49,7 @@ export default function ClientsPage() {
   const createClient = useCreateClient();
   const updateClient = useUpdateClient();
   const deleteClient = useDeleteClient();
+  const { t, dir } = useLanguage();
 
   const [search, setSearch] = useState("");
   const [editClient, setEditClient] = useState<Client | null>(null);
@@ -69,13 +71,13 @@ export default function ClientsPage() {
       { data },
       {
         onSuccess: (c: Client) => {
-          toast({ title: "تم الحفظ", description: `تم إضافة العميل ${c.name}` });
+          toast({ title: t("clients.addedMsg"), description: c.name });
           invalidate();
           setShowCreate(false);
         },
         onError: (err: unknown) => {
-          const msg = err instanceof Error ? err.message : "فشل الحفظ";
-          toast({ title: "خطأ", description: msg, variant: "destructive" });
+          const msg = err instanceof Error ? err.message : t("common.error");
+          toast({ title: t("common.error"), description: msg, variant: "destructive" });
         },
       },
     );
@@ -87,13 +89,13 @@ export default function ClientsPage() {
       { id: editClient.id, data },
       {
         onSuccess: (c: Client) => {
-          toast({ title: "تم الحفظ", description: `تم تحديث ${c.name}` });
+          toast({ title: t("clients.updatedMsg"), description: c.name });
           invalidate();
           setEditClient(null);
         },
         onError: (err: unknown) => {
-          const msg = err instanceof Error ? err.message : "فشل الحفظ";
-          toast({ title: "خطأ", description: msg, variant: "destructive" });
+          const msg = err instanceof Error ? err.message : t("common.error");
+          toast({ title: t("common.error"), description: msg, variant: "destructive" });
         },
       },
     );
@@ -104,11 +106,11 @@ export default function ClientsPage() {
       { id },
       {
         onSuccess: () => {
-          toast({ title: "تم الحذف", description: `تم حذف العميل ${name}` });
+          toast({ title: t("clients.deletedMsg"), description: name });
           invalidate();
         },
         onError: () =>
-          toast({ title: "خطأ", description: "فشل حذف العميل", variant: "destructive" }),
+          toast({ title: t("common.error"), description: t("clients.failDelete"), variant: "destructive" }),
       },
     );
   };
@@ -116,40 +118,36 @@ export default function ClientsPage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">إدارة العملاء</h1>
-        <p className="text-muted-foreground mt-1">
-          تسجيل وإدارة بيانات العملاء وأرقام GLN الخاصة بهم
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">{t("clients.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("clients.subtitle")}</p>
       </div>
 
-      {/* Actions row */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            className="pr-9"
-            placeholder="بحث بالاسم أو رقم GLN أو صاحب GLN..."
+            className="pe-9"
+            placeholder={t("clients.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <Button onClick={() => setShowCreate(true)} className="gap-2">
           <UserPlus className="h-4 w-4" />
-          إضافة عميل
+          {t("clients.add")}
         </Button>
       </div>
 
-      {/* Table */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Users2 className="h-5 w-5 text-primary" />
-            <CardTitle>العملاء المسجّلون</CardTitle>
+            <CardTitle>{t("clients.listTitle")}</CardTitle>
           </div>
           <CardDescription>
             {clients.length === 0
-              ? "لا يوجد عملاء مسجّلون بعد"
-              : `${clients.length} عميل مسجّل`}
+              ? t("clients.countZero")
+              : `${clients.length} ${t("clients.count")}`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -159,16 +157,16 @@ export default function ClientsPage() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground text-sm">
-              {search ? "لا توجد نتائج مطابقة للبحث" : "لا يوجد عملاء — أضف عميلاً للبدء"}
+              {search ? t("clients.noResults") : t("clients.empty")}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">اسم العميل</TableHead>
-                  <TableHead className="text-right">رقم GLN</TableHead>
-                  <TableHead className="text-right">اسم صاحب GLN</TableHead>
-                  <TableHead className="text-right">تاريخ الإضافة</TableHead>
+                  <TableHead className="text-start">{t("clients.colName")}</TableHead>
+                  <TableHead className="text-start">{t("clients.colGln")}</TableHead>
+                  <TableHead className="text-start">{t("clients.colOwner")}</TableHead>
+                  <TableHead className="text-start">{t("clients.colDate")}</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -184,8 +182,8 @@ export default function ClientsPage() {
                     <TableCell className="text-muted-foreground text-sm">
                       {client.glnOwnerName ?? "—"}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
-                      {new Date(client.createdAt).toLocaleDateString("ar-SA")}
+                    <TableCell className="text-muted-foreground text-xs" dir="ltr">
+                      {new Date(client.createdAt).toLocaleDateString("en-SA")}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1 justify-end">
@@ -203,20 +201,20 @@ export default function ClientsPage() {
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent dir="rtl">
+                          <AlertDialogContent dir={dir}>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+                              <AlertDialogTitle>{t("clients.deleteTitle")}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                سيتم حذف العميل «{client.name}» (GLN: {client.gln}) نهائياً.
+                                {t("clients.deleteDesc")} «{client.name}» (GLN: {client.gln})
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleDelete(client.id, client.name)}
                                 disabled={deleteClient.isPending}
                               >
-                                حذف
+                                {t("common.delete")}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -258,6 +256,7 @@ interface ClientFormDialogProps {
 }
 
 function ClientFormDialog({ open, onOpenChange, initial, onSave, saving }: ClientFormDialogProps) {
+  const { t, dir } = useLanguage();
   const [name, setName] = useState(initial?.name ?? "");
   const [gln, setGln] = useState(initial?.gln ?? "");
   const [glnOwnerName, setGlnOwnerName] = useState(initial?.glnOwnerName ?? "");
@@ -276,55 +275,55 @@ function ClientFormDialog({ open, onOpenChange, initial, onSave, saving }: Clien
 
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
-      <DialogContent dir="rtl" className="max-w-sm">
+      <DialogContent dir={dir} className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5 text-primary" />
-            {initial ? "تعديل بيانات العميل" : "إضافة عميل جديد"}
+            {initial ? t("clients.formEditTitle") : t("clients.formAddTitle")}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-1.5">
-            <Label htmlFor="cf-name">اسم العميل *</Label>
+            <Label htmlFor="cf-name">{t("clients.nameLabel")}</Label>
             <Input
               id="cf-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="اسم الشركة أو المنشأة"
+              placeholder={t("clients.namePlaceholder")}
               required
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="cf-gln">رقم GLN *</Label>
+            <Label htmlFor="cf-gln">{t("clients.glnLabel")}</Label>
             <Input
               id="cf-gln"
               dir="ltr"
               className="text-left font-mono"
               value={gln}
               onChange={(e) => setGln(e.target.value)}
-              placeholder="1234567890123"
+              placeholder={t("clients.glnPlaceholder")}
               required
             />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cf-owner">
-              اسم صاحب GLN
-              <span className="mr-1 text-xs text-muted-foreground">(اختياري)</span>
+              {t("clients.ownerLabel")}
+              <span className="ms-1 text-xs text-muted-foreground">({t("common.optional")})</span>
             </Label>
             <Input
               id="cf-owner"
               value={glnOwnerName}
               onChange={(e) => setGlnOwnerName(e.target.value)}
-              placeholder="الاسم المسجّل في الهيئة"
+              placeholder={t("clients.ownerPlaceholder")}
             />
           </div>
           <div className="flex gap-2 justify-end pt-1">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-              إلغاء
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={saving || !name.trim() || !gln.trim()}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
-              {initial ? "حفظ التعديلات" : "إضافة العميل"}
+              {saving && <Loader2 className="h-4 w-4 animate-spin me-2" />}
+              {initial ? t("clients.btnSave") : t("clients.btnAdd")}
             </Button>
           </div>
         </form>

@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { useLanguage } from "@/lib/language-context";
 
 const PROD_URL = "https://rsd.sfda.gov.sa/ws";
 const TEST_URL = "https://tandttest.sfda.gov.sa/ws";
@@ -72,6 +73,7 @@ export default function Settings() {
   const [gateError, setGateError] = useState<string | null>(null);
   const unlock = useUnlockSettings();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const handleUnlock = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,15 +100,13 @@ export default function Settings() {
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
               <Lock className="h-6 w-6 text-primary" />
             </div>
-            <CardTitle>صفحة محمية</CardTitle>
-            <CardDescription>
-              يرجى إدخال كلمة المرور للدخول إلى صفحة الإعدادات
-            </CardDescription>
+            <CardTitle>{t("settings.gateTitle")}</CardTitle>
+            <CardDescription>{t("settings.gateDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUnlock} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="gate-password">كلمة المرور</Label>
+                <Label htmlFor="gate-password">{t("settings.gatePasswordLabel")}</Label>
                 <Input
                   id="gate-password"
                   type="password"
@@ -115,15 +115,15 @@ export default function Settings() {
                   required
                   autoFocus
                 />
-                {gateError && <p className="text-sm text-destructive">{gateError}</p>}
+                {gateError && <p className="text-sm text-destructive">{t("settings.gateWrongPassword")}</p>}
               </div>
               <Button type="submit" className="w-full" disabled={unlock.isPending}>
                 {unlock.isPending ? (
-                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <Lock className="ml-2 h-4 w-4" />
+                  <Lock className="me-2 h-4 w-4" />
                 )}
-                دخول
+                {t("settings.gateEnter")}
               </Button>
             </form>
           </CardContent>
@@ -140,6 +140,7 @@ function ApiKeysSection({ toast }: { toast: ReturnType<typeof useToast>["toast"]
   const { data: keys = [], refetch } = useListApiKeys();
   const createKey = useCreateApiKey();
   const deleteKey = useDeleteApiKey();
+  const { t } = useLanguage();
   const [newKeyName, setNewKeyName] = useState("");
   const [createdKey, setCreatedKey] = useState<{ id: number; name: string; key: string } | null>(null);
   const [confirmRevoke, setConfirmRevoke] = useState<number | null>(null);
@@ -156,7 +157,7 @@ function ApiKeysSection({ toast }: { toast: ReturnType<typeof useToast>["toast"]
           setNewKeyName("");
           refetch();
         },
-        onError: () => toast({ title: "خطأ", description: "فشل إنشاء المفتاح", variant: "destructive" }),
+        onError: () => toast({ title: t("common.error"), description: t("settings.createErrDesc"), variant: "destructive" }),
       }
     );
   };
@@ -168,9 +169,9 @@ function ApiKeysSection({ toast }: { toast: ReturnType<typeof useToast>["toast"]
         onSuccess: () => {
           setConfirmRevoke(null);
           refetch();
-          toast({ title: "تم الحذف", description: "تم إلغاء تفعيل المفتاح بنجاح" });
+          toast({ title: t("settings.revokeOkTitle"), description: t("settings.revokeOkDesc") });
         },
-        onError: () => toast({ title: "خطأ", description: "فشل حذف المفتاح", variant: "destructive" }),
+        onError: () => toast({ title: t("settings.revokeErrTitle"), description: t("settings.revokeErrDesc"), variant: "destructive" }),
       }
     );
   };
@@ -324,6 +325,7 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
   const { data: authConfig, isLoading: authLoading } = useGetAuthConfig();
   const saveAuth = useSaveAuthConfig();
   const testConn = useTestConnection();
+  const { t } = useLanguage();
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -365,14 +367,14 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
       {
         onSuccess: () => {
           toast({
-            title: "تم الحفظ بنجاح",
-            description: "تم تحديث بيانات الاعتماد لنظام رصد",
+            title: t("settings.savedOkTitle"),
+            description: t("settings.savedOkDesc"),
           });
         },
         onError: () => {
           toast({
-            title: "خطأ في الحفظ",
-            description: "حدث خطأ أثناء محاولة حفظ البيانات",
+            title: t("settings.saveErrTitle"),
+            description: t("settings.saveErrDesc"),
             variant: "destructive",
           });
         },
@@ -416,8 +418,8 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">الإعدادات</h1>
-        <p className="text-muted-foreground mt-1">إعدادات الربط مع نظام رصد (DTTS) والتفويض والتكامل الخارجي</p>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">{t("settings.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("settings.subtitle")}</p>
       </div>
 
       {/* ── Connection Status Banner ─────────────────────────────────────── */}
@@ -436,7 +438,7 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
                 <p
                   className={`font-semibold ${connectionStatus.success ? "text-green-800" : "text-destructive"}`}
                 >
-                  {connectionStatus.success ? "الاتصال ناجح ✓" : "فشل الاتصال ✗"}
+                  {connectionStatus.success ? t("settings.connSuccess") : t("settings.connFailed")}
                 </p>
                 <p className="text-sm text-muted-foreground mt-0.5">{connectionStatus.message}</p>
                 {connectionStatus.environment && (

@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
 import NotFound from "@/pages/not-found";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { LanguageProvider, useLanguage } from "@/lib/language-context";
 import { Loader2 } from "lucide-react";
 
 import LoginPage from "@/pages/login";
@@ -32,12 +33,13 @@ const queryClient = new QueryClient({
 
 function PermissionGuard({ slug, children }: { slug: string; children: React.ReactNode }) {
   const { user } = useAuth();
+  const { t } = useLanguage();
   if (!user) return null;
   if (user.role === "admin") return <>{children}</>;
   if (!user.permissions?.includes(slug)) {
     return (
       <div className="rounded-md border bg-card p-8 text-center">
-        <p className="text-muted-foreground">لا تملك صلاحية الوصول إلى هذه الصفحة.</p>
+        <p className="text-muted-foreground">{t("common.noPermissionPage")}</p>
       </div>
     );
   }
@@ -46,11 +48,12 @@ function PermissionGuard({ slug, children }: { slug: string; children: React.Rea
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const { t } = useLanguage();
   if (!user) return null;
   if (user.role !== "admin") {
     return (
       <div className="rounded-md border bg-card p-8 text-center">
-        <p className="text-muted-foreground">هذه الصفحة متاحة للمدير فقط.</p>
+        <p className="text-muted-foreground">{t("common.adminOnly")}</p>
       </div>
     );
   }
@@ -115,14 +118,16 @@ function Gate() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <AuthProvider>
-            <Gate />
-          </AuthProvider>
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
+      <LanguageProvider>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <AuthProvider>
+              <Gate />
+            </AuthProvider>
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

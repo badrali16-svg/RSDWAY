@@ -10,16 +10,16 @@ import {
   SoapResponse
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, RotateCcw, Activity, Ban, Layers, Lock } from "lucide-react";
+import { Loader2, RotateCcw, Activity, Ban, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import { GlnInput } from "@/components/gln-input";
+import { useLanguage } from "@/lib/language-context";
 
 const returnSchema = z.object({
   toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),
@@ -55,6 +55,7 @@ const consumeSchema = z.object({
 export default function ReturnConsumePage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
 
@@ -85,23 +86,23 @@ export default function ReturnConsumePage() {
 
   const onSuccess = (res: SoapResponse, msg: string) => {
     setResponse(res);
-    toast({ title: "تمت العملية", description: msg });
+    toast({ title: t("common.saved"), description: msg });
   };
-  const onError = () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
+  const onError = () => toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">الإرجاع والاستهلاك</h1>
-        <p className="text-muted-foreground mt-1">عمليات إرجاع الأدوية للمورد أو تسجيل استهلاكها (للمستشفيات)</p>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">{t("return.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("return.subtitle")}</p>
       </div>
 
-      <Tabs defaultValue={["return","return-batch","consume","consume-cancel"].find(t => canDo(`op:${t}`)) ?? "return"} className="space-y-6">
+      <Tabs defaultValue={["return","return-batch","consume","consume-cancel"].find(tab => canDo(`op:${tab}`)) ?? "return"} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
-          {canDo("op:return") && <TabsTrigger value="return">إرجاع (SN)</TabsTrigger>}
-          {canDo("op:return-batch") && <TabsTrigger value="return-batch">إرجاع بالتشغيلة</TabsTrigger>}
-          {canDo("op:consume") && <TabsTrigger value="consume">استهلاك (Consume)</TabsTrigger>}
-          {canDo("op:consume-cancel") && <TabsTrigger value="consume-cancel">إلغاء استهلاك</TabsTrigger>}
+          {canDo("op:return") && <TabsTrigger value="return">{t("return.tabReturn")}</TabsTrigger>}
+          {canDo("op:return-batch") && <TabsTrigger value="return-batch">{t("return.tabReturnBatch")}</TabsTrigger>}
+          {canDo("op:consume") && <TabsTrigger value="consume">{t("return.tabConsume")}</TabsTrigger>}
+          {canDo("op:consume-cancel") && <TabsTrigger value="consume-cancel">{t("return.tabConsumeCancel")}</TabsTrigger>}
         </TabsList>
 
         {canDo("op:return") && (
@@ -116,17 +117,17 @@ export default function ReturnConsumePage() {
             </CardHeader>
             <CardContent>
               <Form {...returnForm}>
-                <form onSubmit={returnForm.handleSubmit((v) => returnMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إرسال طلب الإرجاع بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={returnForm.handleSubmit((v) => returnMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("return.successReturn")), onError }))} className="space-y-6">
                   <FormField control={returnForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
+                      <GlnInput value={field.value} onChange={field.onChange} label={t("return.toGLN")} />
                       <FormMessage />
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
                   <Button type="submit" disabled={returnMutation.isPending}>
-                    {returnMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    تنفيذ الإرجاع (SN)
+                    {returnMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                    {t("return.executeReturn")}
                   </Button>
                 </form>
               </Form>
@@ -147,17 +148,17 @@ export default function ReturnConsumePage() {
             </CardHeader>
             <CardContent>
               <Form {...returnBatchForm}>
-                <form onSubmit={returnBatchForm.handleSubmit((v) => returnBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم الإرجاع بالتشغيلة بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={returnBatchForm.handleSubmit((v) => returnBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("return.successReturnBatch")), onError }))} className="space-y-6">
                   <FormField control={returnBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
+                      <GlnInput value={field.value} onChange={field.onChange} label={t("return.toGLN")} />
                       <FormMessage />
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
                   <Button type="submit" disabled={returnBatchMutation.isPending}>
-                    {returnBatchMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    تنفيذ الإرجاع بالتشغيلة
+                    {returnBatchMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                    {t("return.executeReturnBatch")}
                   </Button>
                 </form>
               </Form>
@@ -178,11 +179,11 @@ export default function ReturnConsumePage() {
             </CardHeader>
             <CardContent>
               <Form {...consumeForm}>
-                <form onSubmit={consumeForm.handleSubmit((v) => consumeMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم تسجيل الاستهلاك بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={consumeForm.handleSubmit((v) => consumeMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("return.successConsume")), onError }))} className="space-y-6">
                   <ProductListInput mode="sn" />
                   <Button type="submit" disabled={consumeMutation.isPending}>
-                    {consumeMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    تسجيل الاستهلاك
+                    {consumeMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                    {t("return.executeConsume")}
                   </Button>
                 </form>
               </Form>
@@ -203,11 +204,11 @@ export default function ReturnConsumePage() {
             </CardHeader>
             <CardContent>
               <Form {...cancelForm}>
-                <form onSubmit={cancelForm.handleSubmit((v) => consumeCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء الاستهلاك بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={cancelForm.handleSubmit((v) => consumeCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("return.successConsumeCancel")), onError }))} className="space-y-6">
                   <ProductListInput mode="sn" />
                   <Button type="submit" variant="destructive" disabled={consumeCancelMutation.isPending}>
-                    {consumeCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    إلغاء الاستهلاك
+                    {consumeCancelMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                    {t("return.executeConsumeCancel")}
                   </Button>
                 </form>
               </Form>

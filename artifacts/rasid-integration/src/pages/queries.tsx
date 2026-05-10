@@ -12,8 +12,8 @@ import {
   useGetStakeholderList,
   SoapResponse
 } from "@workspace/api-client-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useLanguage } from "@/lib/language-context";
 
 const checkStatusSchema = z.object({
   products: z.array(z.object({
@@ -49,6 +50,7 @@ const stakeholderSchema = z.object({
 
 export default function QueriesPage() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [response, setResponse] = useState<SoapResponse | null>(null);
 
   const checkStatusMutation = useCheckStatus();
@@ -82,28 +84,28 @@ export default function QueriesPage() {
     mutation.mutate(payload ? { data: payload } : undefined, {
       onSuccess: (res: SoapResponse) => {
         setResponse(res);
-        toast({ title: "نجاح", description: "تم الاستعلام بنجاح" });
+        toast({ title: t("common.saved"), description: "تم الاستعلام بنجاح" });
       },
-      onError: () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاستعلام", variant: "destructive" })
+      onError: () => toast({ title: t("common.error"), description: "حدث خطأ أثناء الاستعلام", variant: "destructive" })
     });
   };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">خدمات الاستعلام</h1>
-        <p className="text-muted-foreground mt-1">الاستعلام عن حالة المنتجات، الإشعارات، والقوائم المرجعية</p>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">{t("queries.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("queries.subtitle")}</p>
       </div>
 
       <Tabs defaultValue="status" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7 h-auto">
-          <TabsTrigger value="status" className="py-2">حالة المنتجات</TabsTrigger>
-          <TabsTrigger value="dispatch" className="py-2">تفاصيل إشعار</TabsTrigger>
-          <TabsTrigger value="stakeholders" className="py-2">الجهات</TabsTrigger>
-          <TabsTrigger value="drugs" className="py-2">الأدوية</TabsTrigger>
-          <TabsTrigger value="countries" className="py-2">الدول</TabsTrigger>
-          <TabsTrigger value="cities" className="py-2">المدن</TabsTrigger>
-          <TabsTrigger value="errors" className="py-2">الأخطاء</TabsTrigger>
+          <TabsTrigger value="status" className="py-2">{t("queries.tabCheckStatus")}</TabsTrigger>
+          <TabsTrigger value="dispatch" className="py-2">{t("queries.tabDispatchDetail")}</TabsTrigger>
+          <TabsTrigger value="stakeholders" className="py-2">{t("queries.tabStakeholder")}</TabsTrigger>
+          <TabsTrigger value="drugs" className="py-2">{t("queries.tabDrug")}</TabsTrigger>
+          <TabsTrigger value="countries" className="py-2">{t("queries.tabCountry")}</TabsTrigger>
+          <TabsTrigger value="cities" className="py-2">{t("queries.tabCity")}</TabsTrigger>
+          <TabsTrigger value="errors" className="py-2">{t("queries.tabError")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="status">
@@ -119,8 +121,8 @@ export default function QueriesPage() {
                 <form onSubmit={checkStatusForm.handleSubmit((v) => runMutation(checkStatusMutation, v))} className="space-y-6">
                   <ProductListInput />
                   <Button type="submit" disabled={checkStatusMutation.isPending}>
-                    {checkStatusMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    استعلام عن الحالة
+                    {checkStatusMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                    {t("queries.executeStatus")}
                   </Button>
                 </form>
               </Form>
@@ -141,14 +143,14 @@ export default function QueriesPage() {
                 <form onSubmit={dispatchDetailForm.handleSubmit((v) => runMutation(dispatchDetailMutation, v))} className="space-y-6">
                   <FormField control={dispatchDetailForm.control} name="dispatchNotificationId" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>رقم الإشعار (Notification ID)</FormLabel>
+                      <FormLabel>{t("queries.notifId")}</FormLabel>
                       <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="ID..." {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <Button type="submit" disabled={dispatchDetailMutation.isPending}>
-                    {dispatchDetailMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    جلب التفاصيل
+                    {dispatchDetailMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                    {t("queries.executeDetail")}
                   </Button>
                 </form>
               </Form>
@@ -190,16 +192,16 @@ export default function QueriesPage() {
                   <FormField control={stakeholderForm.control} name="getAll" render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} className="mr-2" />
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} className="me-2" />
                       </FormControl>
-                      <div className="space-y-1 leading-none mr-2">
+                      <div className="space-y-1 leading-none me-2">
                         <FormLabel>جلب كافة الجهات</FormLabel>
                       </div>
                     </FormItem>
                   )} />
                   <Button type="submit" disabled={stakeholderListMutation.isPending}>
-                    {stakeholderListMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    جلب قائمة الجهات
+                    {stakeholderListMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                    {t("queries.executeStakeholder")}
                   </Button>
                 </form>
               </Form>
@@ -228,8 +230,8 @@ export default function QueriesPage() {
                     </FormItem>
                   )} />
                   <Button type="submit" disabled={drugListMutation.isPending}>
-                    {drugListMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    جلب قائمة الأدوية
+                    {drugListMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                    {t("queries.executeDrug")}
                   </Button>
                 </form>
               </Form>
@@ -247,8 +249,8 @@ export default function QueriesPage() {
             </CardHeader>
             <CardContent>
               <Button onClick={() => runMutation(countryListMutation)} disabled={countryListMutation.isPending}>
-                {countryListMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                جلب القائمة
+                {countryListMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                {t("queries.executeCountry")}
               </Button>
             </CardContent>
           </Card>
@@ -264,8 +266,8 @@ export default function QueriesPage() {
             </CardHeader>
             <CardContent>
               <Button onClick={() => runMutation(cityListMutation)} disabled={cityListMutation.isPending}>
-                {cityListMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                جلب القائمة
+                {cityListMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                {t("queries.executeCity")}
               </Button>
             </CardContent>
           </Card>
@@ -281,8 +283,8 @@ export default function QueriesPage() {
             </CardHeader>
             <CardContent>
               <Button onClick={() => runMutation(errorCodeListMutation)} disabled={errorCodeListMutation.isPending}>
-                {errorCodeListMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                جلب القائمة
+                {errorCodeListMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                {t("queries.executeError")}
               </Button>
             </CardContent>
           </Card>

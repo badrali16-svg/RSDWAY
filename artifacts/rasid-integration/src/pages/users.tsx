@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { OP_PERMISSION_GROUPS, ALL_OP_SLUGS } from "@/lib/op-permissions";
+import { useLanguage } from "@/lib/language-context";
 
 const NAV_PERMISSION_OPTIONS: { slug: string; label: string }[] = [
   { slug: "dashboard", label: "لوحة القيادة" },
@@ -67,6 +68,7 @@ const ALL_DEFAULT_PERMS = [...ALL_NAV_SLUGS, ...ALL_OP_SLUGS];
 
 export default function UsersPage() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const qc = useQueryClient();
   const { data: users, isLoading } = useListUsers();
   const createUser = useCreateUser();
@@ -101,7 +103,7 @@ export default function UsersPage() {
       { data: { username: newUsername, password: newPassword, permissions: newPermissions } },
       {
         onSuccess: () => {
-          toast({ title: "تم إنشاء الحساب", description: `تم إنشاء حساب العميل ${newUsername}` });
+          toast({ title: t("users.createdTitle"), description: `${t("users.createdDesc")} — ${newUsername}` });
           setNewUsername("");
           setNewPassword("");
           setNewPermissions(ALL_DEFAULT_PERMS);
@@ -118,10 +120,8 @@ export default function UsersPage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">إدارة المستخدمين</h1>
-        <p className="text-muted-foreground mt-1">
-          إنشاء حسابات العملاء وتحديد الصلاحيات الجانبية والعمليات المسموح بها لكل حساب
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">{t("users.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("users.subtitle")}</p>
       </div>
 
       {/* Create new client */}
@@ -222,7 +222,7 @@ export default function UsersPage() {
               ) : (
                 <UserPlus className="ml-2 h-4 w-4" />
               )}
-              إنشاء الحساب
+              {t("users.createBtn")}
             </Button>
           </form>
         </CardContent>

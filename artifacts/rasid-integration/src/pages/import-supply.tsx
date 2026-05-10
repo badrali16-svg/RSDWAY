@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import * as XLSX from "xlsx";
+import { useLanguage } from "@/lib/language-context";
 
 // Schema for Import/Supply
 const importSchema = z.object({
@@ -233,6 +234,7 @@ function SnSerialInput({ value, onChange }: SnInputProps) {
 export default function ImportSupplyPage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
 
@@ -271,10 +273,10 @@ export default function ImportSupplyPage() {
     mutation.mutate({ data: payload }, {
       onSuccess: (res) => {
         setResponse(res);
-        toast({ title: "تمت العملية", description: "تم إرسال الطلب بنجاح" });
+        toast({ title: t("common.saved"), description: isSupply ? t("import.successSupply") : t("import.successImport") });
       },
       onError: () => {
-        toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
+        toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
       }
     });
   };
@@ -285,10 +287,10 @@ export default function ImportSupplyPage() {
     mutation.mutate({ data: { products: values.products } }, {
       onSuccess: (res) => {
         setResponse(res);
-        toast({ title: "تمت العملية", description: "تم إرسال طلب الإلغاء بنجاح" });
+        toast({ title: t("common.saved"), description: isSupply ? t("import.successSupplyCancel") : t("import.successImportCancel") });
       },
       onError: () => {
-        toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
+        toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
       }
     });
   };
@@ -338,8 +340,8 @@ export default function ImportSupplyPage() {
         )} />
 
         <Button type="submit" disabled={(isSupply ? supplyMutation.isPending : importMutation.isPending) || !canDo(isSupply ? "op:supply" : "op:import")} title={!canDo(isSupply ? "op:supply" : "op:import") ? "غير مصرّح بهذه العملية" : undefined} className="w-full sm:w-auto">
-          {(isSupply ? supplyMutation.isPending : importMutation.isPending) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo(isSupply ? "op:supply" : "op:import") ? <Lock className="mr-2 h-4 w-4" /> : null}
-          {isSupply ? "تنفيذ عملية التصنيع" : "تنفيذ عملية الاستيراد"}
+          {(isSupply ? supplyMutation.isPending : importMutation.isPending) ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo(isSupply ? "op:supply" : "op:import") ? <Lock className="me-2 h-4 w-4" /> : null}
+          {isSupply ? t("import.executeSupply") : t("import.executeImport")}
         </Button>
       </form>
     </Form>
@@ -348,16 +350,16 @@ export default function ImportSupplyPage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">الاستيراد والتصنيع</h1>
-        <p className="text-muted-foreground mt-1">عمليات تسجيل الأدوية المستوردة أو المصنعة محلياً في نظام رصد</p>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">{t("import.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("import.subtitle")}</p>
       </div>
 
       <Tabs defaultValue={canDo("op:import") ? "import" : canDo("op:import-cancel") ? "import-cancel" : canDo("op:supply") ? "supply" : "supply-cancel"} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
-          {canDo("op:import") && <TabsTrigger value="import">استيراد (Import)</TabsTrigger>}
-          {canDo("op:import-cancel") && <TabsTrigger value="import-cancel">إلغاء استيراد (Cancel Import)</TabsTrigger>}
-          {canDo("op:supply") && <TabsTrigger value="supply">تصنيع (Supply)</TabsTrigger>}
-          {canDo("op:supply-cancel") && <TabsTrigger value="supply-cancel">إلغاء تصنيع (Cancel Supply)</TabsTrigger>}
+          {canDo("op:import") && <TabsTrigger value="import">{t("import.tabImport")}</TabsTrigger>}
+          {canDo("op:import-cancel") && <TabsTrigger value="import-cancel">{t("import.tabImportCancel")}</TabsTrigger>}
+          {canDo("op:supply") && <TabsTrigger value="supply">{t("import.tabSupply")}</TabsTrigger>}
+          {canDo("op:supply-cancel") && <TabsTrigger value="supply-cancel">{t("import.tabSupplyCancel")}</TabsTrigger>}
         </TabsList>
 
         {canDo("op:import") && (
@@ -392,8 +394,8 @@ export default function ImportSupplyPage() {
                 <form onSubmit={cancelForm.handleSubmit((v) => handleCancelSubmit(v, false))} className="space-y-6">
                   <ProductListInput />
                   <Button type="submit" variant="destructive" disabled={importCancelMutation.isPending} className="w-full sm:w-auto">
-                    {importCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    تنفيذ الإلغاء
+                    {importCancelMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                    {t("import.executeCancel")}
                   </Button>
                 </form>
               </Form>
@@ -434,8 +436,8 @@ export default function ImportSupplyPage() {
                 <form onSubmit={cancelForm.handleSubmit((v) => handleCancelSubmit(v, true))} className="space-y-6">
                   <ProductListInput />
                   <Button type="submit" variant="destructive" disabled={supplyCancelMutation.isPending} className="w-full sm:w-auto">
-                    {supplyCancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    تنفيذ الإلغاء
+                    {supplyCancelMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                    {t("import.executeSupplyCancel")}
                   </Button>
                 </form>
               </Form>

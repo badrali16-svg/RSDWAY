@@ -5,12 +5,14 @@ import { Activity, AlertTriangle, CheckCircle2, Clock, XCircle } from "lucide-re
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguage } from "@/lib/language-context";
 
 export default function Dashboard() {
   const { data: authConfig, isLoading: authLoading } = useGetAuthConfig();
-  const { data: history, isLoading: historyLoading } = useGetOperationHistory({ 
-    query: { queryKey: getGetOperationHistoryQueryKey() } 
+  const { data: history, isLoading: historyLoading } = useGetOperationHistory({
+    query: { queryKey: getGetOperationHistoryQueryKey() }
   });
+  const { t } = useLanguage();
 
   const needsConfig = authConfig && !authConfig.hasPassword;
 
@@ -21,8 +23,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">لوحة القيادة</h1>
-        <p className="text-muted-foreground mt-1">نظرة عامة على عمليات نظام رصد (DTTS)</p>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">{t("dashboard.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
       </div>
 
       {authLoading ? (
@@ -30,12 +32,12 @@ export default function Dashboard() {
       ) : needsConfig ? (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle className="mr-2">تنبيه: إعدادات الربط غير مكتملة</AlertTitle>
-          <AlertDescription className="mr-2 mt-2 flex items-center justify-between">
-            <span>يرجى إدخال بيانات الاعتماد الخاصة بنظام رصد (اسم المستخدم وكلمة المرور) لتتمكن من إجراء العمليات.</span>
+          <AlertTitle className="ms-2">{t("dashboard.configAlertTitle")}</AlertTitle>
+          <AlertDescription className="ms-2 mt-2 flex items-center justify-between gap-4">
+            <span>{t("dashboard.configAlertDesc")}</span>
             <Link href="/settings">
-              <Button size="sm" variant="outline" className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                الذهاب للإعدادات
+              <Button size="sm" variant="outline" className="bg-destructive text-destructive-foreground hover:bg-destructive/90 shrink-0">
+                {t("dashboard.goToSettings")}
               </Button>
             </Link>
           </AlertDescription>
@@ -45,7 +47,7 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">إجمالي العمليات</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("dashboard.totalOps")}</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -58,7 +60,7 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">العمليات الناجحة</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("dashboard.successOps")}</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -71,7 +73,7 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">العمليات الفاشلة</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("dashboard.failedOps")}</CardTitle>
             <XCircle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
@@ -88,13 +90,13 @@ export default function Dashboard() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>أحدث العمليات</CardTitle>
-              <CardDescription>سجل بآخر العمليات التي تم تنفيذها على النظام</CardDescription>
+              <CardTitle>{t("dashboard.latestOps")}</CardTitle>
+              <CardDescription>{t("dashboard.latestOpsDesc")}</CardDescription>
             </div>
             <Link href="/history">
               <Button variant="outline" size="sm" className="gap-2">
                 <Clock className="h-4 w-4" />
-                عرض السجل كاملاً
+                {t("dashboard.viewAll")}
               </Button>
             </Link>
           </div>
@@ -108,7 +110,7 @@ export default function Dashboard() {
             </div>
           ) : history?.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              لا توجد عمليات مسجلة حتى الآن
+              {t("dashboard.noOps")}
             </div>
           ) : (
             <div className="space-y-4">

@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import { GlnInput } from "@/components/gln-input";
+import { useLanguage } from "@/lib/language-context";
 
 const transferSchema = z.object({
   toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),
@@ -74,6 +75,7 @@ const pharmacySaleCancelSchema = z.object({
 export default function TransferSalePage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
 
@@ -106,25 +108,25 @@ export default function TransferSalePage() {
 
   const onSuccess = (res: SoapResponse, msg: string) => {
     setResponse(res);
-    toast({ title: "تمت العملية", description: msg });
+    toast({ title: t("common.saved"), description: msg });
   };
-  const onError = () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
+  const onError = () => toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">النقل وصرف الصيدليات</h1>
-        <p className="text-muted-foreground mt-1">عمليات النقل بين الفروع وصرف الأدوية للمرضى عبر الصيدليات</p>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">{t("transfer.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("transfer.subtitle")}</p>
       </div>
 
-      <Tabs defaultValue={["transfer","transfer-batch","transfer-cancel","transfer-cancel-batch","pharmacy-sale","pharmacy-sale-cancel"].find(t => canDo(`op:${t}`))?.replace("pharmacy-sale-cancel","sale-cancel").replace("pharmacy-sale","sale") ?? "transfer"} className="space-y-6">
+      <Tabs defaultValue={["transfer","transfer-batch","transfer-cancel","transfer-cancel-batch","pharmacy-sale","pharmacy-sale-cancel"].find(tab => canDo(`op:${tab}`))?.replace("pharmacy-sale-cancel","sale-cancel").replace("pharmacy-sale","sale") ?? "transfer"} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
-          {canDo("op:transfer") && <TabsTrigger value="transfer">نقل (SN)</TabsTrigger>}
-          {canDo("op:transfer-batch") && <TabsTrigger value="transfer-batch">نقل بالتشغيلة</TabsTrigger>}
-          {canDo("op:transfer-cancel") && <TabsTrigger value="transfer-cancel">إلغاء نقل (SN)</TabsTrigger>}
-          {canDo("op:transfer-cancel-batch") && <TabsTrigger value="transfer-cancel-batch">إلغاء نقل بالتشغيلة</TabsTrigger>}
-          {canDo("op:pharmacy-sale") && <TabsTrigger value="sale">صرف دواء (Pharmacy Sale)</TabsTrigger>}
-          {canDo("op:pharmacy-sale-cancel") && <TabsTrigger value="sale-cancel">إلغاء الصرف</TabsTrigger>}
+          {canDo("op:transfer") && <TabsTrigger value="transfer">{t("transfer.tabTransfer")}</TabsTrigger>}
+          {canDo("op:transfer-batch") && <TabsTrigger value="transfer-batch">{t("transfer.tabTransferBatch")}</TabsTrigger>}
+          {canDo("op:transfer-cancel") && <TabsTrigger value="transfer-cancel">{t("transfer.tabTransferCancel")}</TabsTrigger>}
+          {canDo("op:transfer-cancel-batch") && <TabsTrigger value="transfer-cancel-batch">{t("transfer.tabTransferCancelBatch")}</TabsTrigger>}
+          {canDo("op:pharmacy-sale") && <TabsTrigger value="sale">{t("transfer.tabSale")}</TabsTrigger>}
+          {canDo("op:pharmacy-sale-cancel") && <TabsTrigger value="sale-cancel">{t("transfer.tabSaleCancel")}</TabsTrigger>}
         </TabsList>
 
         {/* ── Transfer SN ── */}
@@ -140,17 +142,17 @@ export default function TransferSalePage() {
             </CardHeader>
             <CardContent>
               <Form {...transferForm}>
-                <form onSubmit={transferForm.handleSubmit((v) => transferMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم نقل المنتجات بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={transferForm.handleSubmit((v) => transferMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("transfer.successTransfer")), onError }))} className="space-y-6">
                   <FormField control={transferForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
+                      <GlnInput value={field.value} onChange={field.onChange} label={t("transfer.toGLN")} />
                       <FormMessage />
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={transferMutation.isPending || !canDo("op:transfer")} title={!canDo("op:transfer") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {transferMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    تنفيذ النقل (SN)
+                  <Button type="submit" disabled={transferMutation.isPending || !canDo("op:transfer")} title={!canDo("op:transfer") ? t("common.noPermission") : undefined}>
+                    {transferMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("transfer.executeTransfer")}
                   </Button>
                 </form>
               </Form>
@@ -172,17 +174,17 @@ export default function TransferSalePage() {
             </CardHeader>
             <CardContent>
               <Form {...transferBatchForm}>
-                <form onSubmit={transferBatchForm.handleSubmit((v) => transferBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم نقل المنتجات بالتشغيلة بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={transferBatchForm.handleSubmit((v) => transferBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("transfer.successTransferBatch")), onError }))} className="space-y-6">
                   <FormField control={transferBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
+                      <GlnInput value={field.value} onChange={field.onChange} label={t("transfer.toGLN")} />
                       <FormMessage />
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" disabled={transferBatchMutation.isPending || !canDo("op:transfer-batch")} title={!canDo("op:transfer-batch") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {transferBatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-batch") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    تنفيذ النقل بالتشغيلة
+                  <Button type="submit" disabled={transferBatchMutation.isPending || !canDo("op:transfer-batch")} title={!canDo("op:transfer-batch") ? t("common.noPermission") : undefined}>
+                    {transferBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("transfer.executeTransferBatch")}
                   </Button>
                 </form>
               </Form>
@@ -204,17 +206,17 @@ export default function TransferSalePage() {
             </CardHeader>
             <CardContent>
               <Form {...transferForm}>
-                <form onSubmit={transferForm.handleSubmit((v) => transferCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء النقل بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={transferForm.handleSubmit((v) => transferCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("transfer.successTransferCancel")), onError }))} className="space-y-6">
                   <FormField control={transferForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
+                      <GlnInput value={field.value} onChange={field.onChange} label={t("transfer.toGLN")} />
                       <FormMessage />
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" variant="destructive" disabled={transferCancelMutation.isPending || !canDo("op:transfer-cancel")} title={!canDo("op:transfer-cancel") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {transferCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    إلغاء النقل (SN)
+                  <Button type="submit" variant="destructive" disabled={transferCancelMutation.isPending || !canDo("op:transfer-cancel")} title={!canDo("op:transfer-cancel") ? t("common.noPermission") : undefined}>
+                    {transferCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("transfer.executeTransferCancel")}
                   </Button>
                 </form>
               </Form>
@@ -236,17 +238,17 @@ export default function TransferSalePage() {
             </CardHeader>
             <CardContent>
               <Form {...transferBatchForm}>
-                <form onSubmit={transferBatchForm.handleSubmit((v) => transferCancelBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء النقل بالتشغيلة بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={transferBatchForm.handleSubmit((v) => transferCancelBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("transfer.successTransferCancelBatch")), onError }))} className="space-y-6">
                   <FormField control={transferBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
+                      <GlnInput value={field.value} onChange={field.onChange} label={t("transfer.toGLN")} />
                       <FormMessage />
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" variant="destructive" disabled={transferCancelBatchMutation.isPending || !canDo("op:transfer-cancel-batch")} title={!canDo("op:transfer-cancel-batch") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {transferCancelBatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-cancel-batch") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    إلغاء النقل بالتشغيلة
+                  <Button type="submit" variant="destructive" disabled={transferCancelBatchMutation.isPending || !canDo("op:transfer-cancel-batch")} title={!canDo("op:transfer-cancel-batch") ? t("common.noPermission") : undefined}>
+                    {transferCancelBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-cancel-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("transfer.executeTransferCancelBatch")}
                   </Button>
                 </form>
               </Form>
@@ -268,11 +270,11 @@ export default function TransferSalePage() {
             </CardHeader>
             <CardContent>
               <Form {...pharmacySaleForm}>
-                <form onSubmit={pharmacySaleForm.handleSubmit((v) => pharmacySaleMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم صرف الأدوية بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={pharmacySaleForm.handleSubmit((v) => pharmacySaleMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("transfer.successSale")), onError }))} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <FormField control={pharmacySaleForm.control} name="toGLN" render={({ field }) => (
                       <FormItem>
-                        <GlnInput value={field.value} onChange={field.onChange} label="GLN للفرع (toGLN)" />
+                        <GlnInput value={field.value} onChange={field.onChange} label={t("transfer.branchGLN")} />
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -306,9 +308,9 @@ export default function TransferSalePage() {
                     )} />
                   </div>
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={pharmacySaleMutation.isPending || !canDo("op:pharmacy-sale")} title={!canDo("op:pharmacy-sale") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {pharmacySaleMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:pharmacy-sale") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    تنفيذ عملية الصرف
+                  <Button type="submit" disabled={pharmacySaleMutation.isPending || !canDo("op:pharmacy-sale")} title={!canDo("op:pharmacy-sale") ? t("common.noPermission") : undefined}>
+                    {pharmacySaleMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:pharmacy-sale") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("transfer.executeSale")}
                   </Button>
                 </form>
               </Form>
@@ -330,11 +332,11 @@ export default function TransferSalePage() {
             </CardHeader>
             <CardContent>
               <Form {...pharmacySaleCancelForm}>
-                <form onSubmit={pharmacySaleCancelForm.handleSubmit((v) => pharmacySaleCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء صرف الأدوية بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={pharmacySaleCancelForm.handleSubmit((v) => pharmacySaleCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("transfer.successSaleCancel")), onError }))} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={pharmacySaleCancelForm.control} name="toGLN" render={({ field }) => (
                       <FormItem>
-                        <GlnInput value={field.value} onChange={field.onChange} label="GLN للفرع (toGLN)" />
+                        <GlnInput value={field.value} onChange={field.onChange} label={t("transfer.branchGLN")} />
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -347,9 +349,9 @@ export default function TransferSalePage() {
                     )} />
                   </div>
                   <ProductListInput mode="sn" />
-                  <Button type="submit" variant="destructive" disabled={pharmacySaleCancelMutation.isPending || !canDo("op:pharmacy-sale-cancel")} title={!canDo("op:pharmacy-sale-cancel") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {pharmacySaleCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:pharmacy-sale-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    إلغاء عملية الصرف
+                  <Button type="submit" variant="destructive" disabled={pharmacySaleCancelMutation.isPending || !canDo("op:pharmacy-sale-cancel")} title={!canDo("op:pharmacy-sale-cancel") ? t("common.noPermission") : undefined}>
+                    {pharmacySaleCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:pharmacy-sale-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("transfer.executeSaleCancel")}
                   </Button>
                 </form>
               </Form>

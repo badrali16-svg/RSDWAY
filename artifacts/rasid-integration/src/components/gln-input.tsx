@@ -31,6 +31,7 @@ import {
 } from "./ui/dialog";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/language-context";
 
 interface GlnInputProps {
   value: string;
@@ -49,6 +50,7 @@ export function GlnInput({
 }: GlnInputProps) {
   const [open, setOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { t, dir } = useLanguage();
 
   const { data: clients = [] } = useListClients();
 
@@ -61,13 +63,13 @@ export function GlnInput({
         <div className="relative flex-1">
           <Input
             dir="ltr"
-            className="text-left pr-8"
+            className="text-left pe-8"
             placeholder={placeholder}
             value={value}
             onChange={(e) => onChange(e.target.value)}
           />
           {selectedClient && (
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground truncate max-w-[120px]">
+            <span className="absolute start-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground truncate max-w-[120px]">
               {selectedClient.glnOwnerName || selectedClient.name}
             </span>
           )}
@@ -82,16 +84,16 @@ export function GlnInput({
               className="shrink-0 gap-1 text-xs"
             >
               <ChevronsUpDown className="h-3.5 w-3.5" />
-              بحث
+              {t("gln.searchBtn")}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-72 p-0" align="start" dir="rtl">
+          <PopoverContent className="w-72 p-0" align="start" dir={dir}>
             <Command>
-              <CommandInput placeholder="ابحث باسم العميل أو رقم GLN..." className="text-right" />
+              <CommandInput placeholder={t("gln.searchPlaceholder")} />
               <CommandList>
                 <CommandEmpty>
                   <div className="py-3 text-center text-sm text-muted-foreground">
-                    <p>لا توجد نتائج</p>
+                    <p>{t("gln.noResults")}</p>
                     <Button
                       type="button"
                       variant="link"
@@ -99,12 +101,12 @@ export function GlnInput({
                       className="mt-1 h-auto p-0 text-xs"
                       onClick={() => { setOpen(false); setDialogOpen(true); }}
                     >
-                      <Plus className="h-3 w-3 ml-1" />
-                      إضافة عميل جديد
+                      <Plus className="h-3 w-3 me-1" />
+                      {t("gln.addNew")}
                     </Button>
                   </div>
                 </CommandEmpty>
-                <CommandGroup heading="العملاء المسجّلون">
+                <CommandGroup heading={t("gln.groupLabel")}>
                   {clients.map((client) => (
                     <CommandItem
                       key={client.id}
@@ -116,7 +118,7 @@ export function GlnInput({
                     >
                       <Check
                         className={cn(
-                          "ml-2 h-4 w-4 shrink-0",
+                          "me-2 h-4 w-4 shrink-0",
                           value === client.gln ? "opacity-100" : "opacity-0",
                         )}
                       />
@@ -135,8 +137,8 @@ export function GlnInput({
                     onSelect={() => { setOpen(false); setDialogOpen(true); }}
                     className="text-primary"
                   >
-                    <Plus className="ml-2 h-4 w-4" />
-                    إضافة عميل جديد
+                    <Plus className="me-2 h-4 w-4" />
+                    {t("gln.addNew")}
                   </CommandItem>
                 </CommandGroup>
               </CommandList>
@@ -173,6 +175,7 @@ function QuickAddClientDialog({
   const { toast } = useToast();
   const qc = useQueryClient();
   const createClient = useCreateClient();
+  const { t, dir } = useLanguage();
 
   const [name, setName] = useState("");
   const [gln, setGln] = useState("");
@@ -187,14 +190,14 @@ function QuickAddClientDialog({
       { data: { name: name.trim(), gln: gln.trim(), glnOwnerName: glnOwnerName.trim() || null } },
       {
         onSuccess: (created: Client) => {
-          toast({ title: "تم الحفظ", description: `تم إضافة العميل ${created.name}` });
+          toast({ title: t("clients.addedMsg"), description: created.name });
           qc.invalidateQueries({ queryKey: getListClientsQueryKey() });
           onCreated(created.gln);
           reset();
         },
         onError: (err: unknown) => {
-          const msg = err instanceof Error ? err.message : "فشل الحفظ";
-          toast({ title: "خطأ", description: msg, variant: "destructive" });
+          const msg = err instanceof Error ? err.message : t("common.error");
+          toast({ title: t("common.error"), description: msg, variant: "destructive" });
         },
       },
     );
@@ -202,54 +205,54 @@ function QuickAddClientDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
-      <DialogContent dir="rtl" className="max-w-sm">
+      <DialogContent dir={dir} className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5 text-primary" />
-            إضافة عميل جديد
+            {t("gln.quickAddTitle")}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-1.5">
-            <Label htmlFor="qac-name">اسم العميل *</Label>
+            <Label htmlFor="qac-name">{t("clients.nameLabel")}</Label>
             <Input
               id="qac-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="اسم الشركة أو المنشأة"
+              placeholder={t("clients.namePlaceholder")}
               required
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="qac-gln">رقم GLN *</Label>
+            <Label htmlFor="qac-gln">{t("clients.glnLabel")}</Label>
             <Input
               id="qac-gln"
               dir="ltr"
               className="text-left font-mono"
               value={gln}
               onChange={(e) => setGln(e.target.value)}
-              placeholder="1234567890123"
+              placeholder={t("clients.glnPlaceholder")}
               required
             />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="qac-owner">
-              اسم صاحب GLN
-              <span className="mr-1 text-xs text-muted-foreground">(اختياري)</span>
+              {t("clients.ownerLabel")}
+              <span className="ms-1 text-xs text-muted-foreground">({t("common.optional")})</span>
             </Label>
             <Input
               id="qac-owner"
               value={glnOwnerName}
               onChange={(e) => setGlnOwnerName(e.target.value)}
-              placeholder="الاسم المسجّل في الهيئة"
+              placeholder={t("clients.ownerPlaceholder")}
             />
           </div>
           <div className="flex gap-2 justify-end pt-1">
             <Button type="button" variant="ghost" onClick={() => { onOpenChange(false); reset(); }}>
-              إلغاء
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={createClient.isPending || !name.trim() || !gln.trim()}>
-              {createClient.isPending ? "جارٍ الحفظ..." : "حفظ العميل"}
+              {createClient.isPending ? t("gln.saving") : t("gln.saveBtn")}
             </Button>
           </div>
         </form>

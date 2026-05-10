@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useLanguage } from "@/lib/language-context";
 
 const deactivationSchema = z.object({
   DR: z.string().min(1, "سبب التعطيل مطلوب"),
@@ -58,6 +59,7 @@ const exportSchema = z.object({
 export default function DeactivationExportPage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
 
@@ -90,9 +92,9 @@ export default function DeactivationExportPage() {
     deactivationMutation.mutate({ data: values }, {
       onSuccess: (res) => {
         setResponse(res);
-        toast({ title: "تمت العملية", description: "تم تعطيل المنتجات بنجاح" });
+        toast({ title: t("common.saved"), description: t("deactivation.successDeactivation") });
       },
-      onError: () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
+      onError: () => toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
     });
   };
 
@@ -100,9 +102,9 @@ export default function DeactivationExportPage() {
     deactivationCancelMutation.mutate({ data: values }, {
       onSuccess: (res) => {
         setResponse(res);
-        toast({ title: "تمت العملية", description: "تم إلغاء تعطيل المنتجات بنجاح" });
+        toast({ title: t("common.saved"), description: t("deactivation.successDeactivationCancel") });
       },
-      onError: () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
+      onError: () => toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
     });
   };
 
@@ -110,9 +112,9 @@ export default function DeactivationExportPage() {
     exportMutation.mutate({ data: values }, {
       onSuccess: (res) => {
         setResponse(res);
-        toast({ title: "تمت العملية", description: "تم تصدير المنتجات بنجاح" });
+        toast({ title: t("common.saved"), description: t("deactivation.successExport") });
       },
-      onError: () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
+      onError: () => toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
     });
   };
 
@@ -120,25 +122,25 @@ export default function DeactivationExportPage() {
     exportCancelMutation.mutate({ data: { products: values.products } }, {
       onSuccess: (res) => {
         setResponse(res);
-        toast({ title: "تمت العملية", description: "تم إلغاء تصدير المنتجات بنجاح" });
+        toast({ title: t("common.saved"), description: t("deactivation.successExportCancel") });
       },
-      onError: () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
+      onError: () => toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
     });
   };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">التعطيل والتصدير</h1>
-        <p className="text-muted-foreground mt-1">إتلاف أو تعطيل المنتجات، وعمليات التصدير لخارج المملكة</p>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">{t("deactivation.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("deactivation.subtitle")}</p>
       </div>
 
-      <Tabs defaultValue={["deactivation","deactivation-cancel","export","export-cancel"].find(t => canDo(`op:${t}`)) ?? "deactivation"} className="space-y-6">
+      <Tabs defaultValue={["deactivation","deactivation-cancel","export","export-cancel"].find(tab => canDo(`op:${tab}`)) ?? "deactivation"} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
-          {canDo("op:deactivation") && <TabsTrigger value="deactivation">تعطيل (Deactivate)</TabsTrigger>}
-          {canDo("op:deactivation-cancel") && <TabsTrigger value="deactivation-cancel">إلغاء التعطيل</TabsTrigger>}
-          {canDo("op:export") && <TabsTrigger value="export">تصدير (Export)</TabsTrigger>}
-          {canDo("op:export-cancel") && <TabsTrigger value="export-cancel">إلغاء تصدير</TabsTrigger>}
+          {canDo("op:deactivation") && <TabsTrigger value="deactivation">{t("deactivation.tabDeactivation")}</TabsTrigger>}
+          {canDo("op:deactivation-cancel") && <TabsTrigger value="deactivation-cancel">{t("deactivation.tabDeactivationCancel")}</TabsTrigger>}
+          {canDo("op:export") && <TabsTrigger value="export">{t("deactivation.tabExport")}</TabsTrigger>}
+          {canDo("op:export-cancel") && <TabsTrigger value="export-cancel">{t("deactivation.tabExportCancel")}</TabsTrigger>}
         </TabsList>
 
         {canDo("op:deactivation") && (
@@ -185,9 +187,9 @@ export default function DeactivationExportPage() {
                     </FormItem>
                   )} />
                   <ProductListInput />
-                  <Button type="submit" disabled={deactivationMutation.isPending || !canDo("op:deactivation")} title={!canDo("op:deactivation") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {deactivationMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:deactivation") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    تنفيذ عملية التعطيل
+                  <Button type="submit" disabled={deactivationMutation.isPending || !canDo("op:deactivation")} title={!canDo("op:deactivation") ? t("common.noPermission") : undefined}>
+                    {deactivationMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:deactivation") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("deactivation.executeDeactivation")}
                   </Button>
                 </form>
               </Form>
@@ -210,9 +212,9 @@ export default function DeactivationExportPage() {
               <Form {...deactivationCancelForm}>
                 <form onSubmit={deactivationCancelForm.handleSubmit(handleDeactivationCancel)} className="space-y-6">
                   <ProductListInput />
-                  <Button type="submit" variant="destructive" disabled={deactivationCancelMutation.isPending || !canDo("op:deactivation-cancel")} title={!canDo("op:deactivation-cancel") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {deactivationCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:deactivation-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    إلغاء عملية التعطيل
+                  <Button type="submit" variant="destructive" disabled={deactivationCancelMutation.isPending || !canDo("op:deactivation-cancel")} title={!canDo("op:deactivation-cancel") ? t("common.noPermission") : undefined}>
+                    {deactivationCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:deactivation-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("deactivation.executeDeactivationCancel")}
                   </Button>
                 </form>
               </Form>
@@ -242,9 +244,9 @@ export default function DeactivationExportPage() {
                     </FormItem>
                   )} />
                   <ProductListInput />
-                  <Button type="submit" disabled={exportMutation.isPending || !canDo("op:export")} title={!canDo("op:export") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {exportMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:export") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    تنفيذ عملية التصدير
+                  <Button type="submit" disabled={exportMutation.isPending || !canDo("op:export")} title={!canDo("op:export") ? t("common.noPermission") : undefined}>
+                    {exportMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:export") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("deactivation.executeExport")}
                   </Button>
                 </form>
               </Form>
@@ -267,9 +269,9 @@ export default function DeactivationExportPage() {
               <Form {...exportCancelForm}>
                 <form onSubmit={exportCancelForm.handleSubmit(handleExportCancel)} className="space-y-6">
                   <ProductListInput />
-                  <Button type="submit" variant="destructive" disabled={exportCancelMutation.isPending || !canDo("op:export-cancel")} title={!canDo("op:export-cancel") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {exportCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:export-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    إلغاء عملية التصدير
+                  <Button type="submit" variant="destructive" disabled={exportCancelMutation.isPending || !canDo("op:export-cancel")} title={!canDo("op:export-cancel") ? t("common.noPermission") : undefined}>
+                    {exportCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:export-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("deactivation.executeExportCancel")}
                   </Button>
                 </form>
               </Form>

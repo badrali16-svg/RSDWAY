@@ -13,12 +13,13 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Upload, Download, Search, Box, Lock } from "lucide-react";
+import { Loader2, Upload, Download, Search, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { GlnInput } from "@/components/gln-input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useLanguage } from "@/lib/language-context";
 
 const uploadSchema = z.object({
   toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),
@@ -40,6 +41,7 @@ const querySchema = z.object({
 export default function PackagesPage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
 
@@ -66,9 +68,9 @@ export default function PackagesPage() {
     uploadMutation.mutate({ data: values }, {
       onSuccess: (res) => {
         setResponse(res);
-        toast({ title: "تمت العملية", description: "تم رفع الحزمة بنجاح" });
+        toast({ title: t("common.saved"), description: t("packages.uploadBtn") });
       },
-      onError: () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
+      onError: () => toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
     });
   };
 
@@ -76,9 +78,9 @@ export default function PackagesPage() {
     downloadMutation.mutate({ data: values }, {
       onSuccess: (res) => {
         setResponse(res);
-        toast({ title: "تمت العملية", description: "تم طلب تنزيل الحزمة بنجاح" });
+        toast({ title: t("common.saved"), description: t("packages.downloadBtn") });
       },
-      onError: () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
+      onError: () => toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
     });
   };
 
@@ -86,24 +88,24 @@ export default function PackagesPage() {
     queryMutation.mutate({ data: values }, {
       onSuccess: (res) => {
         setResponse(res);
-        toast({ title: "تمت العملية", description: "تم الاستعلام بنجاح" });
+        toast({ title: t("common.saved"), description: t("packages.queryBtn") });
       },
-      onError: () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
+      onError: () => toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" })
     });
   };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">نقل الحزم (Packages)</h1>
-        <p className="text-muted-foreground mt-1">رفع وتنزيل حزم البيانات الكبيرة والاستعلام عنها</p>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">{t("packages.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("packages.subtitle")}</p>
       </div>
 
       <Tabs defaultValue={canDo("op:package-upload") ? "upload" : canDo("op:package-download") ? "download" : "query"} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
-          {canDo("op:package-upload") && <TabsTrigger value="upload">رفع حزمة (Upload)</TabsTrigger>}
-          {canDo("op:package-download") && <TabsTrigger value="download">تنزيل حزمة (Download)</TabsTrigger>}
-          {canDo("op:package-query") && <TabsTrigger value="query">استعلام الحزم (Query)</TabsTrigger>}
+          {canDo("op:package-upload") && <TabsTrigger value="upload">{t("packages.tabUpload")}</TabsTrigger>}
+          {canDo("op:package-download") && <TabsTrigger value="download">{t("packages.tabDownload")}</TabsTrigger>}
+          {canDo("op:package-query") && <TabsTrigger value="query">{t("packages.tabQuery")}</TabsTrigger>}
         </TabsList>
 
         {canDo("op:package-upload") && (
@@ -121,7 +123,7 @@ export default function PackagesPage() {
                 <form onSubmit={uploadForm.handleSubmit(handleUpload)} className="space-y-6">
                   <FormField control={uploadForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
+                      <GlnInput value={field.value} onChange={field.onChange} label={t("packages.toGLN")} />
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -132,9 +134,9 @@ export default function PackagesPage() {
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <Button type="submit" disabled={uploadMutation.isPending || !canDo("op:package-upload")} title={!canDo("op:package-upload") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {uploadMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:package-upload") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    رفع الحزمة
+                  <Button type="submit" disabled={uploadMutation.isPending || !canDo("op:package-upload")} title={!canDo("op:package-upload") ? t("common.noPermission") : undefined}>
+                    {uploadMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:package-upload") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("packages.uploadBtn")}
                   </Button>
                 </form>
               </Form>
@@ -163,9 +165,9 @@ export default function PackagesPage() {
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <Button type="submit" disabled={downloadMutation.isPending || !canDo("op:package-download")} title={!canDo("op:package-download") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {downloadMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:package-download") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    تنزيل الحزمة
+                  <Button type="submit" disabled={downloadMutation.isPending || !canDo("op:package-download")} title={!canDo("op:package-download") ? t("common.noPermission") : undefined}>
+                    {downloadMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:package-download") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("packages.downloadBtn")}
                   </Button>
                 </form>
               </Form>
@@ -190,13 +192,13 @@ export default function PackagesPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={queryForm.control} name="fromGLN" render={({ field }) => (
                       <FormItem>
-                        <GlnInput value={field.value ?? ""} onChange={field.onChange} label="GLN المرسل (اختياري)" />
+                        <GlnInput value={field.value ?? ""} onChange={field.onChange} label={t("packages.fromGLN")} />
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={queryForm.control} name="toGLN" render={({ field }) => (
                       <FormItem>
-                        <GlnInput value={field.value ?? ""} onChange={field.onChange} label="GLN المستلم (اختياري)" />
+                        <GlnInput value={field.value ?? ""} onChange={field.onChange} label={t("packages.toGLNOpt")} />
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -218,17 +220,17 @@ export default function PackagesPage() {
                   <FormField control={queryForm.control} name="getAll" render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} className="mr-2" />
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} className="me-2" />
                       </FormControl>
-                      <div className="space-y-1 leading-none mr-2">
+                      <div className="space-y-1 leading-none me-2">
                         <FormLabel>جلب كافة الحزم (getAll)</FormLabel>
                         <FormDescription>سيتم جلب كافة الحزم دون تحديد</FormDescription>
                       </div>
                     </FormItem>
                   )} />
-                  <Button type="submit" disabled={queryMutation.isPending || !canDo("op:package-query")} title={!canDo("op:package-query") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {queryMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:package-query") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    استعلام
+                  <Button type="submit" disabled={queryMutation.isPending || !canDo("op:package-query")} title={!canDo("op:package-query") ? t("common.noPermission") : undefined}>
+                    {queryMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:package-query") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("packages.queryBtn")}
                   </Button>
                 </form>
               </Form>

@@ -23,6 +23,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import { GlnInput } from "@/components/gln-input";
+import { useLanguage } from "@/lib/language-context";
 
 const dispatchSchema = z.object({
   toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),
@@ -73,6 +74,7 @@ const acceptDispatchSchema = z.object({
 export default function DispatchAcceptPage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
 
@@ -111,26 +113,26 @@ export default function DispatchAcceptPage() {
 
   const onSuccess = (res: SoapResponse, msg: string) => {
     setResponse(res);
-    toast({ title: "تمت العملية", description: msg });
+    toast({ title: t("common.saved"), description: msg });
   };
-  const onError = () => toast({ title: "خطأ", description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
+  const onError = () => toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary">الإرسال والاستلام</h1>
-        <p className="text-muted-foreground mt-1">عمليات الإرسال والاستلام بين الجهات في سلسلة التوريد</p>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">{t("dispatch.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("dispatch.subtitle")}</p>
       </div>
 
-      <Tabs defaultValue={["dispatch","dispatch-batch","dispatch-cancel","dispatch-cancel-batch","accept","accept-batch","accept-dispatch"].find(t => canDo(`op:${t}`)) ?? "dispatch"} className="space-y-6">
+      <Tabs defaultValue={["dispatch","dispatch-batch","dispatch-cancel","dispatch-cancel-batch","accept","accept-batch","accept-dispatch"].find(tab => canDo(`op:${tab}`)) ?? "dispatch"} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
-          {canDo("op:dispatch") && <TabsTrigger value="dispatch">إرسال (SN)</TabsTrigger>}
-          {canDo("op:dispatch-batch") && <TabsTrigger value="dispatch-batch">إرسال بالتشغيلة</TabsTrigger>}
-          {canDo("op:dispatch-cancel") && <TabsTrigger value="dispatch-cancel">إلغاء إرسال (SN)</TabsTrigger>}
-          {canDo("op:dispatch-cancel-batch") && <TabsTrigger value="dispatch-cancel-batch">إلغاء إرسال بالتشغيلة</TabsTrigger>}
-          {canDo("op:accept") && <TabsTrigger value="accept">استلام (SN)</TabsTrigger>}
-          {canDo("op:accept-batch") && <TabsTrigger value="accept-batch">استلام بالتشغيلة</TabsTrigger>}
-          {canDo("op:accept-dispatch") && <TabsTrigger value="accept-dispatch">استلام عبر الإشعار</TabsTrigger>}
+          {canDo("op:dispatch") && <TabsTrigger value="dispatch">{t("dispatch.tabDispatch")}</TabsTrigger>}
+          {canDo("op:dispatch-batch") && <TabsTrigger value="dispatch-batch">{t("dispatch.tabDispatchBatch")}</TabsTrigger>}
+          {canDo("op:dispatch-cancel") && <TabsTrigger value="dispatch-cancel">{t("dispatch.tabDispatchCancel")}</TabsTrigger>}
+          {canDo("op:dispatch-cancel-batch") && <TabsTrigger value="dispatch-cancel-batch">{t("dispatch.tabDispatchCancelBatch")}</TabsTrigger>}
+          {canDo("op:accept") && <TabsTrigger value="accept">{t("dispatch.tabAccept")}</TabsTrigger>}
+          {canDo("op:accept-batch") && <TabsTrigger value="accept-batch">{t("dispatch.tabAcceptBatch")}</TabsTrigger>}
+          {canDo("op:accept-dispatch") && <TabsTrigger value="accept-dispatch">{t("dispatch.tabAcceptDispatch")}</TabsTrigger>}
         </TabsList>
 
         {/* ── Dispatch SN ── */}
@@ -146,17 +148,17 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...dispatchForm}>
-                <form onSubmit={dispatchForm.handleSubmit((v) => dispatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إرسال المنتجات بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={dispatchForm.handleSubmit((v) => dispatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatch")), onError }))} className="space-y-6">
                   <FormField control={dispatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
+                      <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.toGLN")} />
                       <FormMessage />
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={dispatchMutation.isPending || !canDo("op:dispatch")} title={!canDo("op:dispatch") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {dispatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    تنفيذ عملية الإرسال (SN)
+                  <Button type="submit" disabled={dispatchMutation.isPending || !canDo("op:dispatch")} title={!canDo("op:dispatch") ? t("common.noPermission") : undefined}>
+                    {dispatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("dispatch.executeDispatch")}
                   </Button>
                 </form>
               </Form>
@@ -178,17 +180,17 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...dispatchBatchForm}>
-                <form onSubmit={dispatchBatchForm.handleSubmit((v) => dispatchBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إرسال المنتجات بالتشغيلة بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={dispatchBatchForm.handleSubmit((v) => dispatchBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchBatch")), onError }))} className="space-y-6">
                   <FormField control={dispatchBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
+                      <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.toGLN")} />
                       <FormMessage />
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" disabled={dispatchBatchMutation.isPending || !canDo("op:dispatch-batch")} title={!canDo("op:dispatch-batch") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {dispatchBatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-batch") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    تنفيذ الإرسال بالتشغيلة
+                  <Button type="submit" disabled={dispatchBatchMutation.isPending || !canDo("op:dispatch-batch")} title={!canDo("op:dispatch-batch") ? t("common.noPermission") : undefined}>
+                    {dispatchBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("dispatch.executeDispatchBatch")}
                   </Button>
                 </form>
               </Form>
@@ -210,17 +212,17 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...dispatchForm}>
-                <form onSubmit={dispatchForm.handleSubmit((v) => dispatchCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء الإرسال بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={dispatchForm.handleSubmit((v) => dispatchCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchCancel")), onError }))} className="space-y-6">
                   <FormField control={dispatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
+                      <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.toGLN")} />
                       <FormMessage />
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" variant="destructive" disabled={dispatchCancelMutation.isPending || !canDo("op:dispatch-cancel")} title={!canDo("op:dispatch-cancel") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {dispatchCancelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-cancel") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    إلغاء الإرسال (SN)
+                  <Button type="submit" variant="destructive" disabled={dispatchCancelMutation.isPending || !canDo("op:dispatch-cancel")} title={!canDo("op:dispatch-cancel") ? t("common.noPermission") : undefined}>
+                    {dispatchCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("dispatch.executeDispatchCancel")}
                   </Button>
                 </form>
               </Form>
@@ -242,17 +244,17 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...dispatchBatchForm}>
-                <form onSubmit={dispatchBatchForm.handleSubmit((v) => dispatchCancelBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم إلغاء الإرسال بالتشغيلة بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={dispatchBatchForm.handleSubmit((v) => dispatchCancelBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchCancelBatch")), onError }))} className="space-y-6">
                   <FormField control={dispatchBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
-                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المستلم (toGLN)" />
+                      <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.toGLN")} />
                       <FormMessage />
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" variant="destructive" disabled={dispatchCancelBatchMutation.isPending || !canDo("op:dispatch-cancel-batch")} title={!canDo("op:dispatch-cancel-batch") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {dispatchCancelBatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-cancel-batch") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    إلغاء الإرسال بالتشغيلة
+                  <Button type="submit" variant="destructive" disabled={dispatchCancelBatchMutation.isPending || !canDo("op:dispatch-cancel-batch")} title={!canDo("op:dispatch-cancel-batch") ? t("common.noPermission") : undefined}>
+                    {dispatchCancelBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:dispatch-cancel-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("dispatch.executeDispatchCancelBatch")}
                   </Button>
                 </form>
               </Form>
@@ -274,17 +276,17 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...acceptForm}>
-                <form onSubmit={acceptForm.handleSubmit((v) => acceptMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم استلام المنتجات بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={acceptForm.handleSubmit((v) => acceptMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("dispatch.successAccept")), onError }))} className="space-y-6">
                   <FormField control={acceptForm.control} name="fromGLN" render={({ field }) => (
                     <FormItem>
-                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المرسل (fromGLN)" />
+                      <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.fromGLN")} />
                       <FormMessage />
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={acceptMutation.isPending || !canDo("op:accept")} title={!canDo("op:accept") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {acceptMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:accept") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    تنفيذ الاستلام (SN)
+                  <Button type="submit" disabled={acceptMutation.isPending || !canDo("op:accept")} title={!canDo("op:accept") ? t("common.noPermission") : undefined}>
+                    {acceptMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:accept") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("dispatch.executeAccept")}
                   </Button>
                 </form>
               </Form>
@@ -306,17 +308,17 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...acceptBatchForm}>
-                <form onSubmit={acceptBatchForm.handleSubmit((v) => acceptBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم استلام المنتجات بالتشغيلة بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={acceptBatchForm.handleSubmit((v) => acceptBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("dispatch.successAcceptBatch")), onError }))} className="space-y-6">
                   <FormField control={acceptBatchForm.control} name="fromGLN" render={({ field }) => (
                     <FormItem>
-                      <GlnInput value={field.value} onChange={field.onChange} label="GLN المرسل (fromGLN)" />
+                      <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.fromGLN")} />
                       <FormMessage />
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" disabled={acceptBatchMutation.isPending || !canDo("op:accept-batch")} title={!canDo("op:accept-batch") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {acceptBatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:accept-batch") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    تنفيذ الاستلام بالتشغيلة
+                  <Button type="submit" disabled={acceptBatchMutation.isPending || !canDo("op:accept-batch")} title={!canDo("op:accept-batch") ? t("common.noPermission") : undefined}>
+                    {acceptBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:accept-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("dispatch.executeAcceptBatch")}
                   </Button>
                 </form>
               </Form>
@@ -338,17 +340,17 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...acceptDispatchForm}>
-                <form onSubmit={acceptDispatchForm.handleSubmit((v) => acceptDispatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, "تم قبول الإشعار بنجاح"), onError }))} className="space-y-6">
+                <form onSubmit={acceptDispatchForm.handleSubmit((v) => acceptDispatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("dispatch.successAcceptDispatch")), onError }))} className="space-y-6">
                   <FormField control={acceptDispatchForm.control} name="dispatchNotificationId" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>رقم إشعار الإرسال (Dispatch Notification ID)</FormLabel>
+                      <FormLabel>{t("dispatch.notifId")}</FormLabel>
                       <FormControl><Input dir="ltr" className="text-left max-w-sm" placeholder="ID..." {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <Button type="submit" disabled={acceptDispatchMutation.isPending || !canDo("op:accept-dispatch")} title={!canDo("op:accept-dispatch") ? "غير مصرّح بهذه العملية" : undefined}>
-                    {acceptDispatchMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : !canDo("op:accept-dispatch") ? <Lock className="mr-2 h-4 w-4" /> : null}
-                    استلام الإشعار
+                  <Button type="submit" disabled={acceptDispatchMutation.isPending || !canDo("op:accept-dispatch")} title={!canDo("op:accept-dispatch") ? t("common.noPermission") : undefined}>
+                    {acceptDispatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:accept-dispatch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    {t("dispatch.executeAcceptDispatch")}
                   </Button>
                 </form>
               </Form>

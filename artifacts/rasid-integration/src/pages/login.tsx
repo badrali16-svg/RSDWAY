@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Box, Loader2, LogIn } from "lucide-react";
+import { Box, Loader2, LogIn, Languages } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/language-context";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const login = useLogin();
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { t, dir, lang, setLang } = useLanguage();
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,8 +29,8 @@ export default function LoginPage() {
         },
         onError: () => {
           toast({
-            title: "فشل تسجيل الدخول",
-            description: "اسم المستخدم أو كلمة المرور غير صحيحة",
+            title: t("login.failTitle"),
+            description: t("login.failDesc"),
             variant: "destructive",
           });
         },
@@ -38,21 +40,34 @@ export default function LoginPage() {
 
   return (
     <div
-      dir="rtl"
+      dir={dir}
       className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-muted/40 via-background to-muted/30 p-4 font-sans"
     >
+      {/* Language toggle */}
+      <div className="absolute top-4 end-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setLang(lang === "ar" ? "en" : "ar")}
+          className="gap-1.5 text-xs"
+        >
+          <Languages className="h-3.5 w-3.5" />
+          {lang === "ar" ? "English" : "العربية"}
+        </Button>
+      </div>
+
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
             <Box className="h-7 w-7 text-primary" />
           </div>
-          <CardTitle className="text-2xl">نظام رصد (DTTS)</CardTitle>
-          <CardDescription>يرجى تسجيل الدخول للمتابعة</CardDescription>
+          <CardTitle className="text-2xl">{t("login.title")}</CardTitle>
+          <CardDescription>{t("login.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">اسم المستخدم</Label>
+              <Label htmlFor="username">{t("login.username")}</Label>
               <Input
                 id="username"
                 value={username}
@@ -63,7 +78,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">كلمة المرور</Label>
+              <Label htmlFor="password">{t("login.password")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -76,11 +91,11 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full" disabled={login.isPending}>
               {login.isPending ? (
-                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <LogIn className="ml-2 h-4 w-4" />
+                <LogIn className="h-4 w-4" />
               )}
-              تسجيل الدخول
+              <span className="ms-2">{t("login.submit")}</span>
             </Button>
           </form>
         </CardContent>
