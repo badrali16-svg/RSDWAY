@@ -49,6 +49,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { useLanguage } from "@/lib/language-context";
+import { useAuth } from "@/hooks/use-auth";
 
 const PROD_URL = "https://rsd.sfda.gov.sa/ws";
 const TEST_URL = "https://tandttest.sfda.gov.sa/ws";
@@ -326,6 +327,8 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
   const saveAuth = useSaveAuthConfig();
   const testConn = useTestConnection();
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -461,90 +464,92 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
         </Card>
       )}
 
-      {/* ── Environment Selector ──────────────────────────────────────────── */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">{t("settings.envTitle")}</CardTitle>
-          <CardDescription>
-            {t("settings.envDesc")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {/* Test Environment */}
-            <button
-              type="button"
-              onClick={() => handleEnvSelect("test")}
-              className={`relative flex items-start gap-3 rounded-lg border-2 p-4 text-right transition-all hover:bg-muted/50 ${
-                isTestEnv
-                  ? "border-primary bg-primary/5"
-                  : "border-border"
-              }`}
-            >
-              <FlaskConical
-                className={`h-6 w-6 shrink-0 mt-0.5 ${isTestEnv ? "text-primary" : "text-muted-foreground"}`}
-              />
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className={`font-semibold ${isTestEnv ? "text-primary" : ""}`}>
-                    {t("settings.testEnvName")}
+      {/* ── Environment Selector — admin only ────────────────────────────── */}
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">{t("settings.envTitle")}</CardTitle>
+            <CardDescription>
+              {t("settings.envDesc")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {/* Test Environment */}
+              <button
+                type="button"
+                onClick={() => handleEnvSelect("test")}
+                className={`relative flex items-start gap-3 rounded-lg border-2 p-4 text-right transition-all hover:bg-muted/50 ${
+                  isTestEnv
+                    ? "border-primary bg-primary/5"
+                    : "border-border"
+                }`}
+              >
+                <FlaskConical
+                  className={`h-6 w-6 shrink-0 mt-0.5 ${isTestEnv ? "text-primary" : "text-muted-foreground"}`}
+                />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className={`font-semibold ${isTestEnv ? "text-primary" : ""}`}>
+                      {t("settings.testEnvName")}
+                    </p>
+                    {isTestEnv && (
+                      <Badge variant="default" className="text-xs">
+                        {t("settings.selected")}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5 break-all font-mono">
+                    {TEST_URL}
                   </p>
-                  {isTestEnv && (
-                    <Badge variant="default" className="text-xs">
-                      {t("settings.selected")}
-                    </Badge>
-                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t("settings.testEnvDesc")}
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 break-all font-mono">
-                  {TEST_URL}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t("settings.testEnvDesc")}
-                </p>
-              </div>
-            </button>
+              </button>
 
-            {/* Production Environment */}
-            <button
-              type="button"
-              onClick={() => handleEnvSelect("prod")}
-              className={`relative flex items-start gap-3 rounded-lg border-2 p-4 text-right transition-all hover:bg-muted/50 ${
-                !isTestEnv
-                  ? "border-primary bg-primary/5"
-                  : "border-border"
-              }`}
-            >
-              <Globe
-                className={`h-6 w-6 shrink-0 mt-0.5 ${!isTestEnv ? "text-primary" : "text-muted-foreground"}`}
-              />
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className={`font-semibold ${!isTestEnv ? "text-primary" : ""}`}>
-                    {t("settings.prodEnvName")}
+              {/* Production Environment */}
+              <button
+                type="button"
+                onClick={() => handleEnvSelect("prod")}
+                className={`relative flex items-start gap-3 rounded-lg border-2 p-4 text-right transition-all hover:bg-muted/50 ${
+                  !isTestEnv
+                    ? "border-primary bg-primary/5"
+                    : "border-border"
+                }`}
+              >
+                <Globe
+                  className={`h-6 w-6 shrink-0 mt-0.5 ${!isTestEnv ? "text-primary" : "text-muted-foreground"}`}
+                />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className={`font-semibold ${!isTestEnv ? "text-primary" : ""}`}>
+                      {t("settings.prodEnvName")}
+                    </p>
+                    {!isTestEnv && (
+                      <Badge variant="default" className="text-xs">
+                        {t("settings.selected")}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5 break-all font-mono">
+                    {PROD_URL}
                   </p>
-                  {!isTestEnv && (
-                    <Badge variant="default" className="text-xs">
-                      {t("settings.selected")}
-                    </Badge>
-                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t("settings.prodEnvDesc")}
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 break-all font-mono">
-                  {PROD_URL}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t("settings.prodEnvDesc")}
-                </p>
-              </div>
-            </button>
-          </div>
-        </CardContent>
-      </Card>
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── External Integration / API Keys ──────────────────────────────── */}
       <ApiKeysSection toast={toast} />
 
-      {/* ── Credentials Form ─────────────────────────────────────────────── */}
-      <Card className="max-w-2xl">
+      {/* ── Credentials Form — admin only ────────────────────────────────── */}
+      {isAdmin && <Card className="max-w-2xl">
         <CardHeader>
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-primary" />
@@ -655,7 +660,7 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
             </Form>
           )}
         </CardContent>
-      </Card>
+      </Card>}
     </div>
   );
 }
