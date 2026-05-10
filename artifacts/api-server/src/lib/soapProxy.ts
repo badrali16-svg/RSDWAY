@@ -12,6 +12,35 @@ export interface SoapResult {
   success: boolean;
   rawXml: string | null;
   error: string | null;
+  faultCode: string | null;
+}
+
+// FC error code descriptions (from DTTS documentation)
+const FC_MESSAGES: Record<string, string> = {
+  "401": "غير مصرح — بيانات الاعتماد مفقودة",
+  "80000": "بيانات الاعتماد غير صحيحة (اسم المستخدم أو كلمة المرور خاطئة)",
+  "80001": "المستخدم غير موجود في النظام",
+  "80002": "المستخدم غير مفعّل",
+  "80003": "كلمة المرور منتهية الصلاحية",
+  "10001": "GTIN غير مسجّل في النظام",
+  "10002": "الرقم التسلسلي مكرر",
+  "10003": "تاريخ الإنتاج أكبر من اليوم",
+  "10004": "تاريخ الانتهاء أقل من اليوم",
+  "20001": "GLN المُرسَل إليه غير موجود",
+  "00000": "نجاح",
+};
+
+function extractFaultCode(xml: string): string | null {
+  const fcMatch = xml.match(/<FC>([^<]+)<\/FC>/i);
+  if (fcMatch) return fcMatch[1].trim();
+  const faultStringMatch = xml.match(/<faultstring>([^<]+)<\/faultstring>/i);
+  if (faultStringMatch) return faultStringMatch[1].trim();
+  return null;
+}
+
+function hasSoapFault(xml: string): boolean {
+  return /<[Ss](OAP-ENV|oapenv|SOAP-ENV)?:?Fault/i.test(xml) ||
+         /<S:Fault/i.test(xml);
 }
 
 export async function callSoap(opts: SoapCallOptions): Promise<SoapResult> {
@@ -37,17 +66,27 @@ export async function callSoap(opts: SoapCallOptions): Promise<SoapResult> {
     });
 
     const rawXml = await response.text();
+    const faultCode = rawXml ? extractFaultCode(rawXml) : null;
 
     if (!response.ok) {
-      logger.warn({ status: response.status, endpoint: opts.endpoint }, "SOAP call failed");
-      return { success: false, rawXml, error: `HTTP ${response.status}: ${response.statusText}` };
+      logger.warn({ status: response.status, endpoint: opts.endpoint, faultCode }, "SOAP call failed");
+      const fcMsg = faultCode ? (FC_MESSAGES[faultCode] ?? `كود الخطأ: ${faultCode}`) : null;
+      const error = fcMsg ?? `HTTP ${response.status}: ${response.statusText}`;
+      return { success: false, rawXml, error, faultCode };
     }
 
-    return { success: true, rawXml, error: null };
+    // Even with HTTP 200, check for SOAP faults in the body
+    if (hasSoapFault(rawXml)) {
+      const fcMsg = faultCode ? (FC_MESSAGES[faultCode] ?? `كود الخطأ: ${faultCode}`) : "خطأ في المعالجة";
+      logger.warn({ endpoint: opts.endpoint, faultCode }, "SOAP fault in 200 response");
+      return { success: false, rawXml, error: fcMsg, faultCode };
+    }
+
+    return { success: true, rawXml, error: null, faultCode };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     logger.error({ err, endpoint: opts.endpoint }, "SOAP call error");
-    return { success: false, rawXml: null, error: msg };
+    return { success: false, rawXml: null, error: msg, faultCode: null };
   }
 }
 

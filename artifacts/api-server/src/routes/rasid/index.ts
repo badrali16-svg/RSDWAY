@@ -85,9 +85,15 @@ router.post("/auth/test-connection", async (req, res): Promise<void> => {
   const result = await callSoap({ endpoint: testEndpoint, action: "", body: soapBody, username: creds.username, password: creds.password });
 
   if (result.success) {
-    res.json({ success: true, message: "تم الاتصال بنجاح بنظام رصد", environment, baseUrl, testedAt: new Date().toISOString() });
+    res.json({ success: true, message: "تم الاتصال بنجاح بنظام رصد ✓", environment, baseUrl, testedAt: new Date().toISOString() });
   } else {
-    res.json({ success: false, message: result.error ?? "فشل الاتصال بنظام رصد", environment, baseUrl, testedAt: new Date().toISOString() });
+    const faultHint = result.faultCode === "80000" || result.faultCode === "80001"
+      ? " — يرجى التحقق من صحة اسم المستخدم وكلمة المرور في الإعدادات"
+      : result.faultCode === "401"
+      ? " — يرجى حفظ بيانات الاعتماد أولاً"
+      : "";
+    const message = (result.error ?? "فشل الاتصال بنظام رصد") + faultHint;
+    res.json({ success: false, message, environment, baseUrl, testedAt: new Date().toISOString() });
   }
 });
 
