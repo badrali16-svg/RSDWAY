@@ -9,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: api-keys
+    description: External API key management
   - name: auth
     description: Authentication configuration
   - name: session
@@ -40,6 +42,60 @@ tags:
   - name: query
     description: Query / utility operations
 paths:
+  /external/keys:
+    get:
+      operationId: listApiKeys
+      tags: [api-keys]
+      summary: List API keys for the logged-in user
+      responses:
+        "200":
+          description: List of API keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApiKeyEntry"
+    post:
+      operationId: createApiKey
+      tags: [api-keys]
+      summary: Create a new API key (returned once — store it securely)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateApiKeyRequest"
+      responses:
+        "200":
+          description: Newly created API key (full key shown once)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreatedApiKey"
+
+  /external/keys/{id}:
+    delete:
+      operationId: deleteApiKey
+      tags: [api-keys]
+      summary: Revoke (delete) an API key
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Revoked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
   /healthz:
     get:
       operationId: healthCheck
@@ -1336,6 +1392,56 @@ components:
           type: ["string", "null"]
       required:
         - success
+
+    ApiKeyEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        enabled:
+          type: boolean
+        keyPreview:
+          type: string
+          description: Masked key preview (first 12 + last 4 chars)
+        createdAt:
+          type: string
+        lastUsedAt:
+          type: ["string", "null"]
+      required:
+        - id
+        - name
+        - enabled
+        - keyPreview
+        - createdAt
+
+    CreateApiKeyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: A label to identify this key (e.g. "Odoo Production")
+      required:
+        - name
+
+    CreatedApiKey:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        key:
+          type: string
+          description: Full API key — shown only once, store it securely
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - key
+        - createdAt
 
     OperationLog:
       type: object

@@ -8,6 +8,50 @@
 import * as zod from "zod";
 
 /**
+ * @summary List API keys for the logged-in user
+ */
+export const ListApiKeysResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  enabled: zod.boolean(),
+  keyPreview: zod
+    .string()
+    .describe("Masked key preview (first 12 + last 4 chars)"),
+  createdAt: zod.string(),
+  lastUsedAt: zod.string().nullish(),
+});
+export const ListApiKeysResponse = zod.array(ListApiKeysResponseItem);
+
+/**
+ * @summary Create a new API key (returned once — store it securely)
+ */
+export const CreateApiKeyBody = zod.object({
+  name: zod
+    .string()
+    .describe('A label to identify this key (e.g. \"Odoo Production\")'),
+});
+
+export const CreateApiKeyResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  key: zod
+    .string()
+    .describe("Full API key — shown only once, store it securely"),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Revoke (delete) an API key
+ */
+export const DeleteApiKeyParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteApiKeyResponse = zod.object({
+  success: zod.boolean().optional(),
+});
+
+/**
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({

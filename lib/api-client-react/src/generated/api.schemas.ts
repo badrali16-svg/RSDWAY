@@ -230,6 +230,30 @@ export interface SoapResponse {
   notificationId?: string | null;
 }
 
+export interface ApiKeyEntry {
+  id: number;
+  name: string;
+  enabled: boolean;
+  /** Masked key preview (first 12 + last 4 chars) */
+  keyPreview: string;
+  createdAt: string;
+  /** @nullable */
+  lastUsedAt?: string | null;
+}
+
+export interface CreateApiKeyRequest {
+  /** A label to identify this key (e.g. "Odoo Production") */
+  name: string;
+}
+
+export interface CreatedApiKey {
+  id: number;
+  name: string;
+  /** Full API key — shown only once, store it securely */
+  key: string;
+  createdAt: string;
+}
+
 export interface OperationLog {
   id: number;
   operation: string;
@@ -241,3 +265,7 @@ export interface OperationLog {
   notificationId?: string | null;
   createdAt: string;
 }
+
+export type DeleteApiKey200 = {
+  success?: boolean;
+};

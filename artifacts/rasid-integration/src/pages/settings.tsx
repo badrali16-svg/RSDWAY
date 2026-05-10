@@ -7,6 +7,9 @@ import {
   useSaveAuthConfig,
   useUnlockSettings,
   useTestConnection,
+  useListApiKeys,
+  useCreateApiKey,
+  useDeleteApiKey,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -36,6 +39,12 @@ import {
   XCircle,
   Clock,
   RefreshCw,
+  Key,
+  Plus,
+  Trash2,
+  Copy,
+  AlertTriangle,
+  Plug,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
@@ -124,6 +133,191 @@ export default function Settings() {
   }
 
   return <SettingsContent toast={toast} />;
+}
+
+// ── API Keys Section ──────────────────────────────────────────────────────────
+function ApiKeysSection({ toast }: { toast: ReturnType<typeof useToast>["toast"] }) {
+  const { data: keys = [], refetch } = useListApiKeys();
+  const createKey = useCreateApiKey();
+  const deleteKey = useDeleteApiKey();
+  const [newKeyName, setNewKeyName] = useState("");
+  const [createdKey, setCreatedKey] = useState<{ id: number; name: string; key: string } | null>(null);
+  const [confirmRevoke, setConfirmRevoke] = useState<number | null>(null);
+
+  const baseUrl = window.location.origin;
+
+  const handleCreate = () => {
+    if (!newKeyName.trim()) return;
+    createKey.mutate(
+      { data: { name: newKeyName.trim() } },
+      {
+        onSuccess: (data) => {
+          setCreatedKey({ id: data.id, name: data.name, key: data.key });
+          setNewKeyName("");
+          refetch();
+        },
+        onError: () => toast({ title: "خطأ", description: "فشل إنشاء المفتاح", variant: "destructive" }),
+      }
+    );
+  };
+
+  const handleRevoke = (id: number) => {
+    deleteKey.mutate(
+      { id },
+      {
+        onSuccess: () => {
+          setConfirmRevoke(null);
+          refetch();
+          toast({ title: "تم الحذف", description: "تم إلغاء تفعيل المفتاح بنجاح" });
+        },
+        onError: () => toast({ title: "خطأ", description: "فشل حذف المفتاح", variant: "destructive" }),
+      }
+    );
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Plug className="h-5 w-5 text-primary" />
+          <CardTitle>التكامل الخارجي — مفاتيح API</CardTitle>
+        </div>
+        <CardDescription>
+          أنشئ مفاتيح API لربط أي نظام خارجي (مثل Odoo) بنظام رصد. كل طلب يستخدم بيانات اعتماد DTTS الخاصة بحسابك.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+
+        {/* Info box: how to use */}
+        <div className="rounded-lg border bg-muted/30 p-4 space-y-3 text-sm">
+          <p className="font-semibold flex items-center gap-2">
+            <Key className="h-4 w-4 text-primary" />
+            كيفية الاستخدام مع Odoo أو أي نظام خارجي
+          </p>
+          <p className="text-muted-foreground">أضف الـ header التالي في كل طلب API:</p>
+          <pre dir="ltr" className="bg-background border rounded px-3 py-2 text-xs font-mono overflow-x-auto">
+{"X-API-Key: rsd_<your-key>"}
+          </pre>
+          <p className="text-muted-foreground">مثال — إرسال Dispatch من Odoo:</p>
+          <pre dir="ltr" className="bg-background border rounded px-3 py-2 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all">
+{`POST ${baseUrl}/api/external/v1/dispatch
+X-API-Key: rsd_<your-key>
+Content-Type: application/json
+
+{
+  "toGLN": "5555555555554",
+  "products": [
+    { "GTIN": "74637840842700", "SN": "SN001", "BN": "BATCH01", "XD": "2026-12-31" }
+  ]
+}`}
+          </pre>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs text-muted-foreground">
+            <div>
+              <p className="font-semibold text-foreground mb-1">عمليات بالرقم التسلسلي (SN):</p>
+              <ul className="space-y-0.5 font-mono" dir="ltr">
+                {["/external/v1/dispatch","/external/v1/dispatch-cancel","/external/v1/accept","/external/v1/accept-dispatch","/external/v1/return","/external/v1/transfer","/external/v1/transfer-cancel","/external/v1/import","/external/v1/supply"].map(ep => (
+                  <li key={ep}>{ep}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold text-foreground mb-1">عمليات بالتشغيلة (Batch):</p>
+              <ul className="space-y-0.5 font-mono" dir="ltr">
+                {["/external/v1/dispatch-batch","/external/v1/dispatch-cancel-batch","/external/v1/accept-batch","/external/v1/return-batch","/external/v1/transfer-batch","/external/v1/transfer-cancel-batch"].map(ep => (
+                  <li key={ep}>{ep}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground pt-1">
+            <span className="font-semibold">تعيين Odoo:</span> Receipt → accept | Delivery → dispatch | Return → return | Internal Transfer → transfer
+          </p>
+        </div>
+
+        <Separator />
+
+        {/* New key created — show once */}
+        {createdKey && (
+          <div className="rounded-lg border-2 border-green-500 bg-green-50 dark:bg-green-900/20 p-4 space-y-3">
+            <div className="flex items-center gap-2 text-green-700 dark:text-green-400 font-semibold">
+              <CheckCircle2 className="h-5 w-5" />
+              تم إنشاء المفتاح — احفظه الآن، لن يظهر مرة أخرى
+            </div>
+            <div className="flex items-center gap-2">
+              <code dir="ltr" className="flex-1 bg-background border rounded px-3 py-2 text-xs font-mono break-all">{createdKey.key}</code>
+              <Button
+                type="button" variant="outline" size="icon"
+                onClick={() => { navigator.clipboard.writeText(createdKey.key); toast({ title: "تم النسخ" }); }}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setCreatedKey(null)}>
+              تم — أخفِ المفتاح
+            </Button>
+          </div>
+        )}
+
+        {/* Create new key */}
+        <div className="flex gap-2 items-end">
+          <div className="flex-1 space-y-1.5">
+            <Label htmlFor="key-name">اسم المفتاح (مثل: Odoo Production)</Label>
+            <Input
+              id="key-name"
+              placeholder="Odoo Warehouse Integration"
+              value={newKeyName}
+              onChange={e => setNewKeyName(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleCreate()}
+            />
+          </div>
+          <Button type="button" onClick={handleCreate} disabled={!newKeyName.trim() || createKey.isPending} className="gap-2">
+            {createKey.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            إنشاء مفتاح
+          </Button>
+        </div>
+
+        {/* Keys list */}
+        {keys.length > 0 ? (
+          <div className="space-y-2">
+            <Label>المفاتيح الحالية</Label>
+            {keys.map(k => (
+              <div key={k.id} className="flex items-center gap-3 rounded-lg border px-4 py-3">
+                <Key className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm">{k.name}</p>
+                  <p dir="ltr" className="text-xs text-muted-foreground font-mono">{k.keyPreview}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    أُنشئ: {new Date(k.createdAt).toLocaleDateString("ar-SA")}
+                    {k.lastUsedAt && ` · آخر استخدام: ${new Date(k.lastUsedAt).toLocaleDateString("ar-SA")}`}
+                  </p>
+                </div>
+                <Badge variant={k.enabled ? "default" : "secondary"} className="text-xs shrink-0">
+                  {k.enabled ? "مفعّل" : "معطّل"}
+                </Badge>
+                {confirmRevoke === k.id ? (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-destructive flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />تأكيد الحذف؟
+                    </span>
+                    <Button type="button" size="sm" variant="destructive" onClick={() => handleRevoke(k.id)} disabled={deleteKey.isPending}>
+                      {deleteKey.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "نعم"}
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setConfirmRevoke(null)}>لا</Button>
+                  </div>
+                ) : (
+                  <Button type="button" variant="ghost" size="icon" className="text-destructive hover:text-destructive shrink-0" onClick={() => setConfirmRevoke(k.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-4">لا توجد مفاتيح API بعد — أنشئ مفتاحاً للبدء.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"] }) {
@@ -223,7 +417,7 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-primary">الإعدادات</h1>
-        <p className="text-muted-foreground mt-1">إعدادات الربط مع نظام رصد (DTTS) والتفويض</p>
+        <p className="text-muted-foreground mt-1">إعدادات الربط مع نظام رصد (DTTS) والتفويض والتكامل الخارجي</p>
       </div>
 
       {/* ── Connection Status Banner ─────────────────────────────────────── */}
@@ -343,6 +537,9 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
           </div>
         </CardContent>
       </Card>
+
+      {/* ── External Integration / API Keys ──────────────────────────────── */}
+      <ApiKeysSection toast={toast} />
 
       {/* ── Credentials Form ─────────────────────────────────────────────── */}
       <Card className="max-w-2xl">

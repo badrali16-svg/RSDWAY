@@ -3,6 +3,7 @@ import healthRouter from "./health";
 import rasidRouter from "./rasid";
 import sessionRouter from "./session";
 import usersRouter from "./users";
+import externalRouter from "./external";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -13,5 +14,6 @@ router.use(usersRouter);
 router.use("/rasid", requireAuth);
 router.use("/auth", requireAuth);
 router.use(rasidRouter);
+router.use(externalRouter);
 
 export default router;
