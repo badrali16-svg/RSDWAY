@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { Loader2, RotateCcw, Activity, Ban, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,6 +21,11 @@ import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import { GlnInput } from "@/components/gln-input";
 import { useLanguage } from "@/lib/use-language";
+
+function withInvoice<T extends object>(data: T, inv: string): T {
+  if (!inv.trim()) return data;
+  return { ...data, invoiceNumber: inv.trim() } as T;
+}
 
 const returnSchema = z.object({
   toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),
@@ -58,6 +64,7 @@ export default function ReturnConsumePage() {
   const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
+  const [invoiceNum, setInvoiceNum] = useState("");
 
   const returnMutation = useReturnProducts();
   const returnBatchMutation = useReturnBatchProducts();
@@ -97,6 +104,19 @@ export default function ReturnConsumePage() {
         <p className="text-muted-foreground mt-1">{t("return.subtitle")}</p>
       </div>
 
+      <div className="flex items-end gap-3 rounded-md border bg-muted/30 px-4 py-3 max-w-sm">
+        <div className="flex-1 space-y-1">
+          <label className="text-sm font-medium">{t("common.invoiceNumber")}</label>
+          <Input
+            value={invoiceNum}
+            onChange={(e) => setInvoiceNum(e.target.value)}
+            placeholder={t("common.invoiceNumberPlaceholder")}
+            dir="ltr"
+            className="bg-background"
+          />
+        </div>
+      </div>
+
       <Tabs defaultValue={["return","return-batch","consume","consume-cancel"].find(tab => canDo(`op:${tab}`)) ?? "return"} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
           {canDo("op:return") && <TabsTrigger value="return">{t("return.tabReturn")}</TabsTrigger>}
@@ -117,7 +137,7 @@ export default function ReturnConsumePage() {
             </CardHeader>
             <CardContent>
               <Form {...returnForm}>
-                <form onSubmit={returnForm.handleSubmit((v) => returnMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("return.successReturn")), onError }))} className="space-y-6">
+                <form onSubmit={returnForm.handleSubmit((v) => returnMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("return.successReturn")), onError }))} className="space-y-6">
                   <FormField control={returnForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("return.toGLN")} />
@@ -148,7 +168,7 @@ export default function ReturnConsumePage() {
             </CardHeader>
             <CardContent>
               <Form {...returnBatchForm}>
-                <form onSubmit={returnBatchForm.handleSubmit((v) => returnBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("return.successReturnBatch")), onError }))} className="space-y-6">
+                <form onSubmit={returnBatchForm.handleSubmit((v) => returnBatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("return.successReturnBatch")), onError }))} className="space-y-6">
                   <FormField control={returnBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("return.toGLN")} />

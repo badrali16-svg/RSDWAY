@@ -36,7 +36,7 @@ import { useLanguage } from "@/lib/use-language";
 import * as XLSX from "xlsx";
 
 type LocalBatchProduct = { GTIN: string; BN?: string; XD?: string; QUANTITY?: number };
-type BatchPayload  = { toGLN?: string; fromGLN?: string; products?: LocalBatchProduct[] };
+type BatchPayload  = { toGLN?: string; fromGLN?: string; products?: LocalBatchProduct[]; invoiceNumber?: string };
 
 function parseBatchPayload(raw: string): BatchPayload | null {
   try { return JSON.parse(raw) as BatchPayload; } catch { return null; }
@@ -60,12 +60,15 @@ function exportHistoryToExcel(
         `${pr.GTIN}${pr.BN ? " BN:" + pr.BN : ""}${pr.XD ? " XD:" + pr.XD : ""}${pr.QUANTITY != null ? " QTY:" + pr.QUANTITY : ""}`
       ).join(" | ");
     } catch { /* ignore */ }
+    let invoiceNumber = "";
+    try { invoiceNumber = (JSON.parse(op.requestPayload) as BatchPayload).invoiceNumber ?? ""; } catch { /* */ }
     return {
       "ID": op.id,
       "التاريخ": new Date(op.createdAt).toLocaleString("en-SA"),
       "نوع العملية": op.operation,
       "الحالة": op.success ? "ناجحة" : "فاشلة",
       "رقم الإشعار": op.notificationId ?? "",
+      "رقم الفاتورة": invoiceNumber,
       "GLN": toGLN,
       "المنتجات": products,
     };
@@ -94,9 +97,12 @@ export default function HistoryPage() {
     if (!search.trim()) return true;
     const q = search.trim().toLowerCase();
     const status = op.success ? t("history.success").toLowerCase() : t("history.failed").toLowerCase();
+    let invoiceNumber = "";
+    try { invoiceNumber = (JSON.parse(op.requestPayload) as BatchPayload).invoiceNumber ?? ""; } catch { /* */ }
     return (
       op.operation.toLowerCase().includes(q) ||
       (op.notificationId ?? "").toLowerCase().includes(q) ||
+      invoiceNumber.toLowerCase().includes(q) ||
       status.includes(q)
     );
   });
@@ -218,6 +224,12 @@ export default function HistoryPage() {
                               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                             )}
                           </div>
+                          {(() => {
+                            try {
+                              const inv = (JSON.parse(op.requestPayload) as BatchPayload).invoiceNumber;
+                              return inv ? <span className="block text-xs text-muted-foreground font-normal mt-0.5" dir="ltr"># {inv}</span> : null;
+                            } catch { return null; }
+                          })()}
                         </TableCell>
                         <TableCell>
                           {op.success ? (
@@ -282,6 +294,14 @@ export default function HistoryPage() {
                   <span className="font-mono font-semibold" dir="ltr">
                     {detailPayload.toGLN ?? detailPayload.fromGLN}
                   </span>
+                </div>
+              )}
+
+              {/* Invoice Number */}
+              {detailPayload?.invoiceNumber && (
+                <div className="flex items-center gap-3 rounded-md border px-3 py-2 bg-muted/30">
+                  <span className="text-muted-foreground shrink-0">{t("history.colInvoice")}:</span>
+                  <span className="font-mono font-semibold" dir="ltr">{detailPayload.invoiceNumber}</span>
                 </div>
               )}
 

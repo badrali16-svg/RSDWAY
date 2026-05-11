@@ -89,8 +89,12 @@ export const en: Record<string, string> = {
   "history.cancelError": "Failed to cancel dispatch",
   "history.colActions": "Actions",
   "history.noPayload": "No details available",
-  "history.search": "Search operations (type, notification ID, status...)",
+  "history.search": "Search operations (type, notification ID, invoice, status...)",
   "history.noResults": "No results matching your search",
+  "history.colInvoice": "Invoice No.",
+
+  "common.invoiceNumber": "Invoice Number (optional)",
+  "common.invoiceNumberPlaceholder": "For reference only — not sent to SFDA",
 
   // Clients
   "clients.title": "Client Management",

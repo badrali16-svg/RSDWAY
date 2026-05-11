@@ -89,8 +89,12 @@ export const ar: Record<string, string> = {
   "history.cancelError": "فشل إلغاء الإرسال",
   "history.colActions": "إجراءات",
   "history.noPayload": "لا توجد تفاصيل",
-  "history.search": "بحث في العمليات (نوع، رقم إشعار، حالة...)",
+  "history.search": "بحث في العمليات (نوع، رقم إشعار، فاتورة، حالة...)",
   "history.noResults": "لا توجد نتائج مطابقة للبحث",
+  "history.colInvoice": "رقم الفاتورة",
+
+  "common.invoiceNumber": "رقم الفاتورة (اختياري)",
+  "common.invoiceNumberPlaceholder": "للمرجعية فقط — لا يُرسَل لـ SFDA",
 
   // Clients
   "clients.title": "إدارة العملاء",
