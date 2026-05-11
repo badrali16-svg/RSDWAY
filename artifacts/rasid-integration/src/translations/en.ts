@@ -1,6 +1,6 @@
 export const en: Record<string, string> = {
   // Nav
-  "nav.dashboard": "لوحة التحكم",
+  "nav.dashboard": "Dashboard",
   "nav.import": "Import & Supply",
   "nav.dispatch": "Dispatch & Accept",
   "nav.return": "Return & Consume",
@@ -53,7 +53,7 @@ export const en: Record<string, string> = {
   "common.close": "Close",
 
   // Dashboard
-  "dashboard.title": "لوحة التحكم",
+  "dashboard.title": "Dashboard",
   "dashboard.subtitle": "Overview of Rasid System operations",
   "dashboard.totalOps": "Total Operations",
   "dashboard.successOps": "Successful Operations",
