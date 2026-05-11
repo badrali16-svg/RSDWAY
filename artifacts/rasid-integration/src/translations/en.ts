@@ -95,6 +95,11 @@ export const en: Record<string, string> = {
 
   "common.invoiceNumber": "Invoice Number (optional)",
   "common.invoiceNumberPlaceholder": "For reference only — not sent to SFDA",
+  "common.invoiceAlert": "Alert",
+  "common.invoiceAlertTitle": "Notice",
+  "common.invoiceAlertDesc": "No invoice number has been entered.\nDo you want to proceed anyway?",
+  "common.invoiceAlertConfirm": "Submit Anyway",
+  "common.invoiceAlertCancel": "Cancel",
 
   // Clients
   "clients.title": "Client Management",

@@ -21,8 +21,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
+import { InvoiceBar } from "@/components/invoice-bar";
+import { useInvoiceGuard } from "@/lib/use-invoice-guard";
 import * as XLSX from "xlsx";
 import { useLanguage } from "@/lib/use-language";
+
+function withInvoice<T extends object>(data: T, inv: string): T {
+  if (!inv.trim()) return data;
+  return { ...data, invoiceNumber: inv.trim() } as T;
+}
 
 // Schema for Import/Supply
 const importSchema = z.object({
@@ -238,6 +245,14 @@ export default function ImportSupplyPage() {
   const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
+  const [invoiceNum, setInvoiceNum] = useState(() => sessionStorage.getItem("inv_import") ?? "");
+  const [invoiceAlert, setInvoiceAlert] = useState(true);
+  const { guard, dialogOpen, confirmSubmit, cancelSubmit } = useInvoiceGuard(invoiceNum, invoiceAlert);
+
+  const handleInvoiceChange = (v: string) => {
+    setInvoiceNum(v);
+    sessionStorage.setItem("inv_import", v);
+  };
 
   const importMutation = useImportProducts();
   const importCancelMutation = useImportCancelProducts();
@@ -260,39 +275,43 @@ export default function ImportSupplyPage() {
   });
 
   const handleImportSubmit = (values: z.infer<typeof importSchema>, isSupply: boolean) => {
-    const serialNumbers = values.serialNumbersStr.split('\n').map(s => s.trim()).filter(Boolean);
-    const payload = {
-      GTIN: values.GTIN,
-      MD: values.MD,
-      XD: values.XD,
-      BN: values.BN,
-      serialNumbers
-    };
-    
-    const mutation = isSupply ? supplyMutation : importMutation;
-    
-    mutation.mutate({ data: payload }, {
-      onSuccess: (res) => {
-        setResponse(res);
-        toast({ title: t("common.saved"), description: isSupply ? t("import.successSupply") : t("import.successImport") });
-      },
-      onError: () => {
-        toast({ title: t("common.error"), description: t("import.connError"), variant: "destructive" });
-      }
+    guard(() => {
+      const serialNumbers = values.serialNumbersStr.split('\n').map(s => s.trim()).filter(Boolean);
+      const payload = withInvoice({
+        GTIN: values.GTIN,
+        MD: values.MD,
+        XD: values.XD,
+        BN: values.BN,
+        serialNumbers
+      }, invoiceNum);
+
+      const mutation = isSupply ? supplyMutation : importMutation;
+
+      mutation.mutate({ data: payload }, {
+        onSuccess: (res) => {
+          setResponse(res);
+          toast({ title: t("common.saved"), description: isSupply ? t("import.successSupply") : t("import.successImport") });
+        },
+        onError: () => {
+          toast({ title: t("common.error"), description: t("import.connError"), variant: "destructive" });
+        }
+      });
     });
   };
 
   const handleCancelSubmit = (values: z.infer<typeof cancelSchema>, isSupply: boolean) => {
-    const mutation = isSupply ? supplyCancelMutation : importCancelMutation;
-    
-    mutation.mutate({ data: { products: values.products } }, {
-      onSuccess: (res) => {
-        setResponse(res);
-        toast({ title: t("common.saved"), description: isSupply ? t("import.successSupplyCancel") : t("import.successImportCancel") });
-      },
-      onError: () => {
-        toast({ title: t("common.error"), description: t("import.connError"), variant: "destructive" });
-      }
+    guard(() => {
+      const mutation = isSupply ? supplyCancelMutation : importCancelMutation;
+
+      mutation.mutate({ data: withInvoice({ products: values.products }, invoiceNum) }, {
+        onSuccess: (res) => {
+          setResponse(res);
+          toast({ title: t("common.saved"), description: isSupply ? t("import.successSupplyCancel") : t("import.successImportCancel") });
+        },
+        onError: () => {
+          toast({ title: t("common.error"), description: t("import.connError"), variant: "destructive" });
+        }
+      });
     });
   };
 
@@ -354,6 +373,16 @@ export default function ImportSupplyPage() {
         <h1 className="text-3xl font-bold tracking-tight text-primary">{t("import.title")}</h1>
         <p className="text-muted-foreground mt-1">{t("import.subtitle")}</p>
       </div>
+
+      <InvoiceBar
+        value={invoiceNum}
+        onChange={handleInvoiceChange}
+        alertEnabled={invoiceAlert}
+        onAlertChange={setInvoiceAlert}
+        dialogOpen={dialogOpen}
+        onDialogConfirm={confirmSubmit}
+        onDialogCancel={cancelSubmit}
+      />
 
       <Tabs defaultValue={canDo("op:import") ? "import" : canDo("op:import-cancel") ? "import-cancel" : canDo("op:supply") ? "supply" : "supply-cancel"} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">

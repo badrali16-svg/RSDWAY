@@ -95,6 +95,11 @@ export const ar: Record<string, string> = {
 
   "common.invoiceNumber": "رقم الفاتورة (اختياري)",
   "common.invoiceNumberPlaceholder": "للمرجعية فقط — لا يُرسَل لـ SFDA",
+  "common.invoiceAlert": "تنبيه",
+  "common.invoiceAlertTitle": "تنبيه",
+  "common.invoiceAlertDesc": "لم يتم إدخال رقم الفاتورة.\nهل تريد تنفيذ العملية على أي حال؟",
+  "common.invoiceAlertConfirm": "إرسال على أي حال",
+  "common.invoiceAlertCancel": "إلغاء",
 
   // Clients
   "clients.title": "إدارة العملاء",

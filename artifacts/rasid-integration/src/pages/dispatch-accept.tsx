@@ -24,6 +24,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import { GlnInput } from "@/components/gln-input";
+import { InvoiceBar } from "@/components/invoice-bar";
+import { useInvoiceGuard } from "@/lib/use-invoice-guard";
 import { useLanguage } from "@/lib/use-language";
 
 const dispatchSchema = z.object({
@@ -122,7 +124,14 @@ export default function DispatchAcceptPage() {
   const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
-  const [invoiceNum, setInvoiceNum] = useState("");
+  const [invoiceNum, setInvoiceNum] = useState(() => sessionStorage.getItem("inv_dispatch") ?? "");
+  const [invoiceAlert, setInvoiceAlert] = useState(true);
+  const { guard, dialogOpen, confirmSubmit, cancelSubmit } = useInvoiceGuard(invoiceNum, invoiceAlert);
+
+  const handleInvoiceChange = (v: string) => {
+    setInvoiceNum(v);
+    sessionStorage.setItem("inv_dispatch", v);
+  };
 
   const dispatchMutation = useDispatchProducts();
   const dispatchCancelMutation = useDispatchCancelProducts();
@@ -170,18 +179,15 @@ export default function DispatchAcceptPage() {
         <p className="text-muted-foreground mt-1">{t("dispatch.subtitle")}</p>
       </div>
 
-      <div className="flex items-end gap-3 rounded-md border bg-muted/30 px-4 py-3 max-w-sm">
-        <div className="flex-1 space-y-1">
-          <label className="text-sm font-medium">{t("common.invoiceNumber")}</label>
-          <Input
-            value={invoiceNum}
-            onChange={(e) => setInvoiceNum(e.target.value)}
-            placeholder={t("common.invoiceNumberPlaceholder")}
-            dir="ltr"
-            className="bg-background"
-          />
-        </div>
-      </div>
+      <InvoiceBar
+        value={invoiceNum}
+        onChange={handleInvoiceChange}
+        alertEnabled={invoiceAlert}
+        onAlertChange={setInvoiceAlert}
+        dialogOpen={dialogOpen}
+        onDialogConfirm={confirmSubmit}
+        onDialogCancel={cancelSubmit}
+      />
 
       <Tabs defaultValue={["dispatch","dispatch-batch","dispatch-cancel","dispatch-cancel-batch","accept","accept-batch","accept-dispatch"].find(tab => canDo(`op:${tab}`)) ?? "dispatch"} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
@@ -207,7 +213,7 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...dispatchForm}>
-                <form onSubmit={dispatchForm.handleSubmit((v) => dispatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatch")), onError }))} className="space-y-6">
+                <form onSubmit={dispatchForm.handleSubmit((v) => guard(() => dispatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatch")), onError })))} className="space-y-6">
                   <FormField control={dispatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.toGLN")} />
@@ -245,7 +251,7 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...dispatchBatchForm}>
-                <form onSubmit={dispatchBatchForm.handleSubmit((v) => dispatchBatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchBatch")), onError }))} className="space-y-6">
+                <form onSubmit={dispatchBatchForm.handleSubmit((v) => guard(() => dispatchBatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchBatch")), onError })))} className="space-y-6">
                   <FormField control={dispatchBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.toGLN")} />
@@ -283,7 +289,7 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...dispatchForm}>
-                <form onSubmit={dispatchForm.handleSubmit((v) => dispatchCancelMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchCancel")), onError }))} className="space-y-6">
+                <form onSubmit={dispatchForm.handleSubmit((v) => guard(() => dispatchCancelMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchCancel")), onError })))} className="space-y-6">
                   <FormField control={dispatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.toGLN")} />
@@ -321,7 +327,7 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...dispatchBatchForm}>
-                <form onSubmit={dispatchBatchForm.handleSubmit((v) => dispatchCancelBatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchCancelBatch")), onError }))} className="space-y-6">
+                <form onSubmit={dispatchBatchForm.handleSubmit((v) => guard(() => dispatchCancelBatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchCancelBatch")), onError })))} className="space-y-6">
                   <FormField control={dispatchBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.toGLN")} />
@@ -359,7 +365,7 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...acceptForm}>
-                <form onSubmit={acceptForm.handleSubmit((v) => acceptMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successAccept")), onError }))} className="space-y-6">
+                <form onSubmit={acceptForm.handleSubmit((v) => guard(() => acceptMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successAccept")), onError })))} className="space-y-6">
                   <FormField control={acceptForm.control} name="fromGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.fromGLN")} />
@@ -397,7 +403,7 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...acceptBatchForm}>
-                <form onSubmit={acceptBatchForm.handleSubmit((v) => acceptBatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successAcceptBatch")), onError }))} className="space-y-6">
+                <form onSubmit={acceptBatchForm.handleSubmit((v) => guard(() => acceptBatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successAcceptBatch")), onError })))} className="space-y-6">
                   <FormField control={acceptBatchForm.control} name="fromGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.fromGLN")} />
@@ -435,7 +441,7 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...acceptDispatchForm}>
-                <form onSubmit={acceptDispatchForm.handleSubmit((v) => acceptDispatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successAcceptDispatch")), onError }))} className="space-y-6">
+                <form onSubmit={acceptDispatchForm.handleSubmit((v) => guard(() => acceptDispatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successAcceptDispatch")), onError })))} className="space-y-6">
                   <FormField control={acceptDispatchForm.control} name="dispatchNotificationId" render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("dispatch.notifId")}</FormLabel>
