@@ -77,6 +77,18 @@ export const ar: Record<string, string> = {
   "history.colNotifId": "رقم الإشعار",
   "history.success": "ناجحة",
   "history.failed": "فاشلة",
+  "history.exportExcel": "تصدير Excel",
+  "history.detailTitle": "تفاصيل العملية",
+  "history.detailToGLN": "GLN المستلم",
+  "history.detailFromGLN": "GLN المرسل",
+  "history.detailProducts": "المنتجات",
+  "history.cancelDispatch": "إلغاء هذا الإرسال",
+  "history.cancelConfirmTitle": "تأكيد إلغاء الإرسال",
+  "history.cancelConfirmDesc": "سيتم تنفيذ DispatchCancelBatch بنفس بيانات الإرسال الأصلية. هل تريد المتابعة؟",
+  "history.cancelSuccess": "تم إلغاء الإرسال بنجاح",
+  "history.cancelError": "فشل إلغاء الإرسال",
+  "history.colActions": "إجراءات",
+  "history.noPayload": "لا توجد تفاصيل",
 
   // Clients
   "clients.title": "إدارة العملاء",

@@ -77,6 +77,18 @@ export const en: Record<string, string> = {
   "history.colNotifId": "Notification ID",
   "history.success": "Successful",
   "history.failed": "Failed",
+  "history.exportExcel": "Export Excel",
+  "history.detailTitle": "Operation Details",
+  "history.detailToGLN": "Recipient GLN",
+  "history.detailFromGLN": "Sender GLN",
+  "history.detailProducts": "Products",
+  "history.cancelDispatch": "Cancel This Dispatch",
+  "history.cancelConfirmTitle": "Confirm Dispatch Cancellation",
+  "history.cancelConfirmDesc": "DispatchCancelBatch will be executed with the same original dispatch data. Do you want to continue?",
+  "history.cancelSuccess": "Dispatch cancelled successfully",
+  "history.cancelError": "Failed to cancel dispatch",
+  "history.colActions": "Actions",
+  "history.noPayload": "No details available",
 
   // Clients
   "clients.title": "Client Management",
