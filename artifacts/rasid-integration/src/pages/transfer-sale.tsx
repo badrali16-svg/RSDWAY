@@ -22,7 +22,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import { GlnInput } from "@/components/gln-input";
+import { InvoiceBar } from "@/components/invoice-bar";
+import { useInvoiceGuard } from "@/lib/use-invoice-guard";
 import { useLanguage } from "@/lib/use-language";
+
+function withInvoice<T extends object>(data: T, inv: string): T {
+  if (!inv.trim()) return data;
+  return { ...data, invoiceNumber: inv.trim() } as T;
+}
 
 const transferSchema = z.object({
   toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),
@@ -78,6 +85,9 @@ export default function TransferSalePage() {
   const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
+  const [invoiceNum, setInvoiceNum] = useState("");
+  const [invoiceAlert, setInvoiceAlert] = useState(true);
+  const { guard, dialogOpen, confirmSubmit, cancelSubmit } = useInvoiceGuard(invoiceNum, invoiceAlert);
 
   const transferMutation = useTransferProducts();
   const transferCancelMutation = useTransferCancelProducts();
@@ -119,7 +129,17 @@ export default function TransferSalePage() {
         <p className="text-muted-foreground mt-1">{t("transfer.subtitle")}</p>
       </div>
 
-      <Tabs defaultValue={["transfer","transfer-batch","transfer-cancel","transfer-cancel-batch","pharmacy-sale","pharmacy-sale-cancel"].find(tab => canDo(`op:${tab}`))?.replace("pharmacy-sale-cancel","sale-cancel").replace("pharmacy-sale","sale") ?? "transfer"} className="space-y-6">
+      <InvoiceBar
+        value={invoiceNum}
+        onChange={setInvoiceNum}
+        alertEnabled={invoiceAlert}
+        onAlertChange={setInvoiceAlert}
+        dialogOpen={dialogOpen}
+        onDialogConfirm={confirmSubmit}
+        onDialogCancel={cancelSubmit}
+      />
+
+      <Tabs defaultValue={["transfer","transfer-batch","transfer-cancel","transfer-cancel-batch","pharmacy-sale","pharmacy-sale-cancel"].find(tab => canDo(`op:${tab}`))?.replace("pharmacy-sale-cancel","sale-cancel").replace("pharmacy-sale","sale") ?? "transfer"} onValueChange={() => setInvoiceNum("")} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
           {canDo("op:transfer") && <TabsTrigger value="transfer">{t("transfer.tabTransfer")}</TabsTrigger>}
           {canDo("op:transfer-batch") && <TabsTrigger value="transfer-batch">{t("transfer.tabTransferBatch")}</TabsTrigger>}
@@ -142,7 +162,7 @@ export default function TransferSalePage() {
             </CardHeader>
             <CardContent>
               <Form {...transferForm}>
-                <form onSubmit={transferForm.handleSubmit((v) => transferMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("transfer.successTransfer")), onError }))} className="space-y-6">
+                <form onSubmit={transferForm.handleSubmit((v) => guard(() => transferMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("transfer.successTransfer")), onError })))} className="space-y-6">
                   <FormField control={transferForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("transfer.toGLN")} />
@@ -174,7 +194,7 @@ export default function TransferSalePage() {
             </CardHeader>
             <CardContent>
               <Form {...transferBatchForm}>
-                <form onSubmit={transferBatchForm.handleSubmit((v) => transferBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("transfer.successTransferBatch")), onError }))} className="space-y-6">
+                <form onSubmit={transferBatchForm.handleSubmit((v) => guard(() => transferBatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("transfer.successTransferBatch")), onError })))} className="space-y-6">
                   <FormField control={transferBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("transfer.toGLN")} />
@@ -206,7 +226,7 @@ export default function TransferSalePage() {
             </CardHeader>
             <CardContent>
               <Form {...transferForm}>
-                <form onSubmit={transferForm.handleSubmit((v) => transferCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("transfer.successTransferCancel")), onError }))} className="space-y-6">
+                <form onSubmit={transferForm.handleSubmit((v) => guard(() => transferCancelMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("transfer.successTransferCancel")), onError })))} className="space-y-6">
                   <FormField control={transferForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("transfer.toGLN")} />
@@ -238,7 +258,7 @@ export default function TransferSalePage() {
             </CardHeader>
             <CardContent>
               <Form {...transferBatchForm}>
-                <form onSubmit={transferBatchForm.handleSubmit((v) => transferCancelBatchMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("transfer.successTransferCancelBatch")), onError }))} className="space-y-6">
+                <form onSubmit={transferBatchForm.handleSubmit((v) => guard(() => transferCancelBatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("transfer.successTransferCancelBatch")), onError })))} className="space-y-6">
                   <FormField control={transferBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("transfer.toGLN")} />
@@ -270,7 +290,7 @@ export default function TransferSalePage() {
             </CardHeader>
             <CardContent>
               <Form {...pharmacySaleForm}>
-                <form onSubmit={pharmacySaleForm.handleSubmit((v) => pharmacySaleMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("transfer.successSale")), onError }))} className="space-y-6">
+                <form onSubmit={pharmacySaleForm.handleSubmit((v) => guard(() => pharmacySaleMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("transfer.successSale")), onError })))} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <FormField control={pharmacySaleForm.control} name="toGLN" render={({ field }) => (
                       <FormItem>
@@ -332,7 +352,7 @@ export default function TransferSalePage() {
             </CardHeader>
             <CardContent>
               <Form {...pharmacySaleCancelForm}>
-                <form onSubmit={pharmacySaleCancelForm.handleSubmit((v) => pharmacySaleCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("transfer.successSaleCancel")), onError }))} className="space-y-6">
+                <form onSubmit={pharmacySaleCancelForm.handleSubmit((v) => guard(() => pharmacySaleCancelMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("transfer.successSaleCancel")), onError })))} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={pharmacySaleCancelForm.control} name="toGLN" render={({ field }) => (
                       <FormItem>
