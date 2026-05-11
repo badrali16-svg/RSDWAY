@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Box, Loader2, LogIn, Languages } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");

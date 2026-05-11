@@ -48,7 +48,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 import { useAuth } from "@/hooks/use-auth";
 
 const PROD_URL = "https://rsd.sfda.gov.sa/ws";

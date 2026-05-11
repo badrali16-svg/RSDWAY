@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import { GlnInput } from "@/components/gln-input";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 
 const returnSchema = z.object({
   toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),

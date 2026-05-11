@@ -31,7 +31,7 @@ import {
 } from "./ui/dialog";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 
 interface GlnInputProps {
   value: string;

@@ -6,7 +6,7 @@ import { Button } from "./ui/button";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 
 export function SoapResponseViewer({ response }: { response: SoapResponse | null }) {
   const [isOpen, setIsOpen] = useState(false);

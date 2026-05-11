@@ -22,7 +22,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import * as XLSX from "xlsx";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 
 // Schema for Import/Supply
 const importSchema = z.object({

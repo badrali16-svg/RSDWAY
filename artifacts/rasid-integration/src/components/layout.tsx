@@ -23,7 +23,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 import { useLogout, getGetCurrentSessionQueryKey } from "@workspace/api-client-react";
 
 interface NavItem {

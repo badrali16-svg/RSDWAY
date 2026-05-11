@@ -31,7 +31,7 @@ import {
   Download, FileSpreadsheet, X, ChevronRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 import * as XLSX from "xlsx";
 
 type LocalBatchProduct = { GTIN: string; BN?: string; XD?: string; QUANTITY?: number };

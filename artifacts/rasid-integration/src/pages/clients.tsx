@@ -54,7 +54,7 @@ import {
   SkipForward,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 
 interface ImportResult {
   added: number;

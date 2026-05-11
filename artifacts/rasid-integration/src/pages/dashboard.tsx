@@ -5,7 +5,7 @@ import { Activity, AlertTriangle, CheckCircle2, Clock, XCircle } from "lucide-re
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 
 export default function Dashboard() {
   const { data: authConfig, isLoading: authLoading } = useGetAuthConfig();

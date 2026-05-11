@@ -7,7 +7,7 @@ import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 import * as XLSX from "xlsx";
 
 type ProductRow = {

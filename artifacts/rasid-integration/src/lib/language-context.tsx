@@ -1,17 +1,17 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect } from "react";
 import { ar } from "@/translations/ar";
 import { en } from "@/translations/en";
 
 export type Lang = "ar" | "en";
 
-interface LanguageContextType {
+export interface LanguageContextType {
   lang: Lang;
   dir: "rtl" | "ltr";
   t: (key: string) => string;
   setLang: (lang: Lang) => void;
 }
 
-const LanguageContext = createContext<LanguageContextType | null>(null);
+export const LanguageContext = createContext<LanguageContextType | null>(null);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
@@ -41,10 +41,4 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       {children}
     </LanguageContext.Provider>
   );
-}
-
-export function useLanguage() {
-  const ctx = useContext(LanguageContext);
-  if (!ctx) throw new Error("useLanguage must be used within LanguageProvider");
-  return ctx;
 }

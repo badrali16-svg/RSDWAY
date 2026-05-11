@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { GlnInput } from "@/components/gln-input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 
 const uploadSchema = z.object({
   toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),

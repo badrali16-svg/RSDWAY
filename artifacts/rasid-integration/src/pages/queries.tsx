@@ -22,7 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 
 const checkStatusSchema = z.object({
   products: z.array(z.object({

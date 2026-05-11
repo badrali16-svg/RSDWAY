@@ -36,7 +36,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { OP_PERMISSION_GROUPS, ALL_OP_SLUGS } from "@/lib/op-permissions";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 
 const PROD_URL = "https://rsd.sfda.gov.sa/ws";
 const TEST_URL = "https://tandttest.sfda.gov.sa/ws";

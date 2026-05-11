@@ -5,7 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
 import NotFound from "@/pages/not-found";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
-import { LanguageProvider, useLanguage } from "@/lib/language-context";
+import { LanguageProvider } from "@/lib/language-context";
+import { useLanguage } from "@/lib/use-language";
 import { Loader2 } from "lucide-react";
 
 import LoginPage from "@/pages/login";
