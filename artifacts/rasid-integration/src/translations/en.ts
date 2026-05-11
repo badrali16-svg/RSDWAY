@@ -75,6 +75,8 @@ export const en: Record<string, string> = {
   "history.colType": "Operation Type",
   "history.colStatus": "Status",
   "history.colNotifId": "Notification ID",
+  "history.colUser": "User",
+  "history.filterAllUsers": "All Users",
   "history.success": "Successful",
   "history.failed": "Failed",
   "history.exportExcel": "Export Excel",

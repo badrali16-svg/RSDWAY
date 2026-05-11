@@ -1122,6 +1122,13 @@ paths:
       operationId: getOperationHistory
       tags: [query]
       summary: Get local operation history
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter by user ID (admin only)
       responses:
         "200":
           description: History list
@@ -1670,6 +1677,8 @@ components:
       properties:
         id:
           type: integer
+        userId:
+          type: ["integer", "null"]
         operation:
           type: string
         requestPayload:

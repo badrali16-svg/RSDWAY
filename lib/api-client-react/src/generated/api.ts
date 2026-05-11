@@ -34,6 +34,7 @@ import type {
   ExportRequest,
   FromGlnBatchProductListRequest,
   FromGlnProductListRequest,
+  GetOperationHistoryParams,
   HealthStatus,
   ImportRequest,
   LoginRequest,
@@ -4963,41 +4964,63 @@ export const useGetStakeholderList = <
 /**
  * @summary Get local operation history
  */
-export const getGetOperationHistoryUrl = () => {
-  return `/api/rasid/history`;
+export const getGetOperationHistoryUrl = (
+  params?: GetOperationHistoryParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/rasid/history?${stringifiedParams}`
+    : `/api/rasid/history`;
 };
 
 export const getOperationHistory = async (
+  params?: GetOperationHistoryParams,
   options?: RequestInit,
 ): Promise<OperationLog[]> => {
-  return customFetch<OperationLog[]>(getGetOperationHistoryUrl(), {
+  return customFetch<OperationLog[]>(getGetOperationHistoryUrl(params), {
     ...options,
     method: "GET",
   });
 };
 
-export const getGetOperationHistoryQueryKey = () => {
-  return [`/api/rasid/history`] as const;
+export const getGetOperationHistoryQueryKey = (
+  params?: GetOperationHistoryParams,
+) => {
+  return [`/api/rasid/history`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetOperationHistoryQueryOptions = <
   TData = Awaited<ReturnType<typeof getOperationHistory>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getOperationHistory>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+  params?: GetOperationHistoryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getOperationHistory>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetOperationHistoryQueryKey();
+  const queryKey =
+    queryOptions?.queryKey ?? getGetOperationHistoryQueryKey(params);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof getOperationHistory>>
-  > = ({ signal }) => getOperationHistory({ signal, ...requestOptions });
+  > = ({ signal }) =>
+    getOperationHistory(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getOperationHistory>>,
@@ -5018,15 +5041,18 @@ export type GetOperationHistoryQueryError = ErrorType<unknown>;
 export function useGetOperationHistory<
   TData = Awaited<ReturnType<typeof getOperationHistory>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getOperationHistory>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetOperationHistoryQueryOptions(options);
+>(
+  params?: GetOperationHistoryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getOperationHistory>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetOperationHistoryQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

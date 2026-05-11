@@ -8,6 +8,8 @@
 
 export interface OperationLog {
   id: number;
+  /** @nullable */
+  userId?: number | null;
   operation: string;
   requestPayload: string;
   /** @nullable */

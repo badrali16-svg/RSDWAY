@@ -286,6 +286,8 @@ export interface UpdateClientRequest {
 
 export interface OperationLog {
   id: number;
+  /** @nullable */
+  userId?: number | null;
   operation: string;
   requestPayload: string;
   /** @nullable */
@@ -298,4 +300,11 @@ export interface OperationLog {
 
 export type DeleteApiKey200 = {
   success?: boolean;
+};
+
+export type GetOperationHistoryParams = {
+  /**
+   * Filter by user ID (admin only)
+   */
+  userId?: number;
 };

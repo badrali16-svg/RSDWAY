@@ -121,6 +121,7 @@ async function proxyExternal(
   const result = await callSoap({ endpoint, action: "", body: soapBody, username: creds.username, password: creds.password });
   const notificationId = result.rawXml ? extractNotificationId(result.rawXml) : null;
   await db.insert(operationLogsTable).values({
+    userId: keyInfo.userId,
     operation: `[API] ${operation}`,
     requestPayload: JSON.stringify(requestPayload),
     responsePayload: result.rawXml,

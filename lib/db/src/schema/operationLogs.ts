@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const operationLogsTable = pgTable("operation_logs", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id"),
   operation: text("operation").notNull(),
   requestPayload: text("request_payload").notNull(),
   responsePayload: text("response_payload"),

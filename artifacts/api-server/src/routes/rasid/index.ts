@@ -1,10 +1,9 @@
 import { Router } from "express";
 import type { IRouter } from "express";
-import { db, operationLogsTable, authConfigTable } from "@workspace/db";
-import { desc } from "drizzle-orm";
+import { db, operationLogsTable, authConfigTable, usersTable } from "@workspace/db";
+import { desc, eq, and, asc } from "drizzle-orm";
 import { callSoap, buildProductListXml, extractNotificationId } from "../../lib/soapProxy";
 import { getCredentialsForUser, clearCredentialCacheForUser } from "../../lib/authStore";
-import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -66,6 +65,7 @@ async function proxy(
   const notificationId = result.rawXml ? extractNotificationId(result.rawXml) : null;
 
   await db.insert(operationLogsTable).values({
+    userId: user.id,
     operation,
     requestPayload: JSON.stringify(requestPayload),
     responsePayload: result.rawXml,
@@ -516,14 +516,28 @@ router.post("/rasid/stakeholder-list", async (req, res): Promise<void> => {
 });
 
 // ── HISTORY ──────────────────────────────────────────────────────────────────
-router.get("/rasid/history", async (_req, res): Promise<void> => {
-  const logs = await db
-    .select()
-    .from(operationLogsTable)
-    .orderBy(desc(operationLogsTable.createdAt))
-    .limit(100);
+router.get("/rasid/history", async (req, res): Promise<void> => {
+  const sessionUser = req.session?.user;
+  if (!sessionUser) {
+    res.status(401).json([]);
+    return;
+  }
+
+  let filterUserId: number | null = null;
+  if (sessionUser.role === "admin" && req.query.userId) {
+    const parsed = parseInt(req.query.userId as string, 10);
+    if (!isNaN(parsed)) filterUserId = parsed;
+  } else if (sessionUser.role !== "admin") {
+    filterUserId = sessionUser.id;
+  }
+
+  const logs = filterUserId !== null
+    ? await db.select().from(operationLogsTable).where(eq(operationLogsTable.userId, filterUserId)).orderBy(desc(operationLogsTable.createdAt)).limit(200)
+    : await db.select().from(operationLogsTable).orderBy(desc(operationLogsTable.createdAt)).limit(200);
+
   res.json(logs.map(l => ({
     id: l.id,
+    userId: l.userId,
     operation: l.operation,
     requestPayload: l.requestPayload,
     responsePayload: l.responsePayload,

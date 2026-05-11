@@ -75,6 +75,8 @@ export const ar: Record<string, string> = {
   "history.colType": "نوع العملية",
   "history.colStatus": "الحالة",
   "history.colNotifId": "رقم الإشعار",
+  "history.colUser": "المستخدم",
+  "history.filterAllUsers": "كل المستخدمين",
   "history.success": "ناجحة",
   "history.failed": "فاشلة",
   "history.exportExcel": "تصدير Excel",

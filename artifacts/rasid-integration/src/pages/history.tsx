@@ -3,6 +3,7 @@ import {
   useGetOperationHistory,
   useDispatchCancelBatchProducts,
   getGetOperationHistoryQueryKey,
+  useListUsers,
   type OperationLog,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,6 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -29,10 +37,11 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   Loader2, History as HistoryIcon, CheckCircle2, XCircle,
-  Download, FileSpreadsheet, X, ChevronRight, Search,
+  Download, FileSpreadsheet, X, ChevronRight, Search, Users,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
+import { useAuth } from "@/hooks/use-auth";
 import * as XLSX from "xlsx";
 
 type LocalBatchProduct = { GTIN: string; BN?: string; XD?: string; QUANTITY?: number };
@@ -80,18 +89,28 @@ function exportHistoryToExcel(
 }
 
 export default function HistoryPage() {
-  const { data: history, isLoading } = useGetOperationHistory({
-    query: { queryKey: getGetOperationHistoryQueryKey() }
-  });
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const { t } = useLanguage();
   const { toast } = useToast();
   const qc = useQueryClient();
   const cancelBatch = useDispatchCancelBatchProducts();
 
+  const [selectedUserId, setSelectedUserId] = useState<number | undefined>(undefined);
   const [search, setSearch] = useState("");
   const [detailOp, setDetailOp] = useState<OperationLog | null>(null);
   const [cancelTarget, setCancelTarget] = useState<{ toGLN: string; products: { GTIN: string; BN?: string; XD?: string; QUANTITY: number }[] } | null>(null);
   const [cancelling, setCancelling] = useState(false);
+
+  const historyParams = isAdmin && selectedUserId !== undefined
+    ? { userId: selectedUserId }
+    : undefined;
+
+  const { data: history, isLoading } = useGetOperationHistory(historyParams, {
+    query: { queryKey: getGetOperationHistoryQueryKey(historyParams) }
+  });
+
+  const { data: users } = useListUsers({ query: { enabled: isAdmin, queryKey: ["listUsers"] } });
 
   const filtered = (history ?? []).filter((op) => {
     if (!search.trim()) return true;
@@ -131,7 +150,7 @@ export default function HistoryPage() {
       {
         onSuccess: () => {
           toast({ title: t("history.cancelSuccess") });
-          qc.invalidateQueries({ queryKey: getGetOperationHistoryQueryKey() });
+          qc.invalidateQueries({ queryKey: getGetOperationHistoryQueryKey(historyParams) });
           setCancelTarget(null);
         },
         onError: () => {
@@ -143,6 +162,8 @@ export default function HistoryPage() {
   };
 
   const detailPayload = detailOp ? parseBatchPayload(detailOp.requestPayload) : null;
+
+  const usernameMap = new Map((users ?? []).map(u => [u.id, u.username]));
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -167,6 +188,33 @@ export default function HistoryPage() {
               </Button>
             )}
           </div>
+
+          {/* Admin user filter */}
+          {isAdmin && users && users.length > 0 && (
+            <div className="flex items-center gap-2 mt-2">
+              <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Select
+                value={selectedUserId !== undefined ? String(selectedUserId) : "all"}
+                onValueChange={(v) => {
+                  setSearch("");
+                  setSelectedUserId(v === "all" ? undefined : Number(v));
+                }}
+              >
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder={t("history.filterAllUsers")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("history.filterAllUsers")}</SelectItem>
+                  {users.map((u) => (
+                    <SelectItem key={u.id} value={String(u.id)}>
+                      {u.username}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {history && history.length > 0 && (
             <div className="relative mt-2">
               <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -199,6 +247,9 @@ export default function HistoryPage() {
                   <TableRow>
                     <TableHead className="text-start">{t("history.colDate")}</TableHead>
                     <TableHead className="text-start">{t("history.colType")}</TableHead>
+                    {isAdmin && selectedUserId === undefined && (
+                      <TableHead className="text-start">{t("history.colUser")}</TableHead>
+                    )}
                     <TableHead className="text-start">{t("history.colStatus")}</TableHead>
                     <TableHead className="text-start">{t("history.colNotifId")}</TableHead>
                     <TableHead className="text-start">{t("history.colActions")}</TableHead>
@@ -231,6 +282,11 @@ export default function HistoryPage() {
                             } catch { return null; }
                           })()}
                         </TableCell>
+                        {isAdmin && selectedUserId === undefined && (
+                          <TableCell className="text-xs text-muted-foreground">
+                            {op.userId != null ? (usernameMap.get(op.userId) ?? `#${op.userId}`) : "—"}
+                          </TableCell>
+                        )}
                         <TableCell>
                           {op.success ? (
                             <div className="flex items-center text-green-600 dark:text-green-500">

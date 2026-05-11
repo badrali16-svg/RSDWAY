@@ -9,7 +9,7 @@ import { useLanguage } from "@/lib/use-language";
 
 export default function Dashboard() {
   const { data: authConfig, isLoading: authLoading } = useGetAuthConfig();
-  const { data: history, isLoading: historyLoading } = useGetOperationHistory({
+  const { data: history, isLoading: historyLoading } = useGetOperationHistory(undefined, {
     query: { queryKey: getGetOperationHistoryQueryKey() }
   });
   const { t } = useLanguage();

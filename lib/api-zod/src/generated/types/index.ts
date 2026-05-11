@@ -25,6 +25,7 @@ export * from "./drugListRequest";
 export * from "./exportRequest";
 export * from "./fromGlnBatchProductListRequest";
 export * from "./fromGlnProductListRequest";
+export * from "./getOperationHistoryParams";
 export * from "./healthStatus";
 export * from "./importRequest";
 export * from "./loginRequest";

@@ -1105,8 +1105,16 @@ export const GetStakeholderListResponse = zod.object({
 /**
  * @summary Get local operation history
  */
+export const GetOperationHistoryQueryParams = zod.object({
+  userId: zod.coerce
+    .number()
+    .optional()
+    .describe("Filter by user ID (admin only)"),
+});
+
 export const GetOperationHistoryResponseItem = zod.object({
   id: zod.number(),
+  userId: zod.number().nullish(),
   operation: zod.string(),
   requestPayload: zod.string(),
   responsePayload: zod.string().nullish(),
