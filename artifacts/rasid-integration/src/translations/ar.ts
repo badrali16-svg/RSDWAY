@@ -1,6 +1,6 @@
 export const ar: Record<string, string> = {
   // Nav
-  "nav.dashboard": "لوحة القيادة",
+  "nav.dashboard": "لوحة التحكم",
   "nav.import": "الاستيراد والتصنيع",
   "nav.dispatch": "الإرسال والاستلام",
   "nav.return": "الإرجاع والاستهلاك",
@@ -14,7 +14,7 @@ export const ar: Record<string, string> = {
   "nav.settings": "الإعدادات",
 
   // Layout
-  "layout.systemName": "نظام رصد (DTTS)",
+  "layout.systemName": "نظام رصد",
   "layout.systemNameShort": "نظام رصد",
   "layout.loggedInAs": "مسجّل كـ",
   "layout.admin": "مدير",
@@ -23,7 +23,7 @@ export const ar: Record<string, string> = {
   "layout.menu": "القائمة",
 
   // Login
-  "login.title": "نظام رصد (DTTS)",
+  "login.title": "نظام رصد",
   "login.subtitle": "يرجى تسجيل الدخول للمتابعة",
   "login.username": "اسم المستخدم",
   "login.password": "كلمة المرور",
@@ -53,8 +53,8 @@ export const ar: Record<string, string> = {
   "common.close": "إغلاق",
 
   // Dashboard
-  "dashboard.title": "لوحة القيادة",
-  "dashboard.subtitle": "نظرة عامة على عمليات نظام رصد (DTTS)",
+  "dashboard.title": "لوحة التحكم",
+  "dashboard.subtitle": "نظرة عامة على عمليات نظام رصد",
   "dashboard.totalOps": "إجمالي العمليات",
   "dashboard.successOps": "العمليات الناجحة",
   "dashboard.failedOps": "العمليات الفاشلة",
@@ -159,7 +159,7 @@ export const ar: Record<string, string> = {
 
   // Settings
   "settings.title": "الإعدادات",
-  "settings.subtitle": "إعدادات الربط مع نظام رصد (DTTS) والتفويض والتكامل الخارجي",
+  "settings.subtitle": "إعدادات الربط مع نظام رصد والتفويض والتكامل الخارجي",
   "settings.gateTitle": "صفحة محمية",
   "settings.gateDesc": "يرجى إدخال كلمة المرور للدخول إلى صفحة الإعدادات",
   "settings.gatePasswordLabel": "كلمة المرور",
@@ -174,7 +174,7 @@ export const ar: Record<string, string> = {
   "settings.prodEnvName": "بيئة الإنتاج (Production)",
   "settings.prodEnvDesc": "للعمل الفعلي مع الهيئة العامة للغذاء والدواء (SFDA)",
   "settings.selected": "محدد",
-  "settings.credTitle": "بيانات اعتماد نظام رصد (DTTS)",
+  "settings.credTitle": "بيانات اعتماد نظام رصد",
   "settings.credDesc": "أدخل بيانات حسابك لدى الهيئة العامة للغذاء والدواء لتتمكن من إرسال العمليات. يتم تخزين كلمة المرور بشكل مشفر وآمن.",
   "settings.testConn": "اختبار الاتصال",
   "settings.testing": "جارٍ الاختبار...",
@@ -190,7 +190,7 @@ export const ar: Record<string, string> = {
   "settings.saving": "جارٍ الحفظ...",
   "settings.envLabel": "البيئة:",
   "settings.apiKeysTitle": "التكامل الخارجي — مفاتيح API",
-  "settings.apiKeysDesc": "أنشئ مفاتيح API لربط أي نظام خارجي (مثل Odoo) بنظام رصد. كل طلب يستخدم بيانات اعتماد DTTS الخاصة بحسابك.",
+  "settings.apiKeysDesc": "أنشئ مفاتيح API لربط أي نظام خارجي (مثل Odoo) بنظام رصد. كل طلب يستخدم بيانات اعتماد حسابك.",
   "settings.apiHowToUse": "كيفية الاستخدام مع Odoo أو أي نظام خارجي",
   "settings.apiAddHeader": "أضف الـ header التالي في كل طلب API:",
   "settings.apiExample": "مثال — إرسال Dispatch من Odoo:",
@@ -480,7 +480,7 @@ export const ar: Record<string, string> = {
   "users.deleteErrDesc": "فشل حذف الحساب",
 
   // Users — قسم بيانات اعتماد رصد (نموذج الإنشاء، للمدير فقط)
-  "users.dttsTitle": "بيانات اعتماد نظام رصد (DTTS)",
+  "users.dttsTitle": "بيانات اعتماد نظام رصد",
   "users.dttsDesc": "أدخل بيانات حساب الهيئة العامة للغذاء والدواء لربط المستخدم ببيئة الإنتاج. يتم تخزين كلمة المرور بشكل مشفر وآمن.",
   "users.dttsOptionalHint": "اختياري — إذا تُرك فارغاً، سيحتاج المستخدم إلى ضبط بيانات الاعتماد من الإعدادات",
   "users.dttsCustomUrl": "رابط مخصص",

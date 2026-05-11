@@ -1,6 +1,6 @@
 export const en: Record<string, string> = {
   // Nav
-  "nav.dashboard": "Dashboard",
+  "nav.dashboard": "لوحة التحكم",
   "nav.import": "Import & Supply",
   "nav.dispatch": "Dispatch & Accept",
   "nav.return": "Return & Consume",
@@ -14,7 +14,7 @@ export const en: Record<string, string> = {
   "nav.settings": "Settings",
 
   // Layout
-  "layout.systemName": "Rasid System (DTTS)",
+  "layout.systemName": "Rasid System",
   "layout.systemNameShort": "Rasid",
   "layout.loggedInAs": "Logged in as",
   "layout.admin": "Admin",
@@ -23,7 +23,7 @@ export const en: Record<string, string> = {
   "layout.menu": "Menu",
 
   // Login
-  "login.title": "Rasid System (DTTS)",
+  "login.title": "Rasid System",
   "login.subtitle": "Please log in to continue",
   "login.username": "Username",
   "login.password": "Password",
@@ -53,8 +53,8 @@ export const en: Record<string, string> = {
   "common.close": "Close",
 
   // Dashboard
-  "dashboard.title": "Dashboard",
-  "dashboard.subtitle": "Overview of Rasid System (DTTS) operations",
+  "dashboard.title": "لوحة التحكم",
+  "dashboard.subtitle": "Overview of Rasid System operations",
   "dashboard.totalOps": "Total Operations",
   "dashboard.successOps": "Successful Operations",
   "dashboard.failedOps": "Failed Operations",
@@ -159,7 +159,7 @@ export const en: Record<string, string> = {
 
   // Settings
   "settings.title": "Settings",
-  "settings.subtitle": "Rasid System (DTTS) integration settings, authorization, and external integrations",
+  "settings.subtitle": "Rasid System integration settings, authorization, and external integrations",
   "settings.gateTitle": "Protected Page",
   "settings.gateDesc": "Please enter the password to access the settings page",
   "settings.gatePasswordLabel": "Password",
@@ -174,7 +174,7 @@ export const en: Record<string, string> = {
   "settings.prodEnvName": "Production Environment",
   "settings.prodEnvDesc": "For live operations with SFDA",
   "settings.selected": "Selected",
-  "settings.credTitle": "Rasid System (DTTS) Credentials",
+  "settings.credTitle": "Rasid System Credentials",
   "settings.credDesc": "Enter your SFDA account credentials to send operations. Password is stored securely.",
   "settings.testConn": "Test Connection",
   "settings.testing": "Testing...",
@@ -190,7 +190,7 @@ export const en: Record<string, string> = {
   "settings.saving": "Saving...",
   "settings.envLabel": "Environment:",
   "settings.apiKeysTitle": "External Integration — API Keys",
-  "settings.apiKeysDesc": "Create API keys to connect any external system (e.g. Odoo) with Rasid. Each request uses your account DTTS credentials.",
+  "settings.apiKeysDesc": "Create API keys to connect any external system (e.g. Odoo) with Rasid. Each request uses your account credentials.",
   "settings.apiHowToUse": "How to use with Odoo or any external system",
   "settings.apiAddHeader": "Add the following header in every API request:",
   "settings.apiExample": "Example — Sending Dispatch from Odoo:",
@@ -480,14 +480,14 @@ export const en: Record<string, string> = {
   "users.deleteErrDesc": "Failed to delete account",
 
   // Users — DTTS credentials section (create form, admin only)
-  "users.dttsTitle": "Rasid System (DTTS) Credentials",
+  "users.dttsTitle": "Rasid System Credentials",
   "users.dttsDesc": "Enter the user's SFDA account credentials to link them with the Production environment. Password is stored securely.",
   "users.dttsOptionalHint": "Optional — if left empty, the user will need to configure credentials from Settings",
   "users.dttsCustomUrl": "Custom URL",
   "users.dttsTesting": "Testing...",
   "users.dttsMustTest": "Please test the connection before creating the account",
   "users.dttsTestFailed": "Connection test failed — cannot create account",
-  "users.dttsPartialFill": "Please fill in all DTTS credential fields or leave them all empty",
+  "users.dttsPartialFill": "Please fill in all credential fields or leave them all empty",
   "users.dttsConnOk": "Connection successful ✓",
   "users.dttsConnFail": "Connection failed ✗",
   "users.dttsSavedOk": "Credentials saved",
