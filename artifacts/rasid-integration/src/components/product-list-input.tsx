@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { Button } from "./ui/button";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "./ui/form";
@@ -84,6 +84,15 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<{ name: string; count: number } | null>(null);
   const isBatch = mode === "batch";
+
+  useEffect(() => {
+    if (fields.length === 0) {
+      isBatch
+        ? append({ GTIN: "", BN: undefined, XD: undefined, QUANTITY: 1 })
+        : append({ GTIN: "", SN: undefined, BN: undefined, XD: undefined, QUANTITY: undefined });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const downloadTemplate = () => {
     const headers = isBatch
