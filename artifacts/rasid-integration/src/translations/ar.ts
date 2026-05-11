@@ -89,6 +89,8 @@ export const ar: Record<string, string> = {
   "history.cancelError": "فشل إلغاء الإرسال",
   "history.colActions": "إجراءات",
   "history.noPayload": "لا توجد تفاصيل",
+  "history.search": "بحث في العمليات (نوع، رقم إشعار، حالة...)",
+  "history.noResults": "لا توجد نتائج مطابقة للبحث",
 
   // Clients
   "clients.title": "إدارة العملاء",

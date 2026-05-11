@@ -89,6 +89,8 @@ export const en: Record<string, string> = {
   "history.cancelError": "Failed to cancel dispatch",
   "history.colActions": "Actions",
   "history.noPayload": "No details available",
+  "history.search": "Search operations (type, notification ID, status...)",
+  "history.noResults": "No results matching your search",
 
   // Clients
   "clients.title": "Client Management",

@@ -26,9 +26,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 import {
   Loader2, History as HistoryIcon, CheckCircle2, XCircle,
-  Download, FileSpreadsheet, X, ChevronRight,
+  Download, FileSpreadsheet, X, ChevronRight, Search,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
@@ -84,9 +85,21 @@ export default function HistoryPage() {
   const qc = useQueryClient();
   const cancelBatch = useDispatchCancelBatchProducts();
 
+  const [search, setSearch] = useState("");
   const [detailOp, setDetailOp] = useState<OperationLog | null>(null);
   const [cancelTarget, setCancelTarget] = useState<{ toGLN: string; products: { GTIN: string; BN?: string; XD?: string; QUANTITY: number }[] } | null>(null);
   const [cancelling, setCancelling] = useState(false);
+
+  const filtered = (history ?? []).filter((op) => {
+    if (!search.trim()) return true;
+    const q = search.trim().toLowerCase();
+    const status = op.success ? t("history.success").toLowerCase() : t("history.failed").toLowerCase();
+    return (
+      op.operation.toLowerCase().includes(q) ||
+      (op.notificationId ?? "").toLowerCase().includes(q) ||
+      status.includes(q)
+    );
+  });
 
   const handleRowClick = (op: NonNullable<typeof history>[number]) => {
     if (DISPATCH_BATCH_OPS.has(op.operation)) {
@@ -148,6 +161,17 @@ export default function HistoryPage() {
               </Button>
             )}
           </div>
+          {history && history.length > 0 && (
+            <div className="relative mt-2">
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("history.search")}
+                className="ps-9"
+              />
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -157,6 +181,10 @@ export default function HistoryPage() {
           ) : history?.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground border border-dashed rounded-md">
               {t("history.noOps")}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground border border-dashed rounded-md">
+              {t("history.noResults")}
             </div>
           ) : (
             <div className="rounded-md border overflow-x-auto">
@@ -171,7 +199,7 @@ export default function HistoryPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {history?.map((op) => {
+                  {filtered.map((op) => {
                     const isDispatchBatch = DISPATCH_BATCH_OPS.has(op.operation);
                     const isCancelable = op.operation === CANCELABLE_OP && op.success;
                     return (
