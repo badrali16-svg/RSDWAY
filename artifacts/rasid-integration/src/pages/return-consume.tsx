@@ -65,14 +65,9 @@ export default function ReturnConsumePage() {
   const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
-  const [invoiceNum, setInvoiceNum] = useState(() => sessionStorage.getItem("inv_return") ?? "");
+  const [invoiceNum, setInvoiceNum] = useState("");
   const [invoiceAlert, setInvoiceAlert] = useState(true);
   const { guard, dialogOpen, confirmSubmit, cancelSubmit } = useInvoiceGuard(invoiceNum, invoiceAlert);
-
-  const handleInvoiceChange = (v: string) => {
-    setInvoiceNum(v);
-    sessionStorage.setItem("inv_return", v);
-  };
 
   const returnMutation = useReturnProducts();
   const returnBatchMutation = useReturnBatchProducts();
@@ -114,7 +109,7 @@ export default function ReturnConsumePage() {
 
       <InvoiceBar
         value={invoiceNum}
-        onChange={handleInvoiceChange}
+        onChange={setInvoiceNum}
         alertEnabled={invoiceAlert}
         onAlertChange={setInvoiceAlert}
         dialogOpen={dialogOpen}
@@ -122,7 +117,7 @@ export default function ReturnConsumePage() {
         onDialogCancel={cancelSubmit}
       />
 
-      <Tabs defaultValue={["return","return-batch","consume","consume-cancel"].find(tab => canDo(`op:${tab}`)) ?? "return"} className="space-y-6">
+      <Tabs defaultValue={["return","return-batch","consume","consume-cancel"].find(tab => canDo(`op:${tab}`)) ?? "return"} onValueChange={() => setInvoiceNum("")} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
           {canDo("op:return") && <TabsTrigger value="return">{t("return.tabReturn")}</TabsTrigger>}
           {canDo("op:return-batch") && <TabsTrigger value="return-batch">{t("return.tabReturnBatch")}</TabsTrigger>}

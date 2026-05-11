@@ -124,14 +124,9 @@ export default function DispatchAcceptPage() {
   const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
-  const [invoiceNum, setInvoiceNum] = useState(() => sessionStorage.getItem("inv_dispatch") ?? "");
+  const [invoiceNum, setInvoiceNum] = useState("");
   const [invoiceAlert, setInvoiceAlert] = useState(true);
   const { guard, dialogOpen, confirmSubmit, cancelSubmit } = useInvoiceGuard(invoiceNum, invoiceAlert);
-
-  const handleInvoiceChange = (v: string) => {
-    setInvoiceNum(v);
-    sessionStorage.setItem("inv_dispatch", v);
-  };
 
   const dispatchMutation = useDispatchProducts();
   const dispatchCancelMutation = useDispatchCancelProducts();
@@ -181,7 +176,7 @@ export default function DispatchAcceptPage() {
 
       <InvoiceBar
         value={invoiceNum}
-        onChange={handleInvoiceChange}
+        onChange={setInvoiceNum}
         alertEnabled={invoiceAlert}
         onAlertChange={setInvoiceAlert}
         dialogOpen={dialogOpen}
@@ -189,7 +184,7 @@ export default function DispatchAcceptPage() {
         onDialogCancel={cancelSubmit}
       />
 
-      <Tabs defaultValue={["dispatch","dispatch-batch","dispatch-cancel","dispatch-cancel-batch","accept","accept-batch","accept-dispatch"].find(tab => canDo(`op:${tab}`)) ?? "dispatch"} className="space-y-6">
+      <Tabs defaultValue={["dispatch","dispatch-batch","dispatch-cancel","dispatch-cancel-batch","accept","accept-batch","accept-dispatch"].find(tab => canDo(`op:${tab}`)) ?? "dispatch"} onValueChange={() => setInvoiceNum("")} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
           {canDo("op:dispatch") && <TabsTrigger value="dispatch">{t("dispatch.tabDispatch")}</TabsTrigger>}
           {canDo("op:dispatch-batch") && <TabsTrigger value="dispatch-batch">{t("dispatch.tabDispatchBatch")}</TabsTrigger>}

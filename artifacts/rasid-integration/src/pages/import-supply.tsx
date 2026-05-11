@@ -245,14 +245,9 @@ export default function ImportSupplyPage() {
   const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
-  const [invoiceNum, setInvoiceNum] = useState(() => sessionStorage.getItem("inv_import") ?? "");
+  const [invoiceNum, setInvoiceNum] = useState("");
   const [invoiceAlert, setInvoiceAlert] = useState(true);
   const { guard, dialogOpen, confirmSubmit, cancelSubmit } = useInvoiceGuard(invoiceNum, invoiceAlert);
-
-  const handleInvoiceChange = (v: string) => {
-    setInvoiceNum(v);
-    sessionStorage.setItem("inv_import", v);
-  };
 
   const importMutation = useImportProducts();
   const importCancelMutation = useImportCancelProducts();
@@ -376,7 +371,7 @@ export default function ImportSupplyPage() {
 
       <InvoiceBar
         value={invoiceNum}
-        onChange={handleInvoiceChange}
+        onChange={setInvoiceNum}
         alertEnabled={invoiceAlert}
         onAlertChange={setInvoiceAlert}
         dialogOpen={dialogOpen}
@@ -384,7 +379,7 @@ export default function ImportSupplyPage() {
         onDialogCancel={cancelSubmit}
       />
 
-      <Tabs defaultValue={canDo("op:import") ? "import" : canDo("op:import-cancel") ? "import-cancel" : canDo("op:supply") ? "supply" : "supply-cancel"} className="space-y-6">
+      <Tabs defaultValue={canDo("op:import") ? "import" : canDo("op:import-cancel") ? "import-cancel" : canDo("op:supply") ? "supply" : "supply-cancel"} onValueChange={() => setInvoiceNum("")} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
           {canDo("op:import") && <TabsTrigger value="import">{t("import.tabImport")}</TabsTrigger>}
           {canDo("op:import-cancel") && <TabsTrigger value="import-cancel">{t("import.tabImportCancel")}</TabsTrigger>}
