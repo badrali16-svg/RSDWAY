@@ -16,11 +16,12 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, PackagePlus, Ban, Upload, FileSpreadsheet, X, CheckCircle2, Lock } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Loader2, PackagePlus, Ban, Upload, FileSpreadsheet, X, CheckCircle2, Lock, ScanLine, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
-import { ProductListInput } from "@/components/product-list-input";
+import { ProductListInput, parseGS1DataMatrix } from "@/components/product-list-input";
 import { InvoiceBar } from "@/components/invoice-bar";
 import { useInvoiceGuard } from "@/lib/use-invoice-guard";
 import * as XLSX from "xlsx";
@@ -54,6 +55,79 @@ const cancelSchema = z.object({
 interface SnInputProps {
   value: string;
   onChange: (val: string) => void;
+}
+
+function SnDataMatrixScanner({ value, onChange }: SnInputProps) {
+  const { t } = useLanguage();
+  const { toast } = useToast();
+  const [scan, setScan] = useState("");
+  const [flash, setFlash] = useState<"ok" | "err" | "dup" | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const triggerFlash = (type: "ok" | "err" | "dup") => {
+    setFlash(type);
+    setTimeout(() => setFlash(null), 1200);
+  };
+
+  const handleScan = useCallback((raw: string) => {
+    const trimmed = raw.trim();
+    if (!trimmed) return;
+    const parsed = parseGS1DataMatrix(trimmed);
+    const sn = parsed?.sn ?? "";
+    if (!sn) {
+      triggerFlash("err");
+      toast({ title: t("products.dmErrTitle"), description: t("import.dmSnErrDesc"), variant: "destructive" });
+      setScan("");
+      return;
+    }
+    const existing = value.split("\n").map(s => s.trim()).filter(Boolean);
+    if (existing.includes(sn)) {
+      triggerFlash("dup");
+      toast({ title: t("import.dmDupTitle"), description: `${t("import.dmDupDesc")} ${sn}`, variant: "destructive" });
+      setScan("");
+      return;
+    }
+    const newVal = existing.length > 0 ? `${value.trimEnd()}\n${sn}` : sn;
+    onChange(newVal);
+    triggerFlash("ok");
+    setScan("");
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, [value, onChange, toast, t]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleScan(scan);
+    }
+  };
+
+  const borderClass =
+    flash === "ok" ? "border-green-500 bg-green-50 dark:bg-green-950/30" :
+    flash === "err" || flash === "dup" ? "border-destructive bg-destructive/5" :
+    "border-border";
+
+  return (
+    <div className="space-y-1.5">
+      <Label className="flex items-center gap-1.5 text-sm font-medium">
+        <ScanLine className="h-4 w-4 text-primary" />
+        {t("products.dmLabel")}
+      </Label>
+      <div className={`flex items-center rounded-md border transition-colors ${borderClass}`}>
+        <Input
+          ref={inputRef}
+          dir="ltr"
+          className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent font-mono text-sm"
+          placeholder={t("import.dmSnPlaceholder")}
+          value={scan}
+          onChange={(e) => setScan(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+        {flash === "ok" && <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 me-3 animate-in fade-in" />}
+        {(flash === "err" || flash === "dup") && <AlertCircle className="h-4 w-4 text-destructive shrink-0 me-3 animate-in fade-in" />}
+      </div>
+      <p className="text-xs text-muted-foreground">{t("import.dmSnHint")}</p>
+    </div>
+  );
 }
 
 function SnSerialInput({ value, onChange }: SnInputProps) {
@@ -124,6 +198,8 @@ function SnSerialInput({ value, onChange }: SnInputProps) {
 
   return (
     <div className="space-y-3">
+      <SnDataMatrixScanner value={value} onChange={onChange} />
+
       <div className="flex items-center gap-2">
         <Button
           type="button"

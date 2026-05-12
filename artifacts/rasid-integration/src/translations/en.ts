@@ -453,6 +453,13 @@ export const en: Record<string, string> = {
   "users.resetPwdPlaceholder": "Leave blank to keep current password",
   "users.createErrFallback": "Failed to create account",
   // Import-Supply (extended)
+  "import.dmSnPlaceholder": "Scan Data Matrix to extract serial number...",
+  "import.dmSnHint": "Extracts the serial number (SN) from GS1 Data Matrix and adds it automatically on Enter",
+  "import.dmSnErrDesc": "Make sure the barcode is in GS1 Data Matrix format and contains a serial number (AI 21)",
+  "import.dmDupTitle": "Serial number already added",
+  "import.dmDupDesc": "This serial number already exists in the list:",
+  "products.dmQtyTitle": "Quantity updated",
+  "products.dmQtyDesc": "Same GTIN + BN + XD — new quantity:",
   "import.manualInput": "Manual Entry",
   "import.uploadFileBtn": "Upload Excel / CSV",
   "import.serialCount": "serial",

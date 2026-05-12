@@ -125,9 +125,12 @@ export function parseGS1DataMatrix(raw: string): ParsedGS1 | null {
 
 type ScanFlash = "ok" | "err" | null;
 
-function DataMatrixScanner({ mode, append }: {
+function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
   mode: "sn" | "batch";
+  name: string;
   append: (row: object) => void;
+  getValues: (n: string) => unknown;
+  setFormValue: (n: string, v: unknown) => void;
 }) {
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -154,13 +157,24 @@ function DataMatrixScanner({ mode, append }: {
       setValue("");
       return;
     }
+
     if (mode === "batch") {
-      append({
-        GTIN: parsed.gtin,
-        BN: parsed.bn ?? "",
-        XD: parsed.xd ?? "",
-        QUANTITY: parsed.qty ?? 1,
-      });
+      const rows = (getValues(name) as Array<{ GTIN: string; BN?: string; XD?: string; QUANTITY?: number }>) ?? [];
+      const scanGtin = parsed.gtin;
+      const scanBn = parsed.bn ?? "";
+      const scanXd = parsed.xd ?? "";
+      const idx = rows.findIndex(
+        r => r.GTIN === scanGtin && (r.BN ?? "") === scanBn && (r.XD ?? "") === scanXd
+      );
+      if (idx >= 0) {
+        const updated = rows.map((r, i) =>
+          i === idx ? { ...r, QUANTITY: (r.QUANTITY ?? 1) + 1 } : r
+        );
+        setFormValue(name, updated);
+        toast({ title: t("products.dmQtyTitle"), description: `${t("products.dmQtyDesc")} ${updated[idx].QUANTITY}` });
+      } else {
+        append({ GTIN: parsed.gtin, BN: scanBn, XD: scanXd, QUANTITY: parsed.qty ?? 1 });
+      }
     } else {
       append({
         GTIN: parsed.gtin,
@@ -170,11 +184,11 @@ function DataMatrixScanner({ mode, append }: {
         QUANTITY: parsed.qty ?? undefined,
       });
     }
+
     triggerFlash("ok");
     setValue("");
-    // Keep focus on the scanner for rapid scanning
     setTimeout(() => inputRef.current?.focus(), 50);
-  }, [value, mode, append, toast, t]);
+  }, [value, mode, name, append, getValues, setFormValue, toast, t]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -371,7 +385,7 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
   return (
     <div className="space-y-4">
       {/* ── Data Matrix Scanner ── */}
-      <DataMatrixScanner mode={mode} append={append} />
+      <DataMatrixScanner mode={mode} name={name} append={append} getValues={getValues} setFormValue={setValue} />
 
       {/* ── Header row ── */}
       <div className="flex flex-wrap items-center justify-between gap-3">

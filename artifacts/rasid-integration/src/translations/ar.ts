@@ -453,6 +453,13 @@ export const ar: Record<string, string> = {
   "users.resetPwdPlaceholder": "اتركه فارغاً للإبقاء على كلمة المرور الحالية",
   "users.createErrFallback": "فشل إنشاء الحساب",
   // Import-Supply (extended)
+  "import.dmSnPlaceholder": "امسح Data Matrix لاستخراج الرقم التسلسلي...",
+  "import.dmSnHint": "يستخرج الرقم التسلسلي (SN) من GS1 Data Matrix ويضيفه تلقائياً عند الضغط على Enter",
+  "import.dmSnErrDesc": "تأكد أن الباركود بصيغة GS1 Data Matrix ويحتوي على رقم تسلسلي (21)",
+  "import.dmDupTitle": "رقم تسلسلي مضاف مسبقاً",
+  "import.dmDupDesc": "الرقم التسلسلي موجود بالفعل في القائمة:",
+  "products.dmQtyTitle": "تم تحديث الكمية",
+  "products.dmQtyDesc": "نفس GTIN + BN + XD — الكمية الجديدة:",
   "import.manualInput": "إدخال يدوي",
   "import.uploadFileBtn": "رفع ملف Excel / CSV",
   "import.serialCount": "رقم",
