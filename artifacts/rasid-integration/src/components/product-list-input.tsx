@@ -176,9 +176,25 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
         append({ GTIN: parsed.gtin, BN: scanBn, XD: scanXd, QUANTITY: parsed.qty ?? 1 });
       }
     } else {
+      // SN mode — check for duplicate SN before appending
+      const snValue = parsed.sn?.trim() ?? "";
+      if (snValue) {
+        const rows = (getValues(name) as Array<{ SN?: string }>) ?? [];
+        const isDup = rows.some(r => (r.SN?.trim() ?? "") === snValue);
+        if (isDup) {
+          triggerFlash("err");
+          toast({
+            title: t("import.dmDupTitle"),
+            description: `${t("import.dmDupDesc")} ${snValue}`,
+            variant: "destructive",
+          });
+          setValue("");
+          return;
+        }
+      }
       append({
         GTIN: parsed.gtin,
-        SN: parsed.sn ?? "",
+        SN: snValue,
         BN: parsed.bn ?? "",
         XD: parsed.xd ?? "",
         QUANTITY: parsed.qty ?? undefined,
