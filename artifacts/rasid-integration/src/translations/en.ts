@@ -528,6 +528,12 @@ export const en: Record<string, string> = {
   "products.uploadErrTitle": "File read error",
   "products.uploadErrDesc": "Make sure the file is a valid Excel or CSV format",
   "products.quantityLabel": "QUANTITY",
+  "products.dmLabel": "Scan Data Matrix",
+  "products.dmPlaceholder": "Scan barcode here or paste text...",
+  "products.dmAdd": "Add",
+  "products.dmHint": "Each scan adds a new product row automatically. Supports GS1 Data Matrix with AIs: (01) (17) (10) (21)",
+  "products.dmErrTitle": "Barcode read failed",
+  "products.dmErrDesc": "Make sure the barcode is in GS1 Data Matrix format and contains at least a GTIN",
 
   // SOAP Response Viewer
   "soap.successTitle": "Operation Successful",

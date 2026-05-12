@@ -528,6 +528,12 @@ export const ar: Record<string, string> = {
   "products.uploadErrTitle": "خطأ في قراءة الملف",
   "products.uploadErrDesc": "تأكد من أن الملف بصيغة Excel أو CSV صحيحة",
   "products.quantityLabel": "الكمية (QUANTITY)",
+  "products.dmLabel": "مسح Data Matrix",
+  "products.dmPlaceholder": "امسح الباركود هنا أو الصق النص...",
+  "products.dmAdd": "إضافة",
+  "products.dmHint": "كل مسح يضيف منتجًا جديدًا تلقائيًا. يدعم GS1 Data Matrix بصيغة AI: (01) (17) (10) (21)",
+  "products.dmErrTitle": "فشل قراءة الباركود",
+  "products.dmErrDesc": "تأكد أن الباركود بصيغة GS1 Data Matrix ويحتوي على GTIN على الأقل",
 
   // SOAP Response Viewer
   "soap.successTitle": "نجاح العملية",
