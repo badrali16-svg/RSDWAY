@@ -101,11 +101,13 @@ export default function UsersPage() {
   const [dttsUsername, setDttsUsername] = useState("");
   const [dttsPassword, setDttsPassword] = useState("");
   const [dttsSelectedEnv, setDttsSelectedEnv] = useState<"prod" | "test">("prod");
+  const [dttsCustomUrl, setDttsCustomUrl] = useState("");
   const [dttsTestStatus, setDttsTestStatus] = useState<DttsTestStatus>("idle");
   const [dttsTestMessage, setDttsTestMessage] = useState("");
 
-  const dttsBaseUrl = dttsSelectedEnv === "test" ? TEST_URL : PROD_URL;
-  const dttsIsFilled = !!dttsUsername && !!dttsPassword && !!dttsBaseUrl;
+  const dttsPresetUrl = dttsSelectedEnv === "test" ? TEST_URL : PROD_URL;
+  const dttsEffectiveUrl = dttsCustomUrl.trim() || dttsPresetUrl;
+  const dttsIsFilled = !!dttsUsername && !!dttsPassword && !!dttsEffectiveUrl;
   const dttsIsPartial = (!!dttsUsername || !!dttsPassword) && !dttsIsFilled;
   const canCreate =
     !createUser.isPending &&
@@ -116,6 +118,7 @@ export default function UsersPage() {
     setDttsUsername("");
     setDttsPassword("");
     setDttsSelectedEnv("prod");
+    setDttsCustomUrl("");
     setDttsTestStatus("idle");
     setDttsTestMessage("");
   };
@@ -125,7 +128,7 @@ export default function UsersPage() {
     setDttsTestStatus("testing");
     setDttsTestMessage("");
     testConnectionDirect.mutate(
-      { data: { username: dttsUsername, password: dttsPassword, baseUrl: dttsBaseUrl } },
+      { data: { username: dttsUsername, password: dttsPassword, baseUrl: dttsEffectiveUrl } },
       {
         onSuccess: (data) => {
           setDttsTestStatus(data.success ? "success" : "failed");
@@ -170,7 +173,7 @@ export default function UsersPage() {
       password: newPassword,
       permissions: newPermissions,
       ...(dttsIsFilled && dttsTestStatus === "success"
-        ? { dttsConfig: { username: dttsUsername, password: dttsPassword, baseUrl: dttsBaseUrl } }
+        ? { dttsConfig: { username: dttsUsername, password: dttsPassword, baseUrl: dttsEffectiveUrl } }
         : {}),
     };
     createUser.mutate(
@@ -308,14 +311,14 @@ export default function UsersPage() {
                   {/* Test */}
                   <button
                     type="button"
-                    onClick={() => { setDttsSelectedEnv("test"); setDttsTestStatus("idle"); setDttsTestMessage(""); }}
-                    className={`relative flex items-start gap-3 rounded-lg border-2 p-4 text-right transition-all hover:bg-muted/50 ${dttsSelectedEnv === "test" ? "border-primary bg-primary/5" : "border-border"}`}
+                    onClick={() => { setDttsSelectedEnv("test"); setDttsCustomUrl(""); setDttsTestStatus("idle"); setDttsTestMessage(""); }}
+                    className={`relative flex items-start gap-3 rounded-lg border-2 p-4 text-right transition-all hover:bg-muted/50 ${dttsSelectedEnv === "test" && !dttsCustomUrl.trim() ? "border-primary bg-primary/5" : "border-border"}`}
                   >
-                    <FlaskConical className={`h-6 w-6 shrink-0 mt-0.5 ${dttsSelectedEnv === "test" ? "text-primary" : "text-muted-foreground"}`} />
+                    <FlaskConical className={`h-6 w-6 shrink-0 mt-0.5 ${dttsSelectedEnv === "test" && !dttsCustomUrl.trim() ? "text-primary" : "text-muted-foreground"}`} />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className={`font-semibold text-sm ${dttsSelectedEnv === "test" ? "text-primary" : ""}`}>{t("settings.testEnvName")}</p>
-                        {dttsSelectedEnv === "test" && <Badge variant="default" className="text-xs">{t("settings.selected")}</Badge>}
+                        <p className={`font-semibold text-sm ${dttsSelectedEnv === "test" && !dttsCustomUrl.trim() ? "text-primary" : ""}`}>{t("settings.testEnvName")}</p>
+                        {dttsSelectedEnv === "test" && !dttsCustomUrl.trim() && <Badge variant="default" className="text-xs">{t("settings.selected")}</Badge>}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5 break-all font-mono">{TEST_URL}</p>
                       <p className="text-xs text-muted-foreground mt-1">{t("settings.testEnvDesc")}</p>
@@ -324,20 +327,38 @@ export default function UsersPage() {
                   {/* Production */}
                   <button
                     type="button"
-                    onClick={() => { setDttsSelectedEnv("prod"); setDttsTestStatus("idle"); setDttsTestMessage(""); }}
-                    className={`relative flex items-start gap-3 rounded-lg border-2 p-4 text-right transition-all hover:bg-muted/50 ${dttsSelectedEnv === "prod" ? "border-primary bg-primary/5" : "border-border"}`}
+                    onClick={() => { setDttsSelectedEnv("prod"); setDttsCustomUrl(""); setDttsTestStatus("idle"); setDttsTestMessage(""); }}
+                    className={`relative flex items-start gap-3 rounded-lg border-2 p-4 text-right transition-all hover:bg-muted/50 ${dttsSelectedEnv === "prod" && !dttsCustomUrl.trim() ? "border-primary bg-primary/5" : "border-border"}`}
                   >
-                    <Globe className={`h-6 w-6 shrink-0 mt-0.5 ${dttsSelectedEnv === "prod" ? "text-primary" : "text-muted-foreground"}`} />
+                    <Globe className={`h-6 w-6 shrink-0 mt-0.5 ${dttsSelectedEnv === "prod" && !dttsCustomUrl.trim() ? "text-primary" : "text-muted-foreground"}`} />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className={`font-semibold text-sm ${dttsSelectedEnv === "prod" ? "text-primary" : ""}`}>{t("settings.prodEnvName")}</p>
-                        {dttsSelectedEnv === "prod" && <Badge variant="default" className="text-xs">{t("settings.selected")}</Badge>}
+                        <p className={`font-semibold text-sm ${dttsSelectedEnv === "prod" && !dttsCustomUrl.trim() ? "text-primary" : ""}`}>{t("settings.prodEnvName")}</p>
+                        {dttsSelectedEnv === "prod" && !dttsCustomUrl.trim() && <Badge variant="default" className="text-xs">{t("settings.selected")}</Badge>}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5 break-all font-mono">{PROD_URL}</p>
                       <p className="text-xs text-muted-foreground mt-1">{t("settings.prodEnvDesc")}</p>
                     </div>
                   </button>
                 </div>
+              </div>
+
+              {/* Base URL (custom) */}
+              <div className="space-y-1.5">
+                <Label htmlFor="dtts-base-url">{t("settings.baseUrlLabel")}</Label>
+                <Input
+                  id="dtts-base-url"
+                  dir="ltr"
+                  className="text-left font-mono"
+                  placeholder={dttsPresetUrl}
+                  value={dttsCustomUrl}
+                  onChange={(e) => {
+                    setDttsCustomUrl(e.target.value);
+                    setDttsTestStatus("idle");
+                    setDttsTestMessage("");
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">{t("settings.baseUrlDesc")}</p>
               </div>
 
               {/* Username + Password */}
