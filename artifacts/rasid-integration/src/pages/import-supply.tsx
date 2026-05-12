@@ -72,14 +72,9 @@ function SnDataMatrixScanner({ value, onChange }: SnInputProps) {
   const handleScan = useCallback((raw: string) => {
     const trimmed = raw.trim();
     if (!trimmed) return;
+    // Extract SN from GS1 Data Matrix; fall back to raw text as SN
     const parsed = parseGS1DataMatrix(trimmed);
-    const sn = parsed?.sn ?? "";
-    if (!sn) {
-      triggerFlash("err");
-      toast({ title: t("products.dmErrTitle"), description: t("import.dmSnErrDesc"), variant: "destructive" });
-      setScan("");
-      return;
-    }
+    const sn = parsed?.sn?.trim() || trimmed;
     const existing = value.split("\n").map(s => s.trim()).filter(Boolean);
     if (existing.includes(sn)) {
       triggerFlash("dup");
