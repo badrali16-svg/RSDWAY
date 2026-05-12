@@ -77,16 +77,26 @@ function parseRaw(s: string): ParsedGS1 {
       i += 8;
     } else if (ai2 === "10") {
       i += 2;
-      const end = remaining.indexOf(GS, 2);
-      result.bn = end === -1 ? remaining.slice(2).replace(/\x1d.*/, "") : remaining.slice(2, end);
-      i += end === -1 ? remaining.length - 2 : end - 2;
-      if (end !== -1) i++; // skip GS
+      const rest10 = remaining.slice(2);
+      const gsPos10 = rest10.indexOf(GS);
+      let end10: number;
+      if (gsPos10 >= 0) {
+        end10 = gsPos10;
+      } else {
+        // No GS separator: look for AI "21" (serial) as terminator
+        const ai21pos = rest10.indexOf("21");
+        end10 = ai21pos >= 0 ? ai21pos : rest10.length;
+      }
+      result.bn = rest10.slice(0, end10) || undefined;
+      i += end10;
+      if (s[i] === GS) i++;
     } else if (ai2 === "21") {
       i += 2;
-      const end = remaining.indexOf(GS, 2);
-      result.sn = end === -1 ? remaining.slice(2).replace(/\x1d.*/, "") : remaining.slice(2, end);
-      i += end === -1 ? remaining.length - 2 : end - 2;
-      if (end !== -1) i++;
+      const rest21 = remaining.slice(2);
+      const gsPos21 = rest21.indexOf(GS);
+      result.sn = (gsPos21 >= 0 ? rest21.slice(0, gsPos21) : rest21) || undefined;
+      i += gsPos21 >= 0 ? gsPos21 : rest21.length;
+      if (s[i] === GS) i++;
     } else if (ai2 === "30") {
       i += 2;
       const end = remaining.indexOf(GS, 2);

@@ -75,16 +75,27 @@ function SnDataMatrixScanner({ value, onChange }: SnInputProps) {
   const process = useCallback((raw: string) => {
     const trimmed = raw.trim();
     if (!trimmed) return;
-    const parsed = parseGS1DataMatrix(trimmed);
-    const sn = parsed?.sn?.trim() || trimmed;
-    const existing = valueRef.current.split("\n").map(s => s.trim()).filter(Boolean);
-    if (existing.includes(sn)) {
-      triggerFlash("dup");
-      toast({ title: t("import.dmDupTitle"), description: `${t("import.dmDupDesc")} ${sn}`, variant: "destructive" });
+    // Replace space characters that some scanners output instead of GS (char 29)
+    const normalized = trimmed.replace(/ (?=\d{2})/g, "\x1d");
+    const parsed = parseGS1DataMatrix(normalized);
+    const sn = parsed?.sn?.trim();
+    // If no SN found but input looks like a GS1 barcode, show error (don't add whole barcode as SN)
+    const looksLikeGs1 = /^(?:\](?:d2|C1|Q3|e0))?01\d{14}/.test(normalized) || normalized.includes("(01)");
+    const snToAdd = sn || (looksLikeGs1 ? "" : trimmed);
+    if (!snToAdd) {
+      triggerFlash("err");
+      toast({ title: t("products.dmErrTitle"), description: t("import.dmSnErrDesc"), variant: "destructive" });
       setScan("");
       return;
     }
-    const newVal = existing.length > 0 ? `${valueRef.current.trimEnd()}\n${sn}` : sn;
+    const existing = valueRef.current.split("\n").map(s => s.trim()).filter(Boolean);
+    if (existing.includes(snToAdd)) {
+      triggerFlash("dup");
+      toast({ title: t("import.dmDupTitle"), description: `${t("import.dmDupDesc")} ${snToAdd}`, variant: "destructive" });
+      setScan("");
+      return;
+    }
+    const newVal = existing.length > 0 ? `${valueRef.current.trimEnd()}\n${snToAdd}` : snToAdd;
     onChange(newVal);
     triggerFlash("ok");
     setScan("");
