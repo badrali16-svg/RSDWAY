@@ -63,36 +63,48 @@ function SnDataMatrixScanner({ value, onChange }: SnInputProps) {
   const [scan, setScan] = useState("");
   const [flash, setFlash] = useState<"ok" | "err" | "dup" | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const valueRef = useRef(value);
+  valueRef.current = value;
 
   const triggerFlash = (type: "ok" | "err" | "dup") => {
     setFlash(type);
     setTimeout(() => setFlash(null), 1200);
   };
 
-  const handleScan = useCallback((raw: string) => {
+  const process = useCallback((raw: string) => {
     const trimmed = raw.trim();
     if (!trimmed) return;
-    // Extract SN from GS1 Data Matrix; fall back to raw text as SN
     const parsed = parseGS1DataMatrix(trimmed);
     const sn = parsed?.sn?.trim() || trimmed;
-    const existing = value.split("\n").map(s => s.trim()).filter(Boolean);
+    const existing = valueRef.current.split("\n").map(s => s.trim()).filter(Boolean);
     if (existing.includes(sn)) {
       triggerFlash("dup");
       toast({ title: t("import.dmDupTitle"), description: `${t("import.dmDupDesc")} ${sn}`, variant: "destructive" });
       setScan("");
       return;
     }
-    const newVal = existing.length > 0 ? `${value.trimEnd()}\n${sn}` : sn;
+    const newVal = existing.length > 0 ? `${valueRef.current.trimEnd()}\n${sn}` : sn;
     onChange(newVal);
     triggerFlash("ok");
     setScan("");
     setTimeout(() => inputRef.current?.focus(), 50);
-  }, [value, onChange, toast, t]);
+  }, [onChange, toast, t]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setScan(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (val.trim()) {
+      debounceRef.current = setTimeout(() => process(val), 200);
+    }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleScan(scan);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      process(scan);
     }
   };
 
@@ -114,7 +126,7 @@ function SnDataMatrixScanner({ value, onChange }: SnInputProps) {
           className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent font-mono text-sm"
           placeholder={t("import.dmSnPlaceholder")}
           value={scan}
-          onChange={(e) => setScan(e.target.value)}
+          onChange={handleChange}
           onKeyDown={handleKeyDown}
         />
         {flash === "ok" && <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 me-3 animate-in fade-in" />}
