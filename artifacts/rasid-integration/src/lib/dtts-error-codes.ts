@@ -8,7 +8,7 @@ export const DTTS_ERROR_CODES: Record<string, string> = {
   "10100": "المنتج موجود في المخزون",
   "10101": "المنتج غير موجود في المخزون",
   "10200": "المنتج غير صالح للعملية",
-  "10201": "لا يمكن تنفيذ العملية على هذا المنتج",
+  "10201": "الرقم التسلسلي (SN) غير موجود في النظام أو لم يُسجَّل مسبقاً",
   "10202": "المنتج تم تفعيله مسبقاً",
   "10203": "المنتج تم إلغاء تنشيطه مسبقاً",
   "10204": "المنتج تم بيعه سابقاً",
@@ -159,20 +159,75 @@ export function getDttsErrorMessage(code: string | null | undefined): string | n
   return DTTS_ERROR_CODES[code.trim()] ?? null;
 }
 
-/** Parse ResponseCode and UnsuccessfulUnitCount from DTTS raw XML */
-export function parseDttsResponse(xml: string | null | undefined): {
+export interface DttsParseResult {
+  /** Top-level or derived overall response code */
   responseCode: string | null;
+  /** Number of products that failed (RC != "00000") */
   unsuccessfulUnitCount: number | null;
-} {
-  if (!xml) return { responseCode: null, unsuccessfulUnitCount: null };
+  /** Per-product { rc, gtin, sn } — only those with RC != "00000" */
+  failedProducts: Array<{ rc: string; gtin?: string; sn?: string }>;
+}
 
-  const rcMatch = xml.match(/<(?:RESPONSECODE|ResponseCode|responseCode)>([^<]+)<\/(?:RESPONSECODE|ResponseCode|responseCode)>/i);
-  const responseCode = rcMatch ? rcMatch[1].trim() : null;
+/** Parse ResponseCode / RC + UnsuccessfulUnitCount from DTTS raw XML.
+ *
+ *  DTTS responses come in two shapes:
+ *  1. Top-level <RESPONSECODE> or <RC> (e.g. query/list services)
+ *  2. Per-product <RC> inside each <PRODUCT> block (e.g. Dispatch, Import …)
+ *
+ *  For shape 2 we derive the overall code from the product-level codes.
+ */
+export function parseDttsResponse(xml: string | null | undefined): DttsParseResult {
+  if (!xml) return { responseCode: null, unsuccessfulUnitCount: null, failedProducts: [] };
 
-  const ucMatch = xml.match(/<(?:UNSUCCESSFULUNITCOUNT|UnsuccessfulUnitCount|unsuccessfulUnitCount)>([^<]+)<\/(?:UNSUCCESSFULUNITCOUNT|UnsuccessfulUnitCount|unsuccessfulUnitCount)>/i);
-  const unsuccessfulUnitCount = ucMatch ? parseInt(ucMatch[1].trim(), 10) : null;
+  // ── 1. Explicit top-level <RESPONSECODE> / <RC> (outside any <PRODUCT>) ──
+  // Strip everything inside <PRODUCT>…</PRODUCT> to avoid matching product-level tags
+  const xmlWithoutProducts = xml.replace(/<PRODUCT\b[^>]*>[\s\S]*?<\/PRODUCT>/gi, "");
 
-  return { responseCode, unsuccessfulUnitCount };
+  const topRcMatch = xmlWithoutProducts.match(
+    /<(?:RESPONSECODE|ResponseCode|responseCode|RC)>([^<]+)<\/(?:RESPONSECODE|ResponseCode|responseCode|RC)>/i
+  );
+  const topLevelRc = topRcMatch ? topRcMatch[1].trim() : null;
+
+  // ── 2. Explicit <UNSUCCESSFULUNITCOUNT> at top level ──
+  const uccMatch = xmlWithoutProducts.match(
+    /<(?:UNSUCCESSFULUNITCOUNT|UnsuccessfulUnitCount|unsuccessfulUnitCount)>([^<]+)<\/(?:UNSUCCESSFULUNITCOUNT|UnsuccessfulUnitCount|unsuccessfulUnitCount)>/i
+  );
+  const explicitUcc = uccMatch ? parseInt(uccMatch[1].trim(), 10) : null;
+
+  // ── 3. Per-product <RC> codes ──
+  const productBlocks = [...xml.matchAll(/<PRODUCT\b[^>]*>([\s\S]*?)<\/PRODUCT>/gi)];
+  const failedProducts: DttsParseResult["failedProducts"] = [];
+
+  for (const block of productBlocks) {
+    const inner = block[1];
+    const rcm   = inner.match(/<RC>([^<]+)<\/RC>/i);
+    const rc    = rcm ? rcm[1].trim() : "00000";
+    if (rc !== "00000") {
+      const gtin = inner.match(/<GTIN>([^<]+)<\/GTIN>/i)?.[1]?.trim();
+      const sn   = inner.match(/<SN>([^<]+)<\/SN>/i)?.[1]?.trim();
+      failedProducts.push({ rc, gtin, sn });
+    }
+  }
+
+  const unsuccessfulFromProducts = productBlocks.length > 0 ? failedProducts.length : null;
+  const unsuccessfulUnitCount = explicitUcc !== null ? explicitUcc : unsuccessfulFromProducts;
+
+  // ── 4. Derive overall responseCode ──
+  let responseCode: string | null = topLevelRc;
+
+  if (!responseCode) {
+    if (productBlocks.length > 0) {
+      // All products succeeded?
+      if (failedProducts.length === 0) {
+        responseCode = "00000";
+      } else {
+        // Use the first failing product's RC as the representative code
+        responseCode = failedProducts[0].rc;
+      }
+    }
+  }
+
+  return { responseCode, unsuccessfulUnitCount, failedProducts };
 }
 
 export type DttsStatus = "success" | "partial" | "failed";
@@ -181,5 +236,7 @@ export function getDttsStatus(responseCode: string | null, unsuccessfulUnitCount
   if (!responseCode) return "failed";
   if (responseCode === "00000" && (unsuccessfulUnitCount === null || unsuccessfulUnitCount === 0)) return "success";
   if (responseCode === "00000" && unsuccessfulUnitCount !== null && unsuccessfulUnitCount > 0) return "partial";
+  // RC != 00000 but some products may have succeeded
+  if (unsuccessfulUnitCount !== null && unsuccessfulUnitCount > 0) return "partial";
   return "failed";
 }
