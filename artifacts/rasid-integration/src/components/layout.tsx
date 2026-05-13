@@ -24,7 +24,7 @@ import { Badge } from "./ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/lib/use-language";
-import { useLogout, getGetCurrentSessionQueryKey } from "@workspace/api-client-react";
+import { useLogout, getGetCurrentSessionQueryKey, useGetAuthConfig } from "@workspace/api-client-react";
 
 interface NavItem {
   href: string;
@@ -57,6 +57,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const qc = useQueryClient();
   const logout = useLogout();
   const { t, dir, lang, setLang } = useLanguage();
+  const { data: authConfig } = useGetAuthConfig();
 
   const visibleItems = navItems.filter((item) => {
     if (item.adminOnly) return user?.role === "admin";
@@ -138,6 +139,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <p className="text-xs text-muted-foreground">
                 {user.role === "admin" ? t("layout.admin") : t("layout.client")}
               </p>
+              {authConfig?.username && (
+                <p className="text-xs text-muted-foreground/70 truncate mt-0.5 font-mono" dir="ltr">
+                  {authConfig.username}
+                </p>
+              )}
             </div>
           </div>
         )}
