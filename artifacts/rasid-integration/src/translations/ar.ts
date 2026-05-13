@@ -458,6 +458,8 @@ export const ar: Record<string, string> = {
   "import.dmSnErrDesc": "تأكد أن الباركود بصيغة GS1 Data Matrix ويحتوي على رقم تسلسلي (21)",
   "import.dmDupTitle": "رقم تسلسلي مضاف مسبقاً",
   "import.dmDupDesc": "الرقم التسلسلي موجود بالفعل في القائمة:",
+  "import.dupRemovedTitle": "تم حذف أرقام تسلسلية مكررة",
+  "import.dupRemovedDesc": "عدد الأرقام المكررة التي تم حذفها:",
   "products.dmQtyTitle": "تم تحديث الكمية",
   "products.dmQtyDesc": "نفس GTIN + BN + XD — الكمية الجديدة:",
   "import.manualInput": "إدخال يدوي",

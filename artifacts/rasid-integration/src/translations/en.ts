@@ -458,6 +458,8 @@ export const en: Record<string, string> = {
   "import.dmSnErrDesc": "Make sure the barcode is in GS1 Data Matrix format and contains a serial number (AI 21)",
   "import.dmDupTitle": "Serial number already added",
   "import.dmDupDesc": "This serial number already exists in the list:",
+  "import.dupRemovedTitle": "Duplicate serial numbers removed",
+  "import.dupRemovedDesc": "Duplicates removed:",
   "products.dmQtyTitle": "Quantity updated",
   "products.dmQtyDesc": "Same GTIN + BN + XD — new quantity:",
   "import.manualInput": "Manual Entry",

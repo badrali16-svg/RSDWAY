@@ -148,6 +148,17 @@ function SnDataMatrixScanner({ value, onChange }: SnInputProps) {
   );
 }
 
+/** Remove duplicate SNs from a newline-separated string. Returns { unique, removedCount }. */
+function deduplicateSns(raw: string): { unique: string; removedCount: number } {
+  const lines = raw.split("\n").map(s => s.trim()).filter(Boolean);
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const sn of lines) {
+    if (!seen.has(sn)) { seen.add(sn); unique.push(sn); }
+  }
+  return { unique: unique.join("\n"), removedCount: lines.length - unique.length };
+}
+
 function SnSerialInput({ value, onChange }: SnInputProps) {
   const [inputMode, setInputMode] = useState<"manual" | "file">("manual");
   const [uploadedFile, setUploadedFile] = useState<{ name: string; count: number } | null>(null);
@@ -155,6 +166,19 @@ function SnSerialInput({ value, onChange }: SnInputProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { t } = useLanguage();
+
+  /** Deduplicate and notify user if any were removed */
+  const applyDedup = useCallback((raw: string, _source?: "manual" | "file") => {
+    const { unique, removedCount } = deduplicateSns(raw);
+    if (removedCount > 0) {
+      toast({
+        title: t("import.dupRemovedTitle"),
+        description: `${t("import.dupRemovedDesc")} ${removedCount}`,
+        variant: "destructive",
+      });
+    }
+    return unique;
+  }, [toast, t]);
 
   const parseFile = useCallback((file: File) => {
     const reader = new FileReader();
@@ -173,19 +197,19 @@ function SnSerialInput({ value, onChange }: SnInputProps) {
         if (!snKey && rows.length > 0) {
           // If no SN column found, take the first column
           const firstKey = Object.keys(rows[0])[0];
-          const sns = rows
-            .map(r => String(r[firstKey] ?? "").trim())
-            .filter(Boolean);
-          onChange(sns.join("\n"));
-          setUploadedFile({ name: file.name, count: sns.length });
-          toast({ title: t("import.uploadedTitle"), description: `${t("import.uploadedFromColumn")} ${sns.length} ${firstKey})` });
+          const raw = rows.map(r => String(r[firstKey] ?? "").trim()).filter(Boolean).join("\n");
+          const deduped = applyDedup(raw, "file");
+          const count = deduped.split("\n").filter(Boolean).length;
+          onChange(deduped);
+          setUploadedFile({ name: file.name, count });
+          toast({ title: t("import.uploadedTitle"), description: `${t("import.uploadedFromColumn")} ${count} ${firstKey})` });
         } else if (snKey) {
-          const sns = rows
-            .map(r => String(r[snKey] ?? "").trim())
-            .filter(Boolean);
-          onChange(sns.join("\n"));
-          setUploadedFile({ name: file.name, count: sns.length });
-          toast({ title: t("import.uploadedTitle"), description: `${t("import.uploadedSN")} ${sns.length}` });
+          const raw = rows.map(r => String(r[snKey] ?? "").trim()).filter(Boolean).join("\n");
+          const deduped = applyDedup(raw, "file");
+          const count = deduped.split("\n").filter(Boolean).length;
+          onChange(deduped);
+          setUploadedFile({ name: file.name, count });
+          toast({ title: t("import.uploadedTitle"), description: `${t("import.uploadedSN")} ${count}` });
         } else {
           toast({ title: t("import.emptyFileTitle"), description: t("import.emptyFileDesc"), variant: "destructive" });
         }
@@ -194,7 +218,7 @@ function SnSerialInput({ value, onChange }: SnInputProps) {
       }
     };
     reader.readAsArrayBuffer(file);
-  }, [onChange, toast]);
+  }, [onChange, toast, applyDedup]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -253,6 +277,10 @@ function SnSerialInput({ value, onChange }: SnInputProps) {
           placeholder={"SN1001\nSN1002\nSN1003"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={(e) => {
+            const deduped = applyDedup(e.target.value, "manual");
+            if (deduped !== e.target.value) onChange(deduped);
+          }}
         />
       ) : (
         <div className="space-y-3">
