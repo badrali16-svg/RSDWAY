@@ -544,8 +544,13 @@ export const en: Record<string, string> = {
 
   // SOAP Response Viewer
   "soap.successTitle": "Operation Successful",
+  "soap.partialTitle": "Partial Success",
   "soap.failTitle": "Operation Failed",
   "soap.rawXml": "XML Response (Raw XML)",
+  "soap.successMsg": "Operation completed successfully",
+  "soap.partialMsg": "Operation partially completed — some units failed",
+  "soap.failMsg": "Operation failed",
+  "soap.unsuccessfulUnits": "Failed Units",
 
   // Queries
   "queries.title": "Query Services",

@@ -544,8 +544,13 @@ export const ar: Record<string, string> = {
 
   // SOAP Response Viewer
   "soap.successTitle": "نجاح العملية",
+  "soap.partialTitle": "نجاح جزئي",
   "soap.failTitle": "فشل العملية",
   "soap.rawXml": "استجابة XML (Raw XML)",
+  "soap.successMsg": "تم تنفيذ العملية بنجاح",
+  "soap.partialMsg": "تم تنفيذ العملية جزئياً، يوجد وحدات فشلت",
+  "soap.failMsg": "فشل تنفيذ العملية",
+  "soap.unsuccessfulUnits": "عدد الوحدات الفاشلة",
 
   // Queries
   "queries.title": "خدمات الاستعلام",
