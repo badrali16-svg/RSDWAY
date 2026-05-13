@@ -28,9 +28,16 @@ export const ALL_OP_PERMISSIONS = [
   "op:package-upload", "op:package-download", "op:package-query",
 ] as const;
 
+export const ALL_SETTINGS_PERMISSIONS = [
+  "settings:env:view",  "settings:env:edit",
+  "settings:api:view",  "settings:api:edit",
+  "settings:dtts:view", "settings:dtts:edit",
+] as const;
+
 export const ALL_PERMISSIONS = [
   ...ALL_NAV_PERMISSIONS,
   ...ALL_OP_PERMISSIONS,
+  ...ALL_SETTINGS_PERMISSIONS,
 ] as const;
 
 export const SETTINGS_PASSWORD = "Ash@123456";
