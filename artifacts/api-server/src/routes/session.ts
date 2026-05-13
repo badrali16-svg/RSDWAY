@@ -43,8 +43,26 @@ router.post("/session/logout", (req, res): void => {
   });
 });
 
-router.get("/session/me", (req, res): void => {
-  res.json({ user: req.session?.user ?? null });
+router.get("/session/me", async (req, res): Promise<void> => {
+  if (!req.session?.user) {
+    res.json({ user: null });
+    return;
+  }
+  // Re-read fresh data from DB so permission changes are reflected immediately
+  const rows = await db.select().from(usersTable).where(eq(usersTable.id, req.session.user.id)).limit(1);
+  if (rows.length === 0 || !rows[0].isActive) {
+    res.json({ user: null });
+    return;
+  }
+  const row = rows[0];
+  const freshUser: SessionUser = {
+    id: row.id,
+    username: row.username,
+    role: row.role,
+    permissions: row.permissions ?? [],
+  };
+  req.session.user = freshUser;
+  res.json({ user: freshUser });
 });
 
 router.post("/session/unlock-settings", (req, res): void => {
