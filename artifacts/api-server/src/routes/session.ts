@@ -44,6 +44,9 @@ router.post("/session/logout", (req, res): void => {
 });
 
 router.get("/session/me", async (req, res): Promise<void> => {
+  // Never cache — permissions may change without the client knowing
+  res.set("Cache-Control", "no-store");
+
   if (!req.session?.user) {
     res.json({ user: null });
     return;
