@@ -18,10 +18,10 @@ export function SoapResponseViewer({ response }: { response: SoapResponse | null
 
   if (!response) return null;
 
-  const { responseCode, unsuccessfulUnitCount, failedProducts } = parseDttsResponse(response.rawXml);
+  const { responseCode, unsuccessfulUnitCount, totalProductCount, failedProducts } = parseDttsResponse(response.rawXml);
 
-  const hasRc        = responseCode !== null;
-  const dttsStatus   = getDttsStatus(responseCode, unsuccessfulUnitCount);
+  const hasRc           = responseCode !== null;
+  const dttsStatus      = getDttsStatus(responseCode, unsuccessfulUnitCount, totalProductCount);
   const effectiveStatus = hasRc ? dttsStatus : (response.success ? "success" : "failed");
 
   const isSuccess = effectiveStatus === "success";

@@ -164,6 +164,8 @@ export interface DttsParseResult {
   responseCode: string | null;
   /** Number of products that failed (RC != "00000") */
   unsuccessfulUnitCount: number | null;
+  /** Total number of products in the response PRODUCTLIST */
+  totalProductCount: number;
   /** Per-product { rc, gtin, sn } — only those with RC != "00000" */
   failedProducts: Array<{ rc: string; gtin?: string; sn?: string }>;
 }
@@ -177,7 +179,7 @@ export interface DttsParseResult {
  *  For shape 2 we derive the overall code from the product-level codes.
  */
 export function parseDttsResponse(xml: string | null | undefined): DttsParseResult {
-  if (!xml) return { responseCode: null, unsuccessfulUnitCount: null, failedProducts: [] };
+  if (!xml) return { responseCode: null, unsuccessfulUnitCount: null, totalProductCount: 0, failedProducts: [] };
 
   // ── 1. Explicit top-level <RESPONSECODE> / <RC> (outside any <PRODUCT>) ──
   // Strip everything inside <PRODUCT>…</PRODUCT> to avoid matching product-level tags
@@ -209,15 +211,15 @@ export function parseDttsResponse(xml: string | null | undefined): DttsParseResu
     }
   }
 
-  const unsuccessfulFromProducts = productBlocks.length > 0 ? failedProducts.length : null;
+  const totalProductCount = productBlocks.length;
+  const unsuccessfulFromProducts = totalProductCount > 0 ? failedProducts.length : null;
   const unsuccessfulUnitCount = explicitUcc !== null ? explicitUcc : unsuccessfulFromProducts;
 
   // ── 4. Derive overall responseCode ──
   let responseCode: string | null = topLevelRc;
 
   if (!responseCode) {
-    if (productBlocks.length > 0) {
-      // All products succeeded?
+    if (totalProductCount > 0) {
       if (failedProducts.length === 0) {
         responseCode = "00000";
       } else {
@@ -227,16 +229,42 @@ export function parseDttsResponse(xml: string | null | undefined): DttsParseResu
     }
   }
 
-  return { responseCode, unsuccessfulUnitCount, failedProducts };
+  return { responseCode, unsuccessfulUnitCount, totalProductCount, failedProducts };
 }
 
 export type DttsStatus = "success" | "partial" | "failed";
 
-export function getDttsStatus(responseCode: string | null, unsuccessfulUnitCount: number | null): DttsStatus {
+/**
+ * Determines operation status from parsed DTTS response.
+ *
+ * Rules:
+ * - Success  : RC == "00000"  AND  no failed products
+ * - Partial  : RC == "00000"  AND  some (but not all) products failed
+ *            OR some products succeeded and some failed (mixed result)
+ * - Failed   : RC != "00000"  AND  ALL products failed (or no product list)
+ */
+export function getDttsStatus(
+  responseCode: string | null,
+  unsuccessfulUnitCount: number | null,
+  totalProductCount = 0,
+): DttsStatus {
   if (!responseCode) return "failed";
-  if (responseCode === "00000" && (unsuccessfulUnitCount === null || unsuccessfulUnitCount === 0)) return "success";
-  if (responseCode === "00000" && unsuccessfulUnitCount !== null && unsuccessfulUnitCount > 0) return "partial";
-  // RC != 00000 but some products may have succeeded
-  if (unsuccessfulUnitCount !== null && unsuccessfulUnitCount > 0) return "partial";
+
+  const failed = unsuccessfulUnitCount ?? 0;
+  const total  = totalProductCount;
+
+  if (responseCode === "00000") {
+    if (failed === 0) return "success";
+    // RC 00000 but some units failed → partial
+    return "partial";
+  }
+
+  // RC != 00000 — check if some products still succeeded
+  if (total > 0 && failed < total) {
+    // At least one product got through → partial
+    return "partial";
+  }
+
+  // All failed (or no product breakdown available)
   return "failed";
 }
