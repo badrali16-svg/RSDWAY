@@ -547,4 +547,30 @@ router.get("/rasid/history", async (req, res): Promise<void> => {
   })));
 });
 
+// ── DELETE /rasid/history — Admin only: clear logs for a user or all ──────────
+router.delete("/rasid/history", async (req, res): Promise<void> => {
+  const sessionUser = req.session?.user;
+  if (!sessionUser) {
+    res.status(401).json({ ok: false });
+    return;
+  }
+  if (sessionUser.role !== "admin") {
+    res.status(403).json({ ok: false });
+    return;
+  }
+
+  if (req.query.userId) {
+    const parsed = parseInt(req.query.userId as string, 10);
+    if (isNaN(parsed)) {
+      res.status(400).json({ ok: false });
+      return;
+    }
+    await db.delete(operationLogsTable).where(eq(operationLogsTable.userId, parsed));
+  } else {
+    await db.delete(operationLogsTable);
+  }
+
+  res.json({ ok: true });
+});
+
 export default router;

@@ -1138,6 +1138,28 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/OperationLog"
+    delete:
+      operationId: clearOperationHistory
+      tags: [query]
+      summary: Delete operation history (admin only)
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Delete logs for a specific user. If omitted, deletes all logs.
+      responses:
+        "200":
+          description: Deletion result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (admin only)
 
 components:
   schemas:

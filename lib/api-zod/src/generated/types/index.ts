@@ -12,6 +12,7 @@ export * from "./authConfig";
 export * from "./authConfigInput";
 export * from "./batchProduct";
 export * from "./batchProductListRequest";
+export * from "./clearOperationHistoryParams";
 export * from "./client";
 export * from "./connectionTestResult";
 export * from "./createApiKeyRequest";

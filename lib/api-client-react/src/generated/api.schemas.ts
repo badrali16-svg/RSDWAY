@@ -308,3 +308,10 @@ export type GetOperationHistoryParams = {
    */
   userId?: number;
 };
+
+export type ClearOperationHistoryParams = {
+  /**
+   * Delete logs for a specific user. If omitted, deletes all logs.
+   */
+  userId?: number;
+};

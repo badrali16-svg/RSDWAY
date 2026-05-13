@@ -21,6 +21,7 @@ import type {
   ApiKeyEntry,
   AuthConfig,
   AuthConfigInput,
+  ClearOperationHistoryParams,
   Client,
   ConnectionTestResult,
   CreateApiKeyRequest,
@@ -5060,3 +5061,101 @@ export function useGetOperationHistory<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Delete operation history (admin only)
+ */
+export const getClearOperationHistoryUrl = (
+  params?: ClearOperationHistoryParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/rasid/history?${stringifiedParams}`
+    : `/api/rasid/history`;
+};
+
+export const clearOperationHistory = async (
+  params?: ClearOperationHistoryParams,
+  options?: RequestInit,
+): Promise<OkResponse> => {
+  return customFetch<OkResponse>(getClearOperationHistoryUrl(params), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getClearOperationHistoryMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof clearOperationHistory>>,
+    TError,
+    { params?: ClearOperationHistoryParams },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof clearOperationHistory>>,
+  TError,
+  { params?: ClearOperationHistoryParams },
+  TContext
+> => {
+  const mutationKey = ["clearOperationHistory"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof clearOperationHistory>>,
+    { params?: ClearOperationHistoryParams }
+  > = (props) => {
+    const { params } = props ?? {};
+
+    return clearOperationHistory(params, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ClearOperationHistoryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof clearOperationHistory>>
+>;
+
+export type ClearOperationHistoryMutationError = ErrorType<void>;
+
+/**
+ * @summary Delete operation history (admin only)
+ */
+export const useClearOperationHistory = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof clearOperationHistory>>,
+    TError,
+    { params?: ClearOperationHistoryParams },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof clearOperationHistory>>,
+  TError,
+  { params?: ClearOperationHistoryParams },
+  TContext
+> => {
+  return useMutation(getClearOperationHistoryMutationOptions(options));
+};

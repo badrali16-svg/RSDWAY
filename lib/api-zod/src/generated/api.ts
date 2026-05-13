@@ -1125,3 +1125,17 @@ export const GetOperationHistoryResponseItem = zod.object({
 export const GetOperationHistoryResponse = zod.array(
   GetOperationHistoryResponseItem,
 );
+
+/**
+ * @summary Delete operation history (admin only)
+ */
+export const ClearOperationHistoryQueryParams = zod.object({
+  userId: zod.coerce
+    .number()
+    .optional()
+    .describe("Delete logs for a specific user. If omitted, deletes all logs."),
+});
+
+export const ClearOperationHistoryResponse = zod.object({
+  ok: zod.boolean(),
+});

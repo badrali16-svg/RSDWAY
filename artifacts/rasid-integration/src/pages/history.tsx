@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   useGetOperationHistory,
   useDispatchCancelBatchProducts,
+  useClearOperationHistory,
   getGetOperationHistoryQueryKey,
   useListUsers,
   type OperationLog,
@@ -37,7 +38,7 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   Loader2, History as HistoryIcon, CheckCircle2, XCircle,
-  Download, FileSpreadsheet, X, ChevronRight, Search, Users,
+  Download, FileSpreadsheet, X, ChevronRight, Search, Users, Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
@@ -96,11 +97,14 @@ export default function HistoryPage() {
   const qc = useQueryClient();
   const cancelBatch = useDispatchCancelBatchProducts();
 
+  const clearHistory = useClearOperationHistory();
+
   const [selectedUserId, setSelectedUserId] = useState<number | undefined>(undefined);
   const [search, setSearch] = useState("");
   const [detailOp, setDetailOp] = useState<OperationLog | null>(null);
   const [cancelTarget, setCancelTarget] = useState<{ toGLN: string; products: { GTIN: string; BN?: string; XD?: string; QUANTITY: number }[] } | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [clearConfirm, setClearConfirm] = useState(false);
 
   const historyParams = isAdmin && selectedUserId !== undefined
     ? { userId: selectedUserId }
@@ -161,6 +165,24 @@ export default function HistoryPage() {
     );
   };
 
+  const handleClearLogs = () => {
+    const params = selectedUserId !== undefined ? { userId: selectedUserId } : undefined;
+    clearHistory.mutate(
+      { params },
+      {
+        onSuccess: () => {
+          toast({ title: t("history.clearOk") });
+          qc.invalidateQueries({ queryKey: getGetOperationHistoryQueryKey(historyParams) });
+          setClearConfirm(false);
+        },
+        onError: () => {
+          toast({ title: t("common.error"), description: t("history.clearErr"), variant: "destructive" });
+          setClearConfirm(false);
+        },
+      }
+    );
+  };
+
   const detailPayload = detailOp ? parseBatchPayload(detailOp.requestPayload) : null;
 
   const usernameMap = new Map((users ?? []).map(u => [u.id, u.username]));
@@ -185,6 +207,17 @@ export default function HistoryPage() {
               >
                 <FileSpreadsheet className="me-2 h-4 w-4 text-green-600" />
                 {t("history.exportExcel")}
+              </Button>
+            )}
+            {isAdmin && history && history.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => setClearConfirm(true)}
+              >
+                <Trash2 className="me-2 h-4 w-4" />
+                {selectedUserId !== undefined ? t("history.clearLogsUser") : t("history.clearLogsAll")}
               </Button>
             )}
           </div>
@@ -424,6 +457,41 @@ export default function HistoryPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ── Clear logs confirmation dialog ── */}
+      <AlertDialog open={clearConfirm} onOpenChange={(open) => { if (!open) setClearConfirm(false); }}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              {t("history.clearConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedUserId !== undefined
+                ? t("history.clearConfirmDescUser")
+                : t("history.clearConfirmDescAll")}
+              {selectedUserId !== undefined && users && (
+                <span className="block mt-2 font-semibold text-foreground">
+                  {usernameMap.get(selectedUserId) ?? `#${selectedUserId}`}
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={clearHistory.isPending}>
+              {t("users.deleteDialogCancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearLogs}
+              disabled={clearHistory.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {clearHistory.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+              {t("history.clearLogsBtn")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* ── Cancel confirmation dialog ── */}
       <AlertDialog open={!!cancelTarget} onOpenChange={(open) => { if (!open) setCancelTarget(null); }}>
