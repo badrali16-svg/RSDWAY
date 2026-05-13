@@ -1,11 +1,11 @@
 import { useRef, useCallback, useState, useEffect } from "react";
-import { useFieldArray, useFormContext } from "react-hook-form";
+import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { Button } from "./ui/button";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "./ui/form";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
-import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2, Download, ScanLine, AlertCircle } from "lucide-react";
+import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2, Download, ScanLine, AlertCircle, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
 import * as XLSX from "xlsx";
@@ -280,6 +280,34 @@ type ProductRow = {
   QUANTITY?: number;
 };
 
+/** Canonical key for duplicate detection — all 5 fields must match */
+function productRowKey(row: ProductRow): string {
+  return [
+    (row.GTIN     ?? "").trim(),
+    (row.SN       ?? "").trim(),
+    (row.BN       ?? "").trim(),
+    (row.XD       ?? "").trim(),
+    String(row.QUANTITY ?? ""),
+  ].join("|");
+}
+
+/** Returns a Set of indices that are duplicates (second+ occurrence of same key) */
+function findDuplicateIndices(rows: ProductRow[]): Set<number> {
+  const seen = new Map<string, number>();
+  const dups = new Set<number>();
+  rows.forEach((row, i) => {
+    const k = productRowKey(row);
+    if (!k || k === "||||") return; // skip empty rows
+    if (seen.has(k)) {
+      dups.add(i);
+      dups.add(seen.get(k)!);
+    } else {
+      seen.set(k, i);
+    }
+  });
+  return dups;
+}
+
 function normalizeKey(k: string) {
   return k.trim().toUpperCase();
 }
@@ -346,6 +374,10 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
   const [uploadedFile, setUploadedFile] = useState<{ name: string; count: number } | null>(null);
   const isBatch = mode === "batch";
 
+  // ── Real-time duplicate detection ────────────────────────────────────────────
+  const watchedRows = useWatch({ control, name }) as ProductRow[] | undefined;
+  const duplicateIndices: Set<number> = watchedRows ? findDuplicateIndices(watchedRows) : new Set();
+
   useEffect(() => {
     if (fields.length === 0) {
       isBatch
@@ -380,9 +412,20 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
           toast({ title: t("products.noDataTitle"), description: t("products.noDataDesc"), variant: "destructive" });
           return;
         }
-        setValue(name, products);
-        setUploadedFile({ name: file.name, count: products.length });
-        toast({ title: t("products.uploadedTitle"), description: `${products.length} ${t("products.uploadedDesc")}` });
+        // Deduplicate rows from file
+        const seen = new Set<string>();
+        const unique: ProductRow[] = [];
+        for (const p of products) {
+          const k = productRowKey(p);
+          if (!seen.has(k)) { seen.add(k); unique.push(p); }
+        }
+        const removedCount = products.length - unique.length;
+        if (removedCount > 0) {
+          toast({ title: t("products.dupFileRemoved"), description: `${t("products.dupFileRemovedDesc")} ${removedCount}`, variant: "destructive" });
+        }
+        setValue(name, unique);
+        setUploadedFile({ name: file.name, count: unique.length });
+        toast({ title: t("products.uploadedTitle"), description: `${unique.length} ${t("products.uploadedDesc")}` });
       } catch {
         toast({ title: t("products.uploadErrTitle"), description: t("products.uploadErrDesc"), variant: "destructive" });
       }
@@ -468,9 +511,24 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
           />
           <Button
             type="button" variant="outline" size="sm"
-            onClick={() => isBatch
-              ? append({ GTIN: "", BN: undefined, XD: undefined, QUANTITY: 1 })
-              : append({ GTIN: "", SN: undefined, BN: undefined, XD: undefined, QUANTITY: undefined })}
+            onClick={() => {
+              const currentRows = (getValues(name) ?? []) as ProductRow[];
+              const emptyRow: ProductRow = isBatch
+                ? { GTIN: "", BN: undefined, XD: undefined, QUANTITY: 1 }
+                : { GTIN: "", SN: undefined, BN: undefined, XD: undefined, QUANTITY: undefined };
+              // Warn if the last filled row would be a duplicate after adding
+              if (currentRows.length > 0) {
+                const last = currentRows[currentRows.length - 1];
+                const k = productRowKey(last);
+                if (k && k !== "||||") {
+                  const prevMatch = currentRows.slice(0, -1).some(r => productRowKey(r) === k);
+                  if (prevMatch) {
+                    toast({ title: t("products.dupRowWarning"), variant: "destructive" });
+                  }
+                }
+              }
+              append(emptyRow);
+            }}
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
@@ -500,10 +558,20 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
       {/* Products list */}
       {fields.length > 0 && (
         <div className="space-y-3">
-          {fields.map((field, index) => (
-            <div key={field.id} className="relative p-4 border rounded-md bg-card space-y-4">
+          {fields.map((field, index) => {
+            const isDup = duplicateIndices.has(index);
+            return (
+            <div key={field.id} className={`relative p-4 border rounded-md bg-card space-y-4 transition-colors ${isDup ? "border-destructive bg-destructive/5" : ""}`}>
               <div className="flex items-center justify-between pb-2 border-b">
-                <span className="font-medium text-sm text-muted-foreground">{t("products.item")} {index + 1}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm text-muted-foreground">{t("products.item")} {index + 1}</span>
+                  {isDup && (
+                    <Badge variant="destructive" className="gap-1 text-xs py-0">
+                      <AlertTriangle className="h-3 w-3" />
+                      {t("products.dupRowWarning")}
+                    </Badge>
+                  )}
+                </div>
                 <Button
                   type="button" variant="ghost" size="icon"
                   className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
@@ -565,7 +633,8 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
                 )} />
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
