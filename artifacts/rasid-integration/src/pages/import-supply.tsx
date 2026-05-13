@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Loader2, PackagePlus, Ban, Upload, FileSpreadsheet, X, CheckCircle2, Lock, ScanLine, AlertCircle } from "lucide-react";
+import { Loader2, PackagePlus, Ban, Upload, FileSpreadsheet, X, CheckCircle2, Lock, ScanLine, AlertCircle, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
@@ -30,6 +30,28 @@ import { useLanguage } from "@/lib/use-language";
 function withInvoice<T extends object>(data: T, inv: string): T {
   if (!inv.trim()) return data;
   return { ...data, invoiceNumber: inv.trim() } as T;
+}
+
+function exportImportFormToExcel(opName: string, gtin: string, md: string, xd: string, bn: string, snStr: string) {
+  const sns = snStr.split("\n").map(s => s.trim()).filter(Boolean);
+  const rows = sns.length > 0
+    ? sns.map(sn => ({ GTIN: gtin, MD: md, XD: xd, BN: bn, SN: sn }))
+    : [{ GTIN: gtin, MD: md, XD: xd, BN: bn, SN: "" }];
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, opName.slice(0, 31));
+  XLSX.writeFile(wb, `${opName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+
+type SnProduct = { GTIN?: string; SN?: string; BN?: string; XD?: string; QUANTITY?: number };
+function exportProductListToExcel(opName: string, products: SnProduct[]) {
+  const rows = products.length > 0
+    ? products.map(p => ({ GTIN: p.GTIN ?? "", SN: p.SN ?? "", BN: p.BN ?? "", XD: p.XD ?? "", QUANTITY: p.QUANTITY ?? "" }))
+    : [{ GTIN: "", SN: "", BN: "", XD: "", QUANTITY: "" }];
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, opName.slice(0, 31));
+  XLSX.writeFile(wb, `${opName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
 // Schema for Import/Supply
@@ -476,10 +498,22 @@ export default function ImportSupplyPage() {
           </FormItem>
         )} />
 
-        <Button type="submit" disabled={(isSupply ? supplyMutation.isPending : importMutation.isPending) || !canDo(isSupply ? "op:supply" : "op:import")} title={!canDo(isSupply ? "op:supply" : "op:import") ? t("common.noPermission") : undefined} className="w-full sm:w-auto">
-          {(isSupply ? supplyMutation.isPending : importMutation.isPending) ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo(isSupply ? "op:supply" : "op:import") ? <Lock className="me-2 h-4 w-4" /> : null}
-          {isSupply ? t("import.executeSupply") : t("import.executeImport")}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" disabled={(isSupply ? supplyMutation.isPending : importMutation.isPending) || !canDo(isSupply ? "op:supply" : "op:import")} title={!canDo(isSupply ? "op:supply" : "op:import") ? t("common.noPermission") : undefined} className="w-full sm:w-auto">
+            {(isSupply ? supplyMutation.isPending : importMutation.isPending) ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo(isSupply ? "op:supply" : "op:import") ? <Lock className="me-2 h-4 w-4" /> : null}
+            {isSupply ? t("import.executeSupply") : t("import.executeImport")}
+          </Button>
+          <Button
+            type="button" variant="outline" className="w-full sm:w-auto"
+            onClick={() => {
+              const v = form.getValues();
+              exportImportFormToExcel(isSupply ? "تصنيع" : "استيراد", v.GTIN, v.MD, v.XD, v.BN, v.serialNumbersStr);
+            }}
+          >
+            <Download className="me-2 h-4 w-4" />
+            {t("dispatch.downloadData")}
+          </Button>
+        </div>
       </form>
     </Form>
   );
@@ -540,10 +574,16 @@ export default function ImportSupplyPage() {
               <Form {...cancelForm}>
                 <form onSubmit={cancelForm.handleSubmit((v) => handleCancelSubmit(v, false))} className="space-y-6">
                   <ProductListInput />
-                  <Button type="submit" variant="destructive" disabled={importCancelMutation.isPending} className="w-full sm:w-auto">
-                    {importCancelMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
-                    {t("import.executeCancel")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" variant="destructive" disabled={importCancelMutation.isPending} className="w-full sm:w-auto">
+                      {importCancelMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                      {t("import.executeCancel")}
+                    </Button>
+                    <Button type="button" variant="outline" className="w-full sm:w-auto"
+                      onClick={() => exportProductListToExcel("إلغاء-استيراد", cancelForm.getValues("products") as SnProduct[])}>
+                      <Download className="me-2 h-4 w-4" />{t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -582,10 +622,16 @@ export default function ImportSupplyPage() {
               <Form {...cancelForm}>
                 <form onSubmit={cancelForm.handleSubmit((v) => handleCancelSubmit(v, true))} className="space-y-6">
                   <ProductListInput />
-                  <Button type="submit" variant="destructive" disabled={supplyCancelMutation.isPending} className="w-full sm:w-auto">
-                    {supplyCancelMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
-                    {t("import.executeSupplyCancel")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" variant="destructive" disabled={supplyCancelMutation.isPending} className="w-full sm:w-auto">
+                      {supplyCancelMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                      {t("import.executeSupplyCancel")}
+                    </Button>
+                    <Button type="button" variant="outline" className="w-full sm:w-auto"
+                      onClick={() => exportProductListToExcel("إلغاء-تصنيع", cancelForm.getValues("products") as SnProduct[])}>
+                      <Download className="me-2 h-4 w-4" />{t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>

@@ -16,7 +16,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Repeat, ShoppingCart, Ban, Layers, Lock } from "lucide-react";
+import { Loader2, Repeat, ShoppingCart, Ban, Layers, Lock, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
@@ -29,6 +30,39 @@ import { useLanguage } from "@/lib/use-language";
 function withInvoice<T extends object>(data: T, inv: string): T {
   if (!inv.trim()) return data;
   return { ...data, invoiceNumber: inv.trim() } as T;
+}
+
+type SnProduct   = { GTIN?: string; SN?: string;  BN?: string; XD?: string; QUANTITY?: number };
+type BatchProduct = { GTIN?: string; BN?: string; XD?: string; QUANTITY?: number };
+
+function exportSnFormToExcel(opName: string, glnHeader: string, glnValue: string, products: SnProduct[]) {
+  const rows = products.length > 0
+    ? products.map(p => ({ [glnHeader]: glnValue, GTIN: p.GTIN ?? "", SN: p.SN ?? "", BN: p.BN ?? "", XD: p.XD ?? "", QUANTITY: p.QUANTITY ?? "" }))
+    : [{ [glnHeader]: glnValue, GTIN: "", SN: "", BN: "", XD: "", QUANTITY: "" }];
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, opName.slice(0, 31));
+  XLSX.writeFile(wb, `${opName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+
+function exportBatchFormToExcel(opName: string, glnHeader: string, glnValue: string, products: BatchProduct[]) {
+  const rows = products.length > 0
+    ? products.map(p => ({ [glnHeader]: glnValue, GTIN: p.GTIN ?? "", BN: p.BN ?? "", XD: p.XD ?? "", QUANTITY: p.QUANTITY ?? "" }))
+    : [{ [glnHeader]: glnValue, GTIN: "", BN: "", XD: "", QUANTITY: "" }];
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, opName.slice(0, 31));
+  XLSX.writeFile(wb, `${opName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+
+function exportSaleFormToExcel(opName: string, extras: Record<string, string>, products: SnProduct[]) {
+  const rows = products.length > 0
+    ? products.map(p => ({ ...extras, GTIN: p.GTIN ?? "", SN: p.SN ?? "", BN: p.BN ?? "", XD: p.XD ?? "", QUANTITY: p.QUANTITY ?? "" }))
+    : [{ ...extras, GTIN: "", SN: "", BN: "", XD: "", QUANTITY: "" }];
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, opName.slice(0, 31));
+  XLSX.writeFile(wb, `${opName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
 const transferSchema = z.object({
@@ -170,10 +204,16 @@ export default function TransferSalePage() {
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={transferMutation.isPending || !canDo("op:transfer")} title={!canDo("op:transfer") ? t("common.noPermission") : undefined}>
-                    {transferMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("transfer.executeTransfer")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={transferMutation.isPending || !canDo("op:transfer")} title={!canDo("op:transfer") ? t("common.noPermission") : undefined}>
+                      {transferMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("transfer.executeTransfer")}
+                    </Button>
+                    <Button type="button" variant="outline"
+                      onClick={() => exportSnFormToExcel("نقل-SN", "GLN المستلم", transferForm.getValues("toGLN"), transferForm.getValues("products") as SnProduct[])}>
+                      <Download className="me-2 h-4 w-4" />{t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -202,10 +242,16 @@ export default function TransferSalePage() {
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" disabled={transferBatchMutation.isPending || !canDo("op:transfer-batch")} title={!canDo("op:transfer-batch") ? t("common.noPermission") : undefined}>
-                    {transferBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("transfer.executeTransferBatch")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={transferBatchMutation.isPending || !canDo("op:transfer-batch")} title={!canDo("op:transfer-batch") ? t("common.noPermission") : undefined}>
+                      {transferBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("transfer.executeTransferBatch")}
+                    </Button>
+                    <Button type="button" variant="outline"
+                      onClick={() => exportBatchFormToExcel("نقل-Batch", "GLN المستلم", transferBatchForm.getValues("toGLN"), transferBatchForm.getValues("products") as BatchProduct[])}>
+                      <Download className="me-2 h-4 w-4" />{t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -234,10 +280,16 @@ export default function TransferSalePage() {
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" variant="destructive" disabled={transferCancelMutation.isPending || !canDo("op:transfer-cancel")} title={!canDo("op:transfer-cancel") ? t("common.noPermission") : undefined}>
-                    {transferCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("transfer.executeTransferCancel")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" variant="destructive" disabled={transferCancelMutation.isPending || !canDo("op:transfer-cancel")} title={!canDo("op:transfer-cancel") ? t("common.noPermission") : undefined}>
+                      {transferCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("transfer.executeTransferCancel")}
+                    </Button>
+                    <Button type="button" variant="outline"
+                      onClick={() => exportSnFormToExcel("إلغاء-نقل-SN", "GLN المستلم", transferForm.getValues("toGLN"), transferForm.getValues("products") as SnProduct[])}>
+                      <Download className="me-2 h-4 w-4" />{t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -266,10 +318,16 @@ export default function TransferSalePage() {
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" variant="destructive" disabled={transferCancelBatchMutation.isPending || !canDo("op:transfer-cancel-batch")} title={!canDo("op:transfer-cancel-batch") ? t("common.noPermission") : undefined}>
-                    {transferCancelBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-cancel-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("transfer.executeTransferCancelBatch")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" variant="destructive" disabled={transferCancelBatchMutation.isPending || !canDo("op:transfer-cancel-batch")} title={!canDo("op:transfer-cancel-batch") ? t("common.noPermission") : undefined}>
+                      {transferCancelBatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:transfer-cancel-batch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("transfer.executeTransferCancelBatch")}
+                    </Button>
+                    <Button type="button" variant="outline"
+                      onClick={() => exportBatchFormToExcel("إلغاء-نقل-Batch", "GLN المستلم", transferBatchForm.getValues("toGLN"), transferBatchForm.getValues("products") as BatchProduct[])}>
+                      <Download className="me-2 h-4 w-4" />{t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -328,10 +386,19 @@ export default function TransferSalePage() {
                     )} />
                   </div>
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={pharmacySaleMutation.isPending || !canDo("op:pharmacy-sale")} title={!canDo("op:pharmacy-sale") ? t("common.noPermission") : undefined}>
-                    {pharmacySaleMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:pharmacy-sale") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("transfer.executeSale")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={pharmacySaleMutation.isPending || !canDo("op:pharmacy-sale")} title={!canDo("op:pharmacy-sale") ? t("common.noPermission") : undefined}>
+                      {pharmacySaleMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:pharmacy-sale") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("transfer.executeSale")}
+                    </Button>
+                    <Button type="button" variant="outline"
+                      onClick={() => {
+                        const v = pharmacySaleForm.getValues();
+                        exportSaleFormToExcel("بيع-صيدلية", { "GLN الفرع": v.toGLN, "رقم الوصفة": v.prescriptionId, "تاريخ الوصفة": v.prescriptionDate, "رقم الطبيب": v.doctorId ?? "", "الهوية الوطنية": v.patientNationalId ?? "" }, v.products as SnProduct[]);
+                      }}>
+                      <Download className="me-2 h-4 w-4" />{t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -369,10 +436,19 @@ export default function TransferSalePage() {
                     )} />
                   </div>
                   <ProductListInput mode="sn" />
-                  <Button type="submit" variant="destructive" disabled={pharmacySaleCancelMutation.isPending || !canDo("op:pharmacy-sale-cancel")} title={!canDo("op:pharmacy-sale-cancel") ? t("common.noPermission") : undefined}>
-                    {pharmacySaleCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:pharmacy-sale-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("transfer.executeSaleCancel")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" variant="destructive" disabled={pharmacySaleCancelMutation.isPending || !canDo("op:pharmacy-sale-cancel")} title={!canDo("op:pharmacy-sale-cancel") ? t("common.noPermission") : undefined}>
+                      {pharmacySaleCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:pharmacy-sale-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("transfer.executeSaleCancel")}
+                    </Button>
+                    <Button type="button" variant="outline"
+                      onClick={() => {
+                        const v = pharmacySaleCancelForm.getValues();
+                        exportSaleFormToExcel("إلغاء-بيع-صيدلية", { "GLN الفرع": v.toGLN, "رقم الوصفة": v.prescriptionId }, v.products as SnProduct[]);
+                      }}>
+                      <Download className="me-2 h-4 w-4" />{t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>

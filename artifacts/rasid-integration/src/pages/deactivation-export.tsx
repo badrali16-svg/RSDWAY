@@ -15,7 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Ban, PlaneTakeoff, ShieldAlert, Lock } from "lucide-react";
+import { Loader2, Ban, PlaneTakeoff, ShieldAlert, Lock, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
@@ -55,6 +56,18 @@ const exportSchema = z.object({
     QUANTITY: z.coerce.number().optional()
   })).min(1, "يجب إضافة منتج واحد على الأقل")
 });
+
+type SnProduct = { GTIN?: string; SN?: string; BN?: string; XD?: string; QUANTITY?: number };
+
+function exportSnFormToExcel(opName: string, extras: Record<string, string>, products: SnProduct[]) {
+  const rows = products.length > 0
+    ? products.map(p => ({ ...extras, GTIN: p.GTIN ?? "", SN: p.SN ?? "", BN: p.BN ?? "", XD: p.XD ?? "", QUANTITY: p.QUANTITY ?? "" }))
+    : [{ ...extras, GTIN: "", SN: "", BN: "", XD: "", QUANTITY: "" }];
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, opName.slice(0, 31));
+  XLSX.writeFile(wb, `${opName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
 
 export default function DeactivationExportPage() {
   const { toast } = useToast();
@@ -187,10 +200,19 @@ export default function DeactivationExportPage() {
                     </FormItem>
                   )} />
                   <ProductListInput />
-                  <Button type="submit" disabled={deactivationMutation.isPending || !canDo("op:deactivation")} title={!canDo("op:deactivation") ? t("common.noPermission") : undefined}>
-                    {deactivationMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:deactivation") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("deactivation.executeDeactivation")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={deactivationMutation.isPending || !canDo("op:deactivation")} title={!canDo("op:deactivation") ? t("common.noPermission") : undefined}>
+                      {deactivationMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:deactivation") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("deactivation.executeDeactivation")}
+                    </Button>
+                    <Button type="button" variant="outline"
+                      onClick={() => {
+                        const v = deactivationForm.getValues();
+                        exportSnFormToExcel("تعطيل", { "سبب التعطيل": v.DR, "الشرح": v.explanation }, v.products as SnProduct[]);
+                      }}>
+                      <Download className="me-2 h-4 w-4" />{t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -212,10 +234,16 @@ export default function DeactivationExportPage() {
               <Form {...deactivationCancelForm}>
                 <form onSubmit={deactivationCancelForm.handleSubmit(handleDeactivationCancel)} className="space-y-6">
                   <ProductListInput />
-                  <Button type="submit" variant="destructive" disabled={deactivationCancelMutation.isPending || !canDo("op:deactivation-cancel")} title={!canDo("op:deactivation-cancel") ? t("common.noPermission") : undefined}>
-                    {deactivationCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:deactivation-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("deactivation.executeDeactivationCancel")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" variant="destructive" disabled={deactivationCancelMutation.isPending || !canDo("op:deactivation-cancel")} title={!canDo("op:deactivation-cancel") ? t("common.noPermission") : undefined}>
+                      {deactivationCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:deactivation-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("deactivation.executeDeactivationCancel")}
+                    </Button>
+                    <Button type="button" variant="outline"
+                      onClick={() => exportSnFormToExcel("إلغاء-تعطيل", {}, deactivationCancelForm.getValues("products") as SnProduct[])}>
+                      <Download className="me-2 h-4 w-4" />{t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -244,10 +272,16 @@ export default function DeactivationExportPage() {
                     </FormItem>
                   )} />
                   <ProductListInput />
-                  <Button type="submit" disabled={exportMutation.isPending || !canDo("op:export")} title={!canDo("op:export") ? t("common.noPermission") : undefined}>
-                    {exportMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:export") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("deactivation.executeExport")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={exportMutation.isPending || !canDo("op:export")} title={!canDo("op:export") ? t("common.noPermission") : undefined}>
+                      {exportMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:export") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("deactivation.executeExport")}
+                    </Button>
+                    <Button type="button" variant="outline"
+                      onClick={() => exportSnFormToExcel("تصدير", { "كود الدولة": exportForm.getValues("countryCode") }, exportForm.getValues("products") as SnProduct[])}>
+                      <Download className="me-2 h-4 w-4" />{t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -269,10 +303,16 @@ export default function DeactivationExportPage() {
               <Form {...exportCancelForm}>
                 <form onSubmit={exportCancelForm.handleSubmit(handleExportCancel)} className="space-y-6">
                   <ProductListInput />
-                  <Button type="submit" variant="destructive" disabled={exportCancelMutation.isPending || !canDo("op:export-cancel")} title={!canDo("op:export-cancel") ? t("common.noPermission") : undefined}>
-                    {exportCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:export-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
-                    {t("deactivation.executeExportCancel")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" variant="destructive" disabled={exportCancelMutation.isPending || !canDo("op:export-cancel")} title={!canDo("op:export-cancel") ? t("common.noPermission") : undefined}>
+                      {exportCancelMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:export-cancel") ? <Lock className="me-2 h-4 w-4" /> : null}
+                      {t("deactivation.executeExportCancel")}
+                    </Button>
+                    <Button type="button" variant="outline"
+                      onClick={() => exportSnFormToExcel("إلغاء-تصدير", {}, exportCancelForm.getValues("products") as SnProduct[])}>
+                      <Download className="me-2 h-4 w-4" />{t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
