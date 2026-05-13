@@ -283,8 +283,15 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
   const saveAuth = useSaveAuthConfig();
   const testConn = useTestConnection();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, refresh } = useAuth();
   const isAdmin = user?.role === "admin";
+
+  // Force-refresh session on mount so permissions are always up-to-date
+  // (admin may have changed them since last login)
+  useEffect(() => {
+    refresh();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const perms: string[] = user?.permissions ?? [];
 
   // Per-section view/edit caps (admin always has full access)
