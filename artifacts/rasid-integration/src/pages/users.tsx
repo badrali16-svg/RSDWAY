@@ -35,7 +35,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { OP_PERMISSION_GROUPS, ALL_OP_SLUGS } from "@/lib/op-permissions";
+import { OP_PERMISSION_GROUPS, ALL_OP_SLUGS, SETTINGS_PERM_SECTIONS, settingsViewSlug, settingsEditSlug } from "@/lib/op-permissions";
 import { useLanguage } from "@/lib/use-language";
 
 const PROD_URL = "https://rsd.sfda.gov.sa/ws";
@@ -285,6 +285,53 @@ export default function UsersPage() {
                           </label>
                         ))}
                       </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── Settings Permissions ─────────────────────────────── */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Cog className="h-4 w-4 text-primary" />
+                {t("users.settingsPermsLabel")}
+              </Label>
+              <p className="text-xs text-muted-foreground">{t("users.settingsPermsHint")}</p>
+              <div className="rounded-md border p-4 space-y-3">
+                {SETTINGS_PERM_SECTIONS.map((section) => {
+                  const viewSlug = settingsViewSlug(section.key);
+                  const editSlug = settingsEditSlug(section.key);
+                  const hasView = newPermissions.includes(viewSlug);
+                  const hasEdit = newPermissions.includes(editSlug);
+                  return (
+                    <div key={section.key} className="flex flex-wrap items-center gap-x-6 gap-y-1">
+                      <span className="text-sm min-w-[220px]">{section.label}</span>
+                      <label className="flex items-center gap-2 text-xs cursor-pointer">
+                        <Checkbox
+                          checked={hasView}
+                          onCheckedChange={(c) => {
+                            setNewPermissions((prev) => {
+                              let next = c ? [...prev, viewSlug] : prev.filter((s) => s !== viewSlug && s !== editSlug);
+                              return next;
+                            });
+                          }}
+                        />
+                        <span>{t("users.settingsPermShow")}</span>
+                      </label>
+                      <label className={`flex items-center gap-2 text-xs ${!hasView ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
+                        <Checkbox
+                          checked={hasEdit}
+                          disabled={!hasView}
+                          onCheckedChange={(c) => {
+                            if (!hasView) return;
+                            setNewPermissions((prev) =>
+                              c ? [...prev, editSlug] : prev.filter((s) => s !== editSlug)
+                            );
+                          }}
+                        />
+                        <span>{t("users.settingsPermEdit")}</span>
+                      </label>
                     </div>
                   );
                 })}
@@ -949,6 +996,51 @@ function UserRow({
                         </label>
                       ))}
                     </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Settings Permissions */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+              <Cog className="h-3.5 w-3.5" />
+              {t("users.settingsPermsLabel")}
+            </p>
+            <p className="text-xs text-muted-foreground">{t("users.settingsPermsHint")}</p>
+            <div className="rounded-md bg-muted/30 border p-3 space-y-3">
+              {SETTINGS_PERM_SECTIONS.map((section) => {
+                const viewSlug = settingsViewSlug(section.key);
+                const editSlug = settingsEditSlug(section.key);
+                const hasView = perms.includes(viewSlug);
+                const hasEdit = perms.includes(editSlug);
+                return (
+                  <div key={section.key} className="flex flex-wrap items-center gap-x-6 gap-y-1">
+                    <span className="text-xs min-w-[220px]">{section.label}</span>
+                    <label className="flex items-center gap-2 text-xs cursor-pointer">
+                      <Checkbox
+                        checked={hasView}
+                        onCheckedChange={(c) => {
+                          setPerms((prev) => {
+                            const next = c ? [...prev, viewSlug] : prev.filter((s) => s !== viewSlug && s !== editSlug);
+                            return next;
+                          });
+                        }}
+                      />
+                      <span>{t("users.settingsPermShow")}</span>
+                    </label>
+                    <label className={`flex items-center gap-2 text-xs ${!hasView ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
+                      <Checkbox
+                        checked={hasEdit}
+                        disabled={!hasView}
+                        onCheckedChange={(c) => {
+                          if (!hasView) return;
+                          setPerms((prev) => c ? [...prev, editSlug] : prev.filter((s) => s !== editSlug));
+                        }}
+                      />
+                      <span>{t("users.settingsPermEdit")}</span>
+                    </label>
                   </div>
                 );
               })}

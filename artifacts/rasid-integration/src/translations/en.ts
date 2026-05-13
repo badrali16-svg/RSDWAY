@@ -220,6 +220,12 @@ export const en: Record<string, string> = {
   "settings.createErrDesc": "Failed to create key",
   "settings.connErrMsg": "An error occurred while testing the connection",
   "settings.saveFirstHint": "Please save your credentials first before testing the connection",
+  "settings.noEditMsg": "You are not allowed to edit. Please contact the administrator.",
+  "settings.readOnlyBadge": "Read Only",
+  "users.settingsPermsLabel": "Integration Settings Management",
+  "users.settingsPermsHint": "Control visibility and editing permissions for each Settings page section",
+  "users.settingsPermShow": "Show",
+  "users.settingsPermEdit": "Edit",
 
   // Users
   "users.title": "User Management",

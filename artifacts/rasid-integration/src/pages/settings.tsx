@@ -5,12 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   useGetAuthConfig,
   useSaveAuthConfig,
-  useUnlockSettings,
   useTestConnection,
   useListApiKeys,
   useCreateApiKey,
   useDeleteApiKey,
 } from "@workspace/api-client-react";
+import { settingsViewSlug, settingsEditSlug } from "@/lib/op-permissions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -30,7 +30,6 @@ import {
   Save,
   Loader2,
   ShieldCheck,
-  Lock,
   Wifi,
   WifiOff,
   FlaskConical,
@@ -45,6 +44,7 @@ import {
   Copy,
   AlertTriangle,
   Plug,
+  EyeOff,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
@@ -69,75 +69,12 @@ type ConnectionStatus = {
 } | null;
 
 export default function Settings() {
-  const [unlocked, setUnlocked] = useState(false);
-  const [gatePassword, setGatePassword] = useState("");
-  const [gateError, setGateError] = useState<string | null>(null);
-  const unlock = useUnlockSettings();
   const { toast } = useToast();
-  const { t } = useLanguage();
-
-  const handleUnlock = (e: React.FormEvent) => {
-    e.preventDefault();
-    setGateError(null);
-    unlock.mutate(
-      { data: { password: gatePassword } },
-      {
-        onSuccess: () => {
-          setUnlocked(true);
-          setGatePassword("");
-        },
-        onError: () => {
-          setGateError(t("settings.gateWrongPassword"));
-        },
-      },
-    );
-  };
-
-  if (!unlocked) {
-    return (
-      <div className="flex justify-center pt-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <Lock className="h-6 w-6 text-primary" />
-            </div>
-            <CardTitle>{t("settings.gateTitle")}</CardTitle>
-            <CardDescription>{t("settings.gateDesc")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUnlock} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="gate-password">{t("settings.gatePasswordLabel")}</Label>
-                <Input
-                  id="gate-password"
-                  type="password"
-                  value={gatePassword}
-                  onChange={(e) => setGatePassword(e.target.value)}
-                  required
-                  autoFocus
-                />
-                {gateError && <p className="text-sm text-destructive">{t("settings.gateWrongPassword")}</p>}
-              </div>
-              <Button type="submit" className="w-full" disabled={unlock.isPending}>
-                {unlock.isPending ? (
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Lock className="me-2 h-4 w-4" />
-                )}
-                {t("settings.gateEnter")}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return <SettingsContent toast={toast} />;
 }
 
 // ── API Keys Section ──────────────────────────────────────────────────────────
-function ApiKeysSection({ toast }: { toast: ReturnType<typeof useToast>["toast"] }) {
+function ApiKeysSection({ toast, disabled = false }: { toast: ReturnType<typeof useToast>["toast"]; disabled?: boolean }) {
   const { data: keys = [], refetch } = useListApiKeys();
   const createKey = useCreateApiKey();
   const deleteKey = useDeleteApiKey();
@@ -260,6 +197,9 @@ Content-Type: application/json
           </div>
         )}
 
+        {/* Read-only banner for API section */}
+        {disabled && <ReadOnlyBanner t={t} />}
+
         {/* Create new key */}
         <div className="flex gap-2 items-end">
           <div className="flex-1 space-y-1.5">
@@ -269,10 +209,11 @@ Content-Type: application/json
               placeholder="Odoo Warehouse Integration"
               value={newKeyName}
               onChange={e => setNewKeyName(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleCreate()}
+              onKeyDown={e => e.key === "Enter" && !disabled && handleCreate()}
+              disabled={disabled}
             />
           </div>
-          <Button type="button" onClick={handleCreate} disabled={!newKeyName.trim() || createKey.isPending} className="gap-2">
+          <Button type="button" onClick={handleCreate} disabled={disabled || !newKeyName.trim() || createKey.isPending} className="gap-2">
             {createKey.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             {t("settings.createKey")}
           </Button>
@@ -296,20 +237,22 @@ Content-Type: application/json
                 <Badge variant={k.enabled ? "default" : "secondary"} className="text-xs shrink-0">
                   {k.enabled ? t("settings.keyActive") : t("settings.keyDisabled")}
                 </Badge>
-                {confirmRevoke === k.id ? (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-destructive flex items-center gap-1">
-                      <AlertTriangle className="h-3 w-3" />{t("settings.revokeConfirm")}
-                    </span>
-                    <Button type="button" size="sm" variant="destructive" onClick={() => handleRevoke(k.id)} disabled={deleteKey.isPending}>
-                      {deleteKey.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : t("settings.revokeYes")}
+                {!disabled && (
+                  confirmRevoke === k.id ? (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-destructive flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />{t("settings.revokeConfirm")}
+                      </span>
+                      <Button type="button" size="sm" variant="destructive" onClick={() => handleRevoke(k.id)} disabled={deleteKey.isPending}>
+                        {deleteKey.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : t("settings.revokeYes")}
+                      </Button>
+                      <Button type="button" size="sm" variant="ghost" onClick={() => setConfirmRevoke(null)}>{t("settings.revokeNo")}</Button>
+                    </div>
+                  ) : (
+                    <Button type="button" variant="ghost" size="icon" className="text-destructive hover:text-destructive shrink-0" onClick={() => setConfirmRevoke(k.id)}>
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => setConfirmRevoke(null)}>{t("settings.revokeNo")}</Button>
-                  </div>
-                ) : (
-                  <Button type="button" variant="ghost" size="icon" className="text-destructive hover:text-destructive shrink-0" onClick={() => setConfirmRevoke(k.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  )
                 )}
               </div>
             ))}
@@ -322,6 +265,19 @@ Content-Type: application/json
   );
 }
 
+// ── Read-only banner shown when a section is visible but not editable ────────
+function ReadOnlyBanner({ t }: { t: ReturnType<typeof useLanguage>["t"] }) {
+  return (
+    <div className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800">
+      <EyeOff className="h-4 w-4 shrink-0" />
+      <span>{t("settings.noEditMsg")}</span>
+      <Badge variant="outline" className="ms-auto text-xs border-amber-400 text-amber-700 dark:text-amber-300 shrink-0">
+        {t("settings.readOnlyBadge")}
+      </Badge>
+    </div>
+  );
+}
+
 function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"] }) {
   const { data: authConfig, isLoading: authLoading } = useGetAuthConfig();
   const saveAuth = useSaveAuthConfig();
@@ -329,6 +285,16 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
   const { t } = useLanguage();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+  const perms: string[] = user?.permissions ?? [];
+
+  // Per-section view/edit caps (admin always has full access)
+  const canViewEnv  = isAdmin || perms.includes(settingsViewSlug("env"));
+  const canEditEnv  = isAdmin || perms.includes(settingsEditSlug("env"));
+  const canViewApi  = isAdmin || perms.includes(settingsViewSlug("api"));
+  const canEditApi  = isAdmin || perms.includes(settingsEditSlug("api"));
+  const canViewDtts = isAdmin || perms.includes(settingsViewSlug("dtts"));
+  const canEditDtts = isAdmin || perms.includes(settingsEditSlug("dtts"));
+
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -465,200 +431,173 @@ function SettingsContent({ toast }: { toast: ReturnType<typeof useToast>["toast"
       )}
 
       {/* ── Environment Selector ────────────────────────────────────────── */}
-      <Card>
+      {canViewEnv && (
+        <Card>
           <CardHeader>
             <CardTitle className="text-lg">{t("settings.envTitle")}</CardTitle>
-            <CardDescription>
-              {t("settings.envDesc")}
-            </CardDescription>
+            <CardDescription>{t("settings.envDesc")}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 sm:grid-cols-2">
+          <CardContent className="space-y-4">
+            {!canEditEnv && <ReadOnlyBanner t={t} />}
+            <div className={`grid gap-3 sm:grid-cols-2 ${!canEditEnv ? "pointer-events-none opacity-70" : ""}`}>
               {/* Test Environment */}
               <button
                 type="button"
-                onClick={() => handleEnvSelect("test")}
-                className={`relative flex items-start gap-3 rounded-lg border-2 p-4 text-right transition-all hover:bg-muted/50 ${
-                  isTestEnv
-                    ? "border-primary bg-primary/5"
-                    : "border-border"
+                onClick={() => canEditEnv && handleEnvSelect("test")}
+                disabled={!canEditEnv}
+                className={`relative flex items-start gap-3 rounded-lg border-2 p-4 text-right transition-all ${canEditEnv ? "hover:bg-muted/50" : ""} ${
+                  isTestEnv ? "border-primary bg-primary/5" : "border-border"
                 }`}
               >
-                <FlaskConical
-                  className={`h-6 w-6 shrink-0 mt-0.5 ${isTestEnv ? "text-primary" : "text-muted-foreground"}`}
-                />
+                <FlaskConical className={`h-6 w-6 shrink-0 mt-0.5 ${isTestEnv ? "text-primary" : "text-muted-foreground"}`} />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className={`font-semibold ${isTestEnv ? "text-primary" : ""}`}>
-                      {t("settings.testEnvName")}
-                    </p>
-                    {isTestEnv && (
-                      <Badge variant="default" className="text-xs">
-                        {t("settings.selected")}
-                      </Badge>
-                    )}
+                    <p className={`font-semibold ${isTestEnv ? "text-primary" : ""}`}>{t("settings.testEnvName")}</p>
+                    {isTestEnv && <Badge variant="default" className="text-xs">{t("settings.selected")}</Badge>}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5 break-all font-mono">
-                    {TEST_URL}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {t("settings.testEnvDesc")}
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 break-all font-mono">{TEST_URL}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t("settings.testEnvDesc")}</p>
                 </div>
               </button>
 
               {/* Production Environment */}
               <button
                 type="button"
-                onClick={() => handleEnvSelect("prod")}
-                className={`relative flex items-start gap-3 rounded-lg border-2 p-4 text-right transition-all hover:bg-muted/50 ${
-                  !isTestEnv
-                    ? "border-primary bg-primary/5"
-                    : "border-border"
+                onClick={() => canEditEnv && handleEnvSelect("prod")}
+                disabled={!canEditEnv}
+                className={`relative flex items-start gap-3 rounded-lg border-2 p-4 text-right transition-all ${canEditEnv ? "hover:bg-muted/50" : ""} ${
+                  !isTestEnv ? "border-primary bg-primary/5" : "border-border"
                 }`}
               >
-                <Globe
-                  className={`h-6 w-6 shrink-0 mt-0.5 ${!isTestEnv ? "text-primary" : "text-muted-foreground"}`}
-                />
+                <Globe className={`h-6 w-6 shrink-0 mt-0.5 ${!isTestEnv ? "text-primary" : "text-muted-foreground"}`} />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className={`font-semibold ${!isTestEnv ? "text-primary" : ""}`}>
-                      {t("settings.prodEnvName")}
-                    </p>
-                    {!isTestEnv && (
-                      <Badge variant="default" className="text-xs">
-                        {t("settings.selected")}
-                      </Badge>
-                    )}
+                    <p className={`font-semibold ${!isTestEnv ? "text-primary" : ""}`}>{t("settings.prodEnvName")}</p>
+                    {!isTestEnv && <Badge variant="default" className="text-xs">{t("settings.selected")}</Badge>}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5 break-all font-mono">
-                    {PROD_URL}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {t("settings.prodEnvDesc")}
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 break-all font-mono">{PROD_URL}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t("settings.prodEnvDesc")}</p>
                 </div>
               </button>
             </div>
           </CardContent>
         </Card>
+      )}
 
       {/* ── External Integration / API Keys ──────────────────────────────── */}
-      <ApiKeysSection toast={toast} />
+      {canViewApi && <ApiKeysSection toast={toast} disabled={!canEditApi} />}
 
       {/* ── Credentials Form ─────────────────────────────────────────────── */}
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            <CardTitle>{t("settings.credTitle")}</CardTitle>
-          </div>
-          <CardDescription>
-            {t("settings.credDesc")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {authLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      {canViewDtts && (
+        <Card className="max-w-2xl">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              <CardTitle>{t("settings.credTitle")}</CardTitle>
             </div>
-          ) : (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="baseUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("settings.baseUrlLabel")}</FormLabel>
-                      <FormControl>
-                        <Input dir="ltr" className="text-left" placeholder="https://..." {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        {t("settings.baseUrlDesc")}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
+            <CardDescription>{t("settings.credDesc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!canEditDtts && <ReadOnlyBanner t={t} />}
+            {authLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-6 ${!canEditDtts ? "mt-4" : ""}`}>
+                  <FormField
+                    control={form.control}
+                    name="baseUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("settings.baseUrlLabel")}</FormLabel>
+                        <FormControl>
+                          <Input dir="ltr" className="text-left" placeholder="https://..." disabled={!canEditDtts} {...field} />
+                        </FormControl>
+                        <FormDescription>{t("settings.baseUrlDesc")}</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("settings.usernameLabel")}</FormLabel>
+                          <FormControl>
+                            <Input dir="ltr" className="text-left" placeholder="GLN_..." disabled={!canEditDtts} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("settings.passwordLabel")}</FormLabel>
+                          <FormControl>
+                            <Input
+                              dir="ltr"
+                              className="text-left"
+                              type="password"
+                              placeholder="********"
+                              disabled={!canEditDtts}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex flex-wrap gap-3">
+                    <Button type="submit" disabled={!canEditDtts || saveAuth.isPending}>
+                      {saveAuth.isPending ? (
+                        <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="ml-2 h-4 w-4" />
+                      )}
+                      {t("settings.saveBtn")}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleTestConnection}
+                      disabled={testConn.isPending || !authConfig?.hasPassword}
+                    >
+                      {testConn.isPending ? (
+                        <RefreshCw className="ml-2 h-4 w-4 animate-spin" />
+                      ) : connectionStatus?.success ? (
+                        <Wifi className="ml-2 h-4 w-4 text-green-600" />
+                      ) : connectionStatus && !connectionStatus.success ? (
+                        <WifiOff className="ml-2 h-4 w-4 text-destructive" />
+                      ) : (
+                        <Wifi className="ml-2 h-4 w-4" />
+                      )}
+                      {t("settings.testConn")}
+                    </Button>
+                  </div>
+
+                  {!authConfig?.hasPassword && (
+                    <p className="text-xs text-muted-foreground">{t("settings.saveFirstHint")}</p>
                   )}
-                />
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("settings.usernameLabel")}</FormLabel>
-                        <FormControl>
-                          <Input dir="ltr" className="text-left" placeholder="GLN_..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("settings.passwordLabel")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            dir="ltr"
-                            className="text-left"
-                            type="password"
-                            placeholder="********"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="flex flex-wrap gap-3">
-                  <Button type="submit" disabled={saveAuth.isPending}>
-                    {saveAuth.isPending ? (
-                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save className="ml-2 h-4 w-4" />
-                    )}
-                    {t("settings.saveBtn")}
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleTestConnection}
-                    disabled={testConn.isPending || !authConfig?.hasPassword}
-                  >
-                    {testConn.isPending ? (
-                      <RefreshCw className="ml-2 h-4 w-4 animate-spin" />
-                    ) : connectionStatus?.success ? (
-                      <Wifi className="ml-2 h-4 w-4 text-green-600" />
-                    ) : connectionStatus && !connectionStatus.success ? (
-                      <WifiOff className="ml-2 h-4 w-4 text-destructive" />
-                    ) : (
-                      <Wifi className="ml-2 h-4 w-4" />
-                    )}
-                    {t("settings.testConn")}
-                  </Button>
-                </div>
-
-                {!authConfig?.hasPassword && (
-                  <p className="text-xs text-muted-foreground">
-                    {t("settings.saveFirstHint")}
-                  </p>
-                )}
-              </form>
-            </Form>
-          )}
-        </CardContent>
-      </Card>
+                </form>
+              </Form>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

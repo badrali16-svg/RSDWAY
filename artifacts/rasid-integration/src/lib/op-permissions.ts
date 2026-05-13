@@ -77,3 +77,20 @@ export const OP_PERMISSION_GROUPS: OpPermissionGroup[] = [
 ];
 
 export const ALL_OP_SLUGS: string[] = OP_PERMISSION_GROUPS.flatMap(g => g.ops.map(o => o.slug));
+
+// ── Settings section permissions ───────────────────────────────────────────
+export interface SettingsPermSection {
+  key: "env" | "api" | "dtts";
+  label: string;
+}
+
+export const SETTINGS_PERM_SECTIONS: SettingsPermSection[] = [
+  { key: "env",  label: "اختيار البيئة (Production / Test)" },
+  { key: "api",  label: "التكامل الخارجي (API Integration)" },
+  { key: "dtts", label: "بيانات اعتماد نظام رصد (DTTS)" },
+];
+
+/** Returns the view slug for a section key */
+export const settingsViewSlug = (key: string) => `settings:${key}:view`;
+/** Returns the edit slug for a section key */
+export const settingsEditSlug = (key: string) => `settings:${key}:edit`;

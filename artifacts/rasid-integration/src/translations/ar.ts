@@ -220,6 +220,12 @@ export const ar: Record<string, string> = {
   "settings.createErrDesc": "فشل إنشاء المفتاح",
   "settings.connErrMsg": "حدث خطأ أثناء اختبار الاتصال",
   "settings.saveFirstHint": "يرجى حفظ البيانات أولاً قبل اختبار الاتصال",
+  "settings.noEditMsg": "غير مسموح لك بالتعديل، يرجى التواصل مع الإدارة",
+  "settings.readOnlyBadge": "قراءة فقط",
+  "users.settingsPermsLabel": "إدارة إعدادات التكامل",
+  "users.settingsPermsHint": "تحكم في ظهور وإمكانية تعديل كل قسم في صفحة الإعدادات",
+  "users.settingsPermShow": "عرض",
+  "users.settingsPermEdit": "تعديل",
 
   // Users
   "users.title": "إدارة المستخدمين",
