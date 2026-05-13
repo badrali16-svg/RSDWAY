@@ -4,7 +4,7 @@
  * Allows Odoo (or any external system) to submit DTTS operations via API Key.
  *
  * Authentication:
- *   Include header:  X-API-Key: rsd_<your-key>
+ *   Include header:  X-API-Key: rasid_<your-key>
  *
  * Key management endpoints (require user session login):
  *   GET    /api/external/keys          — list your API keys
@@ -63,7 +63,7 @@ interface KeyInfo {
 async function resolveApiKey(req: Request, res: Response): Promise<KeyInfo | null> {
   const apiKey = req.headers["x-api-key"];
   if (!apiKey || typeof apiKey !== "string") {
-    res.status(401).json({ success: false, error: "Missing X-API-Key header. Include your API key in the request header: X-API-Key: rsd_..." });
+    res.status(401).json({ success: false, error: "Missing X-API-Key header. Include your API key in the request header: X-API-Key: rasid_..." });
     return null;
   }
   const [keyRow] = await db
@@ -166,7 +166,7 @@ router.post("/external/keys", requireAuth, async (req, res): Promise<void> => {
     res.status(400).json({ error: "name is required" });
     return;
   }
-  const keyValue = `rsd_${crypto.randomBytes(28).toString("hex")}`;
+  const keyValue = `rasid_${crypto.randomBytes(28).toString("hex")}`;
   const [row] = await db
     .insert(apiKeysTable)
     .values({ userId, name: name.trim(), keyValue, enabled: true })
