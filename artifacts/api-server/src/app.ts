@@ -3,6 +3,8 @@ import cors from "cors";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import pinoHttp from "pino-http";
+import path from "node:path";
+import { existsSync } from "node:fs";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -55,12 +57,22 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: "lax",
-      secure: false,
+      secure: process.env["COOKIE_SECURE"] === "true",
       maxAge: 1000 * 60 * 60 * 24 * 7,
     },
   }),
 );
 
 app.use("/api", router);
+
+// ── Serve built frontend (for standalone / external hosting) ─────────────────
+const frontendDir = path.resolve(import.meta.dirname, "../public");
+if (existsSync(frontendDir)) {
+  app.use(express.static(frontendDir));
+  // SPA fallback — all non-API routes return index.html
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(frontendDir, "index.html"));
+  });
+}
 
 export default app;
