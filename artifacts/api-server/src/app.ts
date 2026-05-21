@@ -69,8 +69,8 @@ app.use("/api", router);
 const frontendDir = path.resolve(import.meta.dirname, "../public");
 if (existsSync(frontendDir)) {
   app.use(express.static(frontendDir));
-  // SPA fallback — all non-API routes return index.html
-  app.get("*", (_req, res) => {
+  // SPA fallback — all non-API routes return index.html (Express 5 requires regex for wildcard)
+  app.get(/.*/, (_req, res) => {
     res.sendFile(path.join(frontendDir, "index.html"));
   });
 }
