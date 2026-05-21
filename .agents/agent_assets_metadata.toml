@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Of-FOZTGOFjOHsP4SFKJk"
+uri = "file://deploy-rasid.tar.gz"
+type = "unspecified"
+title = "deploy-rasid.tar.gz — مجلد النشر الجاهز"
