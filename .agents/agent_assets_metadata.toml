@@ -6,3 +6,9 @@ id = "Of-FOZTGOFjOHsP4SFKJk"
 uri = "file://deploy-rasid.tar.gz"
 type = "unspecified"
 title = "deploy-rasid.tar.gz — نسخة محدّثة (إصلاح Express 5)"
+
+[[outputs]]
+id = "aJM9Zb6GtFfZBnkYw1BBt"
+uri = "file://deploy/REPLIT_PROMPT.md"
+type = "text"
+title = "REPLIT_PROMPT.md — برومبت إنشاء مشروع رصد جديد"
