@@ -12,3 +12,9 @@ id = "aJM9Zb6GtFfZBnkYw1BBt"
 uri = "file://deploy/REPLIT_PROMPT.md"
 type = "text"
 title = "REPLIT_PROMPT.md — برومبت إنشاء مشروع رصد جديد"
+
+[[outputs]]
+id = "CIBet9btCMJcq94S6E3ym"
+uri = "file://soap-integration.tar.gz"
+type = "unspecified"
+title = "soap-integration.tar.gz — ملفات SOAP Integration"
