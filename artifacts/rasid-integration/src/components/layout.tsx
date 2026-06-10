@@ -79,27 +79,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const toggleLang = () => setLang(lang === "ar" ? "en" : "ar");
 
-  const [theme, setTheme] = React.useState<"default" | "sky">(() => {
-    if (typeof window === "undefined") return "default";
-    return (localStorage.getItem("theme") as "default" | "sky") || "default";
+  const [theme, setTheme] = React.useState<"sky" | "teal">(() => {
+    if (typeof window === "undefined") return "sky";
+    return (localStorage.getItem("theme") as "sky" | "teal") || "sky";
   });
 
   const toggleTheme = () => {
-    const next = theme === "default" ? "sky" : "default";
+    const next = theme === "sky" ? "teal" : "sky";
     setTheme(next);
     localStorage.setItem("theme", next);
-    if (next === "sky") {
-      document.body.classList.add("theme-sky");
+    if (next === "teal") {
+      document.body.classList.add("theme-teal");
     } else {
-      document.body.classList.remove("theme-sky");
+      document.body.classList.remove("theme-teal");
     }
   };
 
   React.useEffect(() => {
-    if (theme === "sky") {
-      document.body.classList.add("theme-sky");
+    if (theme === "teal") {
+      document.body.classList.add("theme-teal");
     } else {
-      document.body.classList.remove("theme-sky");
+      document.body.classList.remove("theme-teal");
     }
   }, [theme]);
 
@@ -145,10 +145,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
       size="sm"
       onClick={toggleTheme}
       className="w-full gap-1.5 text-xs font-semibold px-2 h-8"
-      title={theme === "default" ? "Sky theme" : "Default theme"}
+      title={theme === "sky" ? "Teal theme" : "Sky theme"}
     >
       <Palette className="h-3.5 w-3.5" />
-      {theme === "default" ? "Sky" : "Teal"}
+      {theme === "sky" ? "Teal" : "Sky"}
     </Button>
   );
 
