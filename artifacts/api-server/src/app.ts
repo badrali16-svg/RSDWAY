@@ -7,6 +7,7 @@ import path from "node:path";
 import { existsSync } from "node:fs";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { pool } from "@workspace/db";
 
 const app: Express = express();
 
@@ -46,7 +47,7 @@ app.use(
   session({
     name: "rasid.sid",
     store: new PgStore({
-      conString: process.env["DATABASE_URL"],
+      pool,
       tableName: "session",
       createTableIfMissing: false,
     }),
