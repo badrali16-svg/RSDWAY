@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: rasid-integration
+    runtime: node
+    repo: https://github.com/badrali16-svg/RSDWAY.git
+    branch: main
+    buildCommand: bash scripts/deploy-build.sh && cd deploy && npm install --omit=dev
+    startCommand: node --enable-source-maps ./deploy/dist/index.mjs
+    healthCheckPath: /api/healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: ENCRYPTION_KEY
+        sync: false
