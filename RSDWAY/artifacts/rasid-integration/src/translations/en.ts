@@ -14,8 +14,8 @@ export const en: Record<string, string> = {
   "nav.settings": "Settings",
 
   // Layout
-  "layout.systemName": "RSDWAY System",
-  "layout.systemNameShort": "RSDWAY",
+  "layout.systemName": "RSD System",
+  "layout.systemNameShort": "RSD",
   "layout.loggedInAs": "Logged in as",
   "layout.admin": "Admin",
   "layout.client": "Client",
