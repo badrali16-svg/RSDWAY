@@ -174,3 +174,36 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* —══════ Theme: Sky (White + Sky Blue) ══════— */
+.theme-sky {
+  --background: 210 40% 98%;
+  --foreground: 210 50% 10%;
+  --border: 210 20% 85%;
+  --card: 0 0% 100%;
+  --card-foreground: 210 50% 10%;
+  --card-border: 210 20% 90%;
+  --sidebar: 210 30% 96%;
+  --sidebar-foreground: 210 50% 15%;
+  --sidebar-border: 210 20% 88%;
+  --sidebar-primary: 199 89% 48%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 210 30% 90%;
+  --sidebar-accent-foreground: 199 89% 40%;
+  --sidebar-ring: 199 89% 48%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 210 50% 10%;
+  --popover-border: 210 20% 85%;
+  --primary: 199 89% 48%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 20% 90%;
+  --secondary-foreground: 199 89% 40%;
+  --muted: 210 15% 92%;
+  --muted-foreground: 210 15% 45%;
+  --accent: 210 25% 90%;
+  --accent-foreground: 199 89% 40%;
+  --destructive: 0 70% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 210 20% 85%;
+  --ring: 199 89% 48%;
+}

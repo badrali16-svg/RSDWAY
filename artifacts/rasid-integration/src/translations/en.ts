@@ -23,7 +23,7 @@ export const en: Record<string, string> = {
   "layout.menu": "Menu",
 
   // Login
-  "login.title": "Rsdway System",
+  "login.title": "RSDWAY System",
   "login.subtitle": "Please log in to continue",
   "login.username": "Username",
   "login.password": "Password",
@@ -54,7 +54,7 @@ export const en: Record<string, string> = {
 
   // Dashboard
   "dashboard.title": "Dashboard",
-  "dashboard.subtitle": "Overview of Rsdway System operations",
+  "dashboard.subtitle": "Overview of RSDWAY System operations",
   "dashboard.totalOps": "Total Operations",
   "dashboard.successOps": "Successful Operations",
   "dashboard.failedOps": "Failed Operations",
@@ -63,12 +63,12 @@ export const en: Record<string, string> = {
   "dashboard.viewAll": "View Full History",
   "dashboard.noOps": "No operations recorded yet",
   "dashboard.configAlertTitle": "Warning: Integration settings incomplete",
-  "dashboard.configAlertDesc": "Please enter your Rsdway System credentials (username and password) to proceed with operations.",
+  "dashboard.configAlertDesc": "Please enter your RSDWAY System credentials (username and password) to proceed with operations.",
   "dashboard.goToSettings": "Go to Settings",
 
   // History
   "history.title": "Operation History",
-  "history.subtitle": "History of operations executed on Rsdway System and their status",
+  "history.subtitle": "History of operations executed on RSDWAY System and their status",
   "history.allOps": "All Previous Operations",
   "history.noOps": "No operations recorded in the system",
   "history.colDate": "Date",
@@ -169,7 +169,7 @@ export const en: Record<string, string> = {
 
   // Settings
   "settings.title": "Settings",
-  "settings.subtitle": "Rsdway System integration settings, authorization, and external integrations",
+  "settings.subtitle": "RSDWAY System integration settings, authorization, and external integrations",
   "settings.gateTitle": "Protected Page",
   "settings.gateDesc": "Please enter the password to access the settings page",
   "settings.gatePasswordLabel": "Password",
@@ -184,12 +184,12 @@ export const en: Record<string, string> = {
   "settings.prodEnvName": "Production Environment",
   "settings.prodEnvDesc": "For live operations with SFDA",
   "settings.selected": "Selected",
-  "settings.credTitle": "Rsdway System Credentials",
+  "settings.credTitle": "RSDWAY System Credentials",
   "settings.credDesc": "Enter your SFDA account credentials to send operations. Password is stored securely.",
   "settings.testConn": "Test Connection",
   "settings.testing": "Testing...",
   "settings.savedOkTitle": "Saved Successfully",
-  "settings.savedOkDesc": "Rsdway System credentials updated",
+  "settings.savedOkDesc": "RSDWAY System credentials updated",
   "settings.saveErrTitle": "Save Error",
   "settings.saveErrDesc": "An error occurred while saving",
   "settings.baseUrlLabel": "System URL (Base URL)",
@@ -200,7 +200,7 @@ export const en: Record<string, string> = {
   "settings.saving": "Saving...",
   "settings.envLabel": "Environment:",
   "settings.apiKeysTitle": "External Integration — API Keys",
-  "settings.apiKeysDesc": "Create API keys to connect any external system (e.g. Odoo) with Rsdway. Each request uses your account credentials.",
+  "settings.apiKeysDesc": "Create API keys to connect any external system (e.g. Odoo) with RSDWAY. Each request uses your account credentials.",
   "settings.apiHowToUse": "How to use with Odoo or any external system",
   "settings.apiAddHeader": "Add the following header in every API request:",
   "settings.apiExample": "Example — Sending Dispatch from Odoo:",
@@ -265,7 +265,7 @@ export const en: Record<string, string> = {
 
   // Import/Supply
   "import.title": "Import & Supply",
-  "import.subtitle": "Register import and supply operations in Rsdway System",
+  "import.subtitle": "Register import and supply operations in RSDWAY System",
   "import.tabImport": "Import (SN)",
   "import.tabImportCancel": "Cancel Import",
   "import.tabSupply": "Supply (Manufacture)",
@@ -279,11 +279,11 @@ export const en: Record<string, string> = {
   "import.successSupply": "Supply completed successfully",
   "import.successSupplyCancel": "Supply cancelled successfully",
   "import.importCardTitle": "Import Products",
-  "import.importCardDesc": "Register imported products in Rsdway System — ImportService",
+  "import.importCardDesc": "Register imported products in RSDWAY System — ImportService",
   "import.importCancelCardTitle": "Cancel Import",
   "import.importCancelCardDesc": "Cancel a previous import operation — ImportCancelService",
   "import.supplyCardTitle": "Supply Products (Manufacture)",
-  "import.supplyCardDesc": "Register locally manufactured products in Rsdway System — SupplyService",
+  "import.supplyCardDesc": "Register locally manufactured products in RSDWAY System — SupplyService",
   "import.supplyCancelCardTitle": "Cancel Supply",
   "import.supplyCancelCardDesc": "Cancel a previous supply operation — SupplyCancelService",
 
@@ -505,7 +505,7 @@ export const en: Record<string, string> = {
   "users.deleteErrDesc": "Failed to delete account",
 
   // Users — DTTS credentials section (create form, admin only)
-  "users.dttsTitle": "Rsdway System Credentials",
+  "users.dttsTitle": "RSDWAY System Credentials",
   "users.dttsDesc": "Enter the user's SFDA account credentials to link them with the Production environment. Password is stored securely.",
   "users.dttsOptionalHint": "Optional — if left empty, the user will need to configure credentials from Settings",
   "users.dttsCustomUrl": "Custom URL",

@@ -1,3 +1,4 @@
+import React from "react";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -17,6 +18,7 @@ import {
   Building2,
   User,
   Languages,
+  Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -77,6 +79,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const toggleLang = () => setLang(lang === "ar" ? "en" : "ar");
 
+  const [theme, setTheme] = React.useState<"default" | "sky">(() => {
+    if (typeof window === "undefined") return "default";
+    return (localStorage.getItem("theme") as "default" | "sky") || "default";
+  });
+
+  const toggleTheme = () => {
+    const next = theme === "default" ? "sky" : "default";
+    setTheme(next);
+    localStorage.setItem("theme", next);
+    if (next === "sky") {
+      document.body.classList.add("theme-sky");
+    } else {
+      document.body.classList.remove("theme-sky");
+    }
+  };
+
+  React.useEffect(() => {
+    if (theme === "sky") {
+      document.body.classList.add("theme-sky");
+    } else {
+      document.body.classList.remove("theme-sky");
+    }
+  }, [theme]);
+
   const NavLinks = () => (
     <nav className="space-y-1 p-4">
       {visibleItems.map((item) => {
@@ -110,6 +136,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
     >
       <Languages className="h-3.5 w-3.5" />
       {lang === "ar" ? "EN" : "AR"}
+    </Button>
+  );
+
+  const ThemeToggle = () => (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={toggleTheme}
+      className="w-full gap-1.5 text-xs font-semibold px-2 h-8"
+      title={theme === "default" ? "Sky theme" : "Default theme"}
+    >
+      <Palette className="h-3.5 w-3.5" />
+      {theme === "default" ? "Sky" : "Teal"}
     </Button>
   );
 
@@ -152,8 +191,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <NavLinks />
         </div>
 
-        {/* Logout */}
-        <div className="border-t p-4">
+        {/* Theme + Logout */}
+        <div className="border-t p-4 space-y-2">
+          <ThemeToggle />
           <Button
             variant="outline"
             size="sm"
@@ -209,7 +249,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <div className="flex-1 overflow-y-auto">
                   <NavLinks />
                 </div>
-                <div className="border-t p-4">
+                <div className="border-t p-4 space-y-2">
+                  <ThemeToggle />
                   <Button
                     variant="outline"
                     size="sm"
