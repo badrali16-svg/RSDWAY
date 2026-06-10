@@ -18,3 +18,9 @@ id = "CIBet9btCMJcq94S6E3ym"
 uri = "file://soap-integration.tar.gz"
 type = "unspecified"
 title = "soap-integration.tar.gz — ملفات SOAP Integration"
+
+[[outputs]]
+id = "ftPvs7b_kQ-3UPkf1q3H-"
+uri = "file://RSDWAY.tar.gz"
+type = "unspecified"
+title = "RSDWAY.tar.gz — كل ملفات المشروع جاهزة للGitHub"
