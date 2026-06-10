@@ -14,8 +14,8 @@ export const ar: Record<string, string> = {
   "nav.settings": "الإعدادات",
 
   // Layout
-  "layout.systemName": "نظام رصد",
-  "layout.systemNameShort": "نظام رصد",
+  "layout.systemName": "نظام Rsdway",
+  "layout.systemNameShort": "نظام Rsdway",
   "layout.loggedInAs": "مسجّل كـ",
   "layout.admin": "مدير",
   "layout.client": "عميل",
@@ -23,7 +23,7 @@ export const ar: Record<string, string> = {
   "layout.menu": "القائمة",
 
   // Login
-  "login.title": "نظام رصد",
+  "login.title": "نظام Rsdway",
   "login.subtitle": "يرجى تسجيل الدخول للمتابعة",
   "login.username": "اسم المستخدم",
   "login.password": "كلمة المرور",
@@ -54,7 +54,7 @@ export const ar: Record<string, string> = {
 
   // Dashboard
   "dashboard.title": "لوحة التحكم",
-  "dashboard.subtitle": "نظرة عامة على عمليات نظام رصد",
+  "dashboard.subtitle": "نظرة عامة على عمليات نظام Rsdway",
   "dashboard.totalOps": "إجمالي العمليات",
   "dashboard.successOps": "العمليات الناجحة",
   "dashboard.failedOps": "العمليات الفاشلة",
@@ -63,12 +63,12 @@ export const ar: Record<string, string> = {
   "dashboard.viewAll": "عرض السجل كاملاً",
   "dashboard.noOps": "لا توجد عمليات مسجلة حتى الآن",
   "dashboard.configAlertTitle": "تنبيه: إعدادات الربط غير مكتملة",
-  "dashboard.configAlertDesc": "يرجى إدخال بيانات الاعتماد الخاصة بنظام رصد (اسم المستخدم وكلمة المرور) لتتمكن من إجراء العمليات.",
+  "dashboard.configAlertDesc": "يرجى إدخال بيانات الاعتماد الخاصة بنظام Rsdway (اسم المستخدم وكلمة المرور) لتتمكن من إجراء العمليات.",
   "dashboard.goToSettings": "الذهاب للإعدادات",
 
   // History
   "history.title": "سجل العمليات",
-  "history.subtitle": "تاريخ العمليات المنفذة على نظام رصد وحالتها",
+  "history.subtitle": "تاريخ العمليات المنفذة على نظام Rsdway وحالتها",
   "history.allOps": "جميع العمليات السابقة",
   "history.noOps": "لا توجد عمليات مسجلة في النظام",
   "history.colDate": "تاريخ العملية",
@@ -169,7 +169,7 @@ export const ar: Record<string, string> = {
 
   // Settings
   "settings.title": "الإعدادات",
-  "settings.subtitle": "إعدادات الربط مع نظام رصد والتفويض والتكامل الخارجي",
+  "settings.subtitle": "إعدادات الربط مع نظام Rsdway والتفويض والتكامل الخارجي",
   "settings.gateTitle": "صفحة محمية",
   "settings.gateDesc": "يرجى إدخال كلمة المرور للدخول إلى صفحة الإعدادات",
   "settings.gatePasswordLabel": "كلمة المرور",
@@ -184,12 +184,12 @@ export const ar: Record<string, string> = {
   "settings.prodEnvName": "بيئة الإنتاج (Production)",
   "settings.prodEnvDesc": "للعمل الفعلي مع الهيئة العامة للغذاء والدواء (SFDA)",
   "settings.selected": "محدد",
-  "settings.credTitle": "بيانات اعتماد نظام رصد",
+  "settings.credTitle": "بيانات اعتماد نظام Rsdway",
   "settings.credDesc": "أدخل بيانات حسابك لدى الهيئة العامة للغذاء والدواء لتتمكن من إرسال العمليات. يتم تخزين كلمة المرور بشكل مشفر وآمن.",
   "settings.testConn": "اختبار الاتصال",
   "settings.testing": "جارٍ الاختبار...",
   "settings.savedOkTitle": "تم الحفظ بنجاح",
-  "settings.savedOkDesc": "تم تحديث بيانات الاعتماد لنظام رصد",
+  "settings.savedOkDesc": "تم تحديث بيانات الاعتماد لنظام Rsdway",
   "settings.saveErrTitle": "خطأ في الحفظ",
   "settings.saveErrDesc": "حدث خطأ أثناء محاولة حفظ البيانات",
   "settings.baseUrlLabel": "رابط الخدمة (Base URL)",
@@ -200,7 +200,7 @@ export const ar: Record<string, string> = {
   "settings.saving": "جارٍ الحفظ...",
   "settings.envLabel": "البيئة:",
   "settings.apiKeysTitle": "التكامل الخارجي — مفاتيح API",
-  "settings.apiKeysDesc": "أنشئ مفاتيح API لربط أي نظام خارجي (مثل Odoo) بنظام رصد. كل طلب يستخدم بيانات اعتماد حسابك.",
+  "settings.apiKeysDesc": "أنشئ مفاتيح API لربط أي نظام خارجي (مثل Odoo) بنظام Rsdway. كل طلب يستخدم بيانات اعتماد حسابك.",
   "settings.apiHowToUse": "كيفية الاستخدام مع Odoo أو أي نظام خارجي",
   "settings.apiAddHeader": "أضف الـ header التالي في كل طلب API:",
   "settings.apiExample": "مثال — إرسال Dispatch من Odoo:",
@@ -265,7 +265,7 @@ export const ar: Record<string, string> = {
 
   // Import/Supply
   "import.title": "الاستيراد والتصنيع",
-  "import.subtitle": "تسجيل عمليات الاستيراد والتصنيع في نظام رصد",
+  "import.subtitle": "تسجيل عمليات الاستيراد والتصنيع في نظام Rsdway",
   "import.tabImport": "استيراد (SN)",
   "import.tabImportCancel": "إلغاء الاستيراد",
   "import.tabSupply": "تصنيع (Supply)",
@@ -279,11 +279,11 @@ export const ar: Record<string, string> = {
   "import.successSupply": "تم التصنيع بنجاح",
   "import.successSupplyCancel": "تم إلغاء التصنيع بنجاح",
   "import.importCardTitle": "استيراد منتجات (Import)",
-  "import.importCardDesc": "تسجيل منتجات مستوردة في نظام رصد — ImportService",
+  "import.importCardDesc": "تسجيل منتجات مستوردة في نظام Rsdway — ImportService",
   "import.importCancelCardTitle": "إلغاء استيراد",
   "import.importCancelCardDesc": "إلغاء عملية استيراد سابقة — ImportCancelService",
   "import.supplyCardTitle": "تصنيع منتجات (Supply)",
-  "import.supplyCardDesc": "تسجيل منتجات محلية الصنع في نظام رصد — SupplyService",
+  "import.supplyCardDesc": "تسجيل منتجات محلية الصنع في نظام Rsdway — SupplyService",
   "import.supplyCancelCardTitle": "إلغاء تصنيع",
   "import.supplyCancelCardDesc": "إلغاء عملية تصنيع سابقة — SupplyCancelService",
 
@@ -504,15 +504,15 @@ export const ar: Record<string, string> = {
   "users.deletedTitle": "تم الحذف",
   "users.deleteErrDesc": "فشل حذف الحساب",
 
-  // Users — قسم بيانات اعتماد رصد (نموذج الإنشاء، للمدير فقط)
-  "users.dttsTitle": "بيانات اعتماد نظام رصد",
+  // Users — قسم بيانات اعتماد Rsdway (نموذج الإنشاء، للمدير فقط)
+  "users.dttsTitle": "بيانات اعتماد نظام Rsdway",
   "users.dttsDesc": "أدخل بيانات حساب الهيئة العامة للغذاء والدواء لربط المستخدم ببيئة الإنتاج. يتم تخزين كلمة المرور بشكل مشفر وآمن.",
   "users.dttsOptionalHint": "اختياري — إذا تُرك فارغاً، سيحتاج المستخدم إلى ضبط بيانات الاعتماد من الإعدادات",
   "users.dttsCustomUrl": "رابط مخصص",
   "users.dttsTesting": "جارٍ الاختبار...",
   "users.dttsMustTest": "يرجى اختبار الاتصال قبل إنشاء الحساب",
   "users.dttsTestFailed": "فشل اختبار الاتصال — لا يمكن إنشاء الحساب",
-  "users.dttsPartialFill": "يرجى إدخال جميع حقول بيانات رصد أو تركها فارغة بالكامل",
+  "users.dttsPartialFill": "يرجى إدخال جميع حقول بيانات Rsdway أو تركها فارغة بالكامل",
   "users.dttsConnOk": "الاتصال ناجح ✓",
   "users.dttsConnFail": "فشل الاتصال ✗",
   "users.dttsSavedOk": "تم حفظ بيانات الاعتماد",
