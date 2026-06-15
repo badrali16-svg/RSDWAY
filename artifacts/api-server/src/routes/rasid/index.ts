@@ -64,24 +64,35 @@ async function proxy(
 
   const notificationId = result.rawXml ? extractNotificationId(result.rawXml) : null;
 
+  // SFDA batch operations return notificationId = "-1" when units fail,
+  // even if the top-level FC is 00000. Treat -1 as failure.
+  const effectiveSuccess = result.success && notificationId !== "-1";
+
+  // If batch failed (notificationId=-1), extract unit-level FC from first failing product
+  let effectiveFaultCode = result.faultCode;
+  if (!effectiveSuccess && !effectiveFaultCode && result.rawXml) {
+    const unitFc = result.rawXml.match(/<FC>([^<]+)<\/FC>/i);
+    effectiveFaultCode = unitFc ? unitFc[1].trim() : null;
+  }
+
   try {
     await db.insert(operationLogsTable).values({
       userId: user.id,
       operation,
       requestPayload: JSON.stringify(requestPayload),
       responsePayload: result.rawXml,
-      success: result.success,
+      success: effectiveSuccess,
       notificationId,
-      errorCode: result.faultCode,
+      errorCode: effectiveFaultCode,
     });
   } catch (dbErr) {
     req.log.error({ err: dbErr }, "Failed to save operation log — DB insert error");
   }
 
   res.json({
-    success: result.success,
+    success: effectiveSuccess,
     rawXml: result.rawXml,
-    error: result.error,
+    error: result.error ?? (notificationId === "-1" ? "فشل تنفيذ العملية" : null),
     notificationId,
   });
 }
