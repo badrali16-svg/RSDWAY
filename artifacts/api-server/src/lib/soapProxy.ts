@@ -82,6 +82,14 @@ export async function callSoap(opts: SoapCallOptions): Promise<SoapResult> {
       return { success: false, rawXml, error: fcMsg, faultCode };
     }
 
+    // SFDA sometimes returns HTTP 200 with <FC> error code but no SOAP Fault element
+    // Any non-zero FC code means the operation failed
+    if (faultCode && faultCode !== "00000") {
+      const fcMsg = FC_MESSAGES[faultCode] ?? `كود الخطأ: ${faultCode}`;
+      logger.warn({ endpoint: opts.endpoint, faultCode }, "SFDA returned FC error code in 200 response");
+      return { success: false, rawXml, error: fcMsg, faultCode };
+    }
+
     return { success: true, rawXml, error: null, faultCode };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
