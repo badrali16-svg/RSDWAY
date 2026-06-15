@@ -17,5 +17,7 @@ export interface OperationLog {
   success: boolean;
   /** @nullable */
   notificationId?: string | null;
+  /** @nullable */
+  errorCode?: string | null;
   createdAt: string;
 }

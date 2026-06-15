@@ -1711,6 +1711,8 @@ components:
           type: boolean
         notificationId:
           type: ["string", "null"]
+        errorCode:
+          type: ["string", "null"]
         createdAt:
           type: string
       required:

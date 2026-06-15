@@ -1120,6 +1120,7 @@ export const GetOperationHistoryResponseItem = zod.object({
   responsePayload: zod.string().nullish(),
   success: zod.boolean(),
   notificationId: zod.string().nullish(),
+  errorCode: zod.string().nullish(),
   createdAt: zod.string(),
 });
 export const GetOperationHistoryResponse = zod.array(

@@ -102,6 +102,8 @@ export const en: Record<string, string> = {
   "history.clearConfirmDescAll": "All operation logs for all users will be permanently deleted. Are you sure?",
   "history.clearOk": "Logs cleared successfully",
   "history.clearErr": "Failed to clear logs",
+  "history.colErrorCode": "Error Code",
+  "history.detailErrorCode": "Rasid Error Code",
 
   "common.invoiceNumber": "Invoice Number (optional)",
   "common.invoiceNumberPlaceholder": "For reference only — not sent to SFDA",

@@ -10,6 +10,7 @@ export const operationLogsTable = pgTable("operation_logs", {
   responsePayload: text("response_payload"),
   success: boolean("success").notNull().default(false),
   notificationId: text("notification_id"),
+  errorCode: text("error_code"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

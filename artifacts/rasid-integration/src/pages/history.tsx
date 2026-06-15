@@ -45,6 +45,20 @@ import { useLanguage } from "@/lib/use-language";
 import { useAuth } from "@/hooks/use-auth";
 import * as XLSX from "xlsx";
 
+const FC_MESSAGES: Record<string, string> = {
+  "401": "غير مصرح — بيانات الاعتماد مفقودة",
+  "80000": "بيانات الاعتماد غير صحيحة (اسم المستخدم أو كلمة المرور خاطئة)",
+  "80001": "المستخدم غير موجود في النظام",
+  "80002": "المستخدم غير مفعّل",
+  "80003": "كلمة المرور منتهية الصلاحية",
+  "10001": "GTIN غير مسجّل في النظام",
+  "10002": "الرقم التسلسلي مكرر",
+  "10003": "تاريخ الإنتاج أكبر من اليوم",
+  "10004": "تاريخ الانتهاء أقل من اليوم",
+  "20001": "GLN المُرسَل إليه غير موجود",
+  "00000": "نجاح",
+};
+
 type LocalBatchProduct = { GTIN: string; BN?: string; XD?: string; QUANTITY?: number };
 type BatchPayload  = { toGLN?: string; fromGLN?: string; products?: LocalBatchProduct[]; invoiceNumber?: string };
 
@@ -327,9 +341,16 @@ export default function HistoryPage() {
                               <span>{t("history.success")}</span>
                             </div>
                           ) : (
-                            <div className="flex items-center text-destructive">
-                              <XCircle className="me-1 h-4 w-4" />
-                              <span>{t("history.failed")}</span>
+                            <div>
+                              <div className="flex items-center text-destructive">
+                                <XCircle className="me-1 h-4 w-4" />
+                                <span>{t("history.failed")}</span>
+                              </div>
+                              {op.errorCode && (
+                                <span className="block font-mono text-xs text-destructive/80 mt-0.5" dir="ltr">
+                                  FC: {op.errorCode}
+                                </span>
+                              )}
                             </div>
                           )}
                         </TableCell>
@@ -399,6 +420,19 @@ export default function HistoryPage() {
                 <div className="flex items-center gap-3 rounded-md border px-3 py-2 bg-muted/30">
                   <span className="text-muted-foreground shrink-0">{t("history.colNotifId")}:</span>
                   <span className="font-mono font-semibold" dir="ltr">{detailOp.notificationId}</span>
+                </div>
+              )}
+
+              {/* Error Code (shown only on failure) */}
+              {!detailOp?.success && detailOp?.errorCode && (
+                <div className="flex items-start gap-3 rounded-md border border-destructive/30 px-3 py-2 bg-destructive/5">
+                  <span className="text-muted-foreground shrink-0 pt-0.5">{t("history.detailErrorCode")}:</span>
+                  <div dir="ltr" className="text-start">
+                    <span className="font-mono font-semibold text-destructive">FC: {detailOp.errorCode}</span>
+                    {FC_MESSAGES[detailOp.errorCode] && (
+                      <span className="block text-xs text-destructive/80 mt-0.5">{FC_MESSAGES[detailOp.errorCode]}</span>
+                    )}
+                  </div>
                 </div>
               )}
 

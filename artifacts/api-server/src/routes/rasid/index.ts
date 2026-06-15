@@ -71,6 +71,7 @@ async function proxy(
     responsePayload: result.rawXml,
     success: result.success,
     notificationId,
+    errorCode: result.faultCode,
   });
 
   res.json({

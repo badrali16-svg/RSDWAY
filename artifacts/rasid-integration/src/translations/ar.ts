@@ -102,6 +102,8 @@ export const ar: Record<string, string> = {
   "history.clearConfirmDescAll": "سيتم حذف جميع سجلات العمليات لكل المستخدمين بشكل نهائي. هل أنت متأكد؟",
   "history.clearOk": "تم حذف السجل بنجاح",
   "history.clearErr": "فشل حذف السجل",
+  "history.colErrorCode": "كود الخطأ",
+  "history.detailErrorCode": "كود الخطأ من رصد",
 
   "common.invoiceNumber": "رقم الفاتورة (اختياري)",
   "common.invoiceNumberPlaceholder": "للمرجعية فقط — لا يُرسَل لـ SFDA",
