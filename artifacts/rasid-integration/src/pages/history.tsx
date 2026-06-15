@@ -66,6 +66,19 @@ function parseBatchPayload(raw: string): BatchPayload | null {
   try { return JSON.parse(raw) as BatchPayload; } catch { return null; }
 }
 
+function extractFaultCodeFromXml(xml: string | null | undefined): string | null {
+  if (!xml) return null;
+  const fc = xml.match(/<FC>([^<]+)<\/FC>/i);
+  if (fc) return fc[1].trim();
+  const fs = xml.match(/<faultstring>([^<]+)<\/faultstring>/i);
+  if (fs) return fs[1].trim();
+  return null;
+}
+
+function resolveErrorCode(op: { errorCode?: string | null; responsePayload?: string | null }): string | null {
+  return op.errorCode ?? extractFaultCodeFromXml(op.responsePayload);
+}
+
 const DISPATCH_BATCH_OPS = new Set(["DispatchBatch", "DispatchCancelBatch"]);
 const CANCELABLE_OP = "DispatchBatch";
 
@@ -346,9 +359,9 @@ export default function HistoryPage() {
                                 <XCircle className="me-1 h-4 w-4" />
                                 <span>{t("history.failed")}</span>
                               </div>
-                              {op.errorCode && (
+                              {resolveErrorCode(op) && (
                                 <span className="block font-mono text-xs text-destructive/80 mt-0.5" dir="ltr">
-                                  FC: {op.errorCode}
+                                  FC: {resolveErrorCode(op)}
                                 </span>
                               )}
                             </div>
@@ -424,17 +437,21 @@ export default function HistoryPage() {
               )}
 
               {/* Error Code (shown only on failure) */}
-              {!detailOp?.success && detailOp?.errorCode && (
-                <div className="flex items-start gap-3 rounded-md border border-destructive/30 px-3 py-2 bg-destructive/5">
-                  <span className="text-muted-foreground shrink-0 pt-0.5">{t("history.detailErrorCode")}:</span>
-                  <div dir="ltr" className="text-start">
-                    <span className="font-mono font-semibold text-destructive">FC: {detailOp.errorCode}</span>
-                    {FC_MESSAGES[detailOp.errorCode] && (
-                      <span className="block text-xs text-destructive/80 mt-0.5">{FC_MESSAGES[detailOp.errorCode]}</span>
-                    )}
+              {!detailOp?.success && (() => {
+                const ec = detailOp ? resolveErrorCode(detailOp) : null;
+                if (!ec) return null;
+                return (
+                  <div className="flex items-start gap-3 rounded-md border border-destructive/30 px-3 py-2 bg-destructive/5">
+                    <span className="text-muted-foreground shrink-0 pt-0.5">{t("history.detailErrorCode")}:</span>
+                    <div dir="ltr" className="text-start">
+                      <span className="font-mono font-semibold text-destructive">FC: {ec}</span>
+                      {FC_MESSAGES[ec] && (
+                        <span className="block text-xs text-destructive/80 mt-0.5">{FC_MESSAGES[ec]}</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Products table */}
               {detailPayload.products && detailPayload.products.length > 0 && (
