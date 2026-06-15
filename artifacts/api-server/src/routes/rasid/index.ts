@@ -559,6 +559,7 @@ router.get("/rasid/history", async (req, res): Promise<void> => {
     responsePayload: l.responsePayload,
     success: l.success,
     notificationId: l.notificationId,
+    errorCode: l.errorCode,
     createdAt: l.createdAt.toISOString(),
   })));
 });
