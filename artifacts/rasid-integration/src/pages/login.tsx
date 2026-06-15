@@ -101,6 +101,24 @@ export default function LoginPage() {
           </form>
         </CardContent>
       </Card>
+
+      <p className="absolute bottom-6 text-center text-xs text-muted-foreground px-4">
+        {lang === "ar" ? (
+          <>
+            إذا واجهتك مشكلة في تسجيل الدخول يمكنك التواصل مع الدعم الفني على البريد:{" "}
+            <a href="mailto:Support@rsdway.com" className="text-primary underline underline-offset-2">
+              Support@rsdway.com
+            </a>
+          </>
+        ) : (
+          <>
+            If you have trouble logging in, contact support at:{" "}
+            <a href="mailto:Support@rsdway.com" className="text-primary underline underline-offset-2">
+              Support@rsdway.com
+            </a>
+          </>
+        )}
+      </p>
     </div>
   );
 }
