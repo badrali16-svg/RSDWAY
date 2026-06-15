@@ -44,6 +44,31 @@ export async function runMigrations(): Promise<void> {
       logger.info({ fixed: r3.rowCount }, "Fixed old records with SOAP Fault");
     }
 
+    // 5. Fix old records: per-product <RC> error codes (Batch operations).
+    //    Matches any <RC>XXXXX</RC> where XXXXX is NOT "00000".
+    const r4 = await client.query(`
+      UPDATE operation_logs
+      SET success = false
+      WHERE success = true
+        AND response_payload IS NOT NULL
+        AND response_payload ~* '<RC>(?!00000)[^<]{1,20}</RC>';
+    `);
+    if (r4.rowCount && r4.rowCount > 0) {
+      logger.info({ fixed: r4.rowCount }, "Fixed old records with per-product RC errors");
+    }
+
+    // 6. Fix old records: top-level <RESPONSECODE> error (non-zero) → failed
+    const r5 = await client.query(`
+      UPDATE operation_logs
+      SET success = false
+      WHERE success = true
+        AND response_payload IS NOT NULL
+        AND response_payload ~* '<(?:RESPONSECODE|ResponseCode)>(?!00000)[^<]{1,20}</(?:RESPONSECODE|ResponseCode)>';
+    `);
+    if (r5.rowCount && r5.rowCount > 0) {
+      logger.info({ fixed: r5.rowCount }, "Fixed old records with top-level RESPONSECODE errors");
+    }
+
     logger.info("DB migrations applied successfully");
   } catch (err) {
     logger.error({ err }, "DB migration failed");

@@ -66,6 +66,60 @@ function hasSoapFault(xml: string): boolean {
          /<S:Fault/i.test(xml);
 }
 
+/**
+ * Mirrors the frontend parseDttsResponse + getDttsStatus logic.
+ * Returns { success, faultCode } based on the actual DTTS XML content.
+ *
+ * Rules (same as frontend):
+ *  - success  : top-level RC == "00000" AND no per-product failures
+ *  - partial  : RC == "00000" BUT some units failed → treated as FAILED for logging
+ *  - failed   : RC != "00000" OR all products failed
+ */
+function analyzeDttsXml(xml: string): { success: boolean; faultCode: string | null } {
+  // Strip PRODUCT blocks to get top-level only
+  const xmlNoProducts = xml.replace(/<PRODUCT\b[^>]*>[\s\S]*?<\/PRODUCT>/gi, "");
+
+  // Top-level RC (RESPONSECODE or RC tag, outside PRODUCT blocks)
+  const topRcMatch = xmlNoProducts.match(
+    /<(?:RESPONSECODE|ResponseCode|responseCode|RC)>([^<]+)<\/(?:RESPONSECODE|ResponseCode|responseCode|RC)>/i
+  );
+  const topRc = topRcMatch ? topRcMatch[1].trim() : null;
+
+  // Per-product RC codes
+  const productBlocks = [...xml.matchAll(/<PRODUCT\b[^>]*>([\s\S]*?)<\/PRODUCT>/gi)];
+  const failedRcs: string[] = [];
+  for (const block of productBlocks) {
+    const inner = block[1];
+    const rcm = inner.match(/<RC>([^<]+)<\/RC>/i);
+    const rc = rcm ? rcm[1].trim() : "00000";
+    if (rc !== "00000") failedRcs.push(rc);
+  }
+
+  const totalProducts = productBlocks.length;
+  const failedCount = failedRcs.length;
+
+  // Determine success
+  let success: boolean;
+  let faultCode: string | null = null;
+
+  if (topRc && topRc !== "00000") {
+    // Top-level error
+    success = false;
+    faultCode = topRc;
+  } else if (totalProducts > 0 && failedCount > 0) {
+    // Some or all products failed (partial or full failure → save as failed)
+    success = false;
+    faultCode = failedRcs[0] ?? null;
+  } else if (topRc === "00000" && failedCount === 0) {
+    success = true;
+  } else {
+    // No RC info found — fall back to FC/SOAP fault checks
+    success = true; // will be overridden by caller if needed
+  }
+
+  return { success, faultCode };
+}
+
 export async function callSoap(opts: SoapCallOptions): Promise<SoapResult> {
   const envelope = `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
@@ -105,15 +159,27 @@ export async function callSoap(opts: SoapCallOptions): Promise<SoapResult> {
       return { success: false, rawXml, error: fcMsg, faultCode };
     }
 
-    // SFDA sometimes returns HTTP 200 with <FC> error code but no SOAP Fault element
-    // Any non-zero FC code means the operation failed
+    // Use DTTS-aware XML analysis (mirrors frontend parseDttsResponse logic)
+    // Handles: top-level <RC>/<RESPONSECODE>, per-product <RC>, and <FC> codes
+    const dtts = analyzeDttsXml(rawXml);
+    const effectiveFaultCode = dtts.faultCode ?? faultCode;
+
+    if (!dtts.success) {
+      const fcMsg = effectiveFaultCode
+        ? (FC_MESSAGES[effectiveFaultCode] ?? `كود الخطأ: ${effectiveFaultCode}`)
+        : "فشل تنفيذ العملية";
+      logger.warn({ endpoint: opts.endpoint, faultCode: effectiveFaultCode }, "DTTS operation failed");
+      return { success: false, rawXml, error: fcMsg, faultCode: effectiveFaultCode };
+    }
+
+    // Legacy FC check for responses without RC structure
     if (faultCode && faultCode !== "00000") {
       const fcMsg = FC_MESSAGES[faultCode] ?? `كود الخطأ: ${faultCode}`;
       logger.warn({ endpoint: opts.endpoint, faultCode }, "SFDA returned FC error code in 200 response");
       return { success: false, rawXml, error: fcMsg, faultCode };
     }
 
-    return { success: true, rawXml, error: null, faultCode };
+    return { success: true, rawXml, error: null, faultCode: effectiveFaultCode };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     logger.error({ err, endpoint: opts.endpoint }, "SOAP call error");
