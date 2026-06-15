@@ -64,15 +64,19 @@ async function proxy(
 
   const notificationId = result.rawXml ? extractNotificationId(result.rawXml) : null;
 
-  await db.insert(operationLogsTable).values({
-    userId: user.id,
-    operation,
-    requestPayload: JSON.stringify(requestPayload),
-    responsePayload: result.rawXml,
-    success: result.success,
-    notificationId,
-    errorCode: result.faultCode,
-  });
+  try {
+    await db.insert(operationLogsTable).values({
+      userId: user.id,
+      operation,
+      requestPayload: JSON.stringify(requestPayload),
+      responsePayload: result.rawXml,
+      success: result.success,
+      notificationId,
+      errorCode: result.faultCode,
+    });
+  } catch (dbErr) {
+    req.log.error({ err: dbErr }, "Failed to save operation log — DB insert error");
+  }
 
   res.json({
     success: result.success,

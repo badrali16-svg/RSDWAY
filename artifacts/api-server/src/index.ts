@@ -1,7 +1,9 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { ensureDefaultAdmin } from "./lib/sessionAuth";
+import { runMigrations } from "./lib/migrate";
 
+runMigrations().catch((err) => logger.error({ err }, "Failed to run migrations"));
 ensureDefaultAdmin().catch((err) => logger.error({ err }, "Failed to seed default admin"));
 
 const rawPort = process.env["PORT"];
