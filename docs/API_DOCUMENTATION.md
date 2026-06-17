@@ -32,7 +32,7 @@ RSDWAY is a bilingual (Arabic/English) REST API gateway that proxies JSON reques
 | Method | Use Case | Authentication |
 |--------|----------|----------------|
 | **Portal Session** | Your internal team uses the web portal | Cookie session (login via `/api/session/login`) |
-| **API Key** | External systems (Odoo, ERP, custom apps) send operations automatically | Header `X-API-Key: rasid_...` |
+| **API Key** | External systems (Odoo, ERP, custom apps) send operations automatically | Header `X-API-Key: rsdway_...` |
 
 ### Base URL
 
@@ -80,7 +80,7 @@ This is the recommended method for any automated system integration.
 5. The portal will show the full key **once only** — save it immediately:
 
 ```
-rasid_7f3a9b2c4e5d6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a
+rsdway_7f3a9b2c4e5d6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a
 ```
 
 #### Step 2: Use the API Key
@@ -88,7 +88,7 @@ rasid_7f3a9b2c4e5d6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a
 Every request must include:
 
 ```http
-X-API-Key: rasid_your_full_key_here
+X-API-Key: rsdway_your_full_key_here
 ```
 
 #### Step 3: Configure DTTS Credentials
@@ -105,7 +105,7 @@ The API Key is tied to a user. That user must have DTTS credentials configured i
 curl -X POST \
   https://app.rsdway.com/api/auth/test-connection \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: rasid_your_key_here"
+  -H "X-API-Key: rsdway_your_key_here"
 ```
 
 ### 3.2 Quick Check: Get Your Auth Config
@@ -113,7 +113,7 @@ curl -X POST \
 ```bash
 curl -X GET \
   https://app.rsdway.com/api/auth/config \
-  -H "X-API-Key: rasid_your_key_here"
+  -H "X-API-Key: rsdway_your_key_here"
 ```
 
 ### 3.3 Save Your DTTS Credentials
@@ -122,7 +122,7 @@ curl -X GET \
 curl -X POST \
   https://app.rsdway.com/api/auth/config \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: rasid_your_key_here" \
+  -H "X-API-Key: rsdway_your_key_here" \
   -d '{
     "username": "your_dtts_username",
     "password": "your_dtts_password",
@@ -165,7 +165,7 @@ curl -X POST \
 
 ```http
 POST /api/rasid/import
-Authorization: Bearer <session> OR X-API-Key: rasid_...
+Authorization: Bearer <session> OR X-API-Key: rsdway_...
 Content-Type: application/json
 
 {
@@ -802,7 +802,7 @@ For Batch operations, some products may succeed and others may fail. The respons
 import requests
 
 BASE_URL = "https://app.rsdway.com/api"
-API_KEY = "rasid_your_key_here"
+API_KEY = "rsdway_your_key_here"
 
 headers = {
     "X-API-Key": API_KEY,
@@ -930,13 +930,13 @@ class RsdwayIntegration:
 # Test connection
 curl -X POST \
   https://app.rsdway.com/api/auth/test-connection \
-  -H "X-API-Key: rasid_your_key" \
+  -H "X-API-Key: rsdway_your_key" \
   -H "Content-Type: application/json"
 
 # Dispatch batch
 curl -X POST \
   https://app.rsdway.com/api/rasid/dispatch-batch \
-  -H "X-API-Key: rasid_your_key" \
+  -H "X-API-Key: rsdway_your_key" \
   -H "Content-Type: application/json" \
   -d '{
     "toGLN": "1234567890123",
@@ -948,7 +948,7 @@ curl -X POST \
 # Check status
 curl -X POST \
   https://app.rsdway.com/api/rasid/check-status \
-  -H "X-API-Key: rasid_your_key" \
+  -H "X-API-Key: rsdway_your_key" \
   -H "Content-Type: application/json" \
   -d '{
     "products": [
@@ -959,7 +959,7 @@ curl -X POST \
 # Get history
 curl -X GET \
   https://app.rsdway.com/api/rasid/history \
-  -H "X-API-Key: rasid_your_key"
+  -H "X-API-Key: rsdway_your_key"
 ```
 
 ### 9.4 PHP Example
@@ -998,7 +998,7 @@ class RsdwayClient {
 }
 
 // Usage
-$rsd = new RsdwayClient("rasid_your_key_here");
+$rsd = new RsdwayClient("rsdway_your_key_here");
 $result = $rsd->dispatchBatch("1234567890123", [
     ["GTIN" => "12345678901234", "BN" => "LOT123", "XD" => "2025-12-31", "QUANTITY" => 100]
 ]);
@@ -1017,7 +1017,7 @@ if ($result["success"]) {
 const axios = require('axios');
 
 const BASE_URL = 'https://app.rsdway.com/api';
-const API_KEY = 'rasid_your_key_here';
+const API_KEY = 'rsdway_your_key_here';
 
 const client = axios.create({
   baseURL: BASE_URL,
@@ -1200,7 +1200,7 @@ Content-Type: application/json
 {
   "id": 1,
   "name": "Odoo Production",
-  "key": "rasid_7f3a9b2c4e5d6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a",
+  "key": "rsdway_7f3a9b2c4e5d6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a",
   "createdAt": "2024-06-15T10:00:00Z"
 }
 ```

@@ -135,12 +135,12 @@ function ApiKeysSection({ toast, disabled = false }: { toast: ReturnType<typeof 
           </p>
           <p className="text-muted-foreground">{t("settings.apiAddHeader")}</p>
           <pre dir="ltr" className="bg-background border rounded px-3 py-2 text-xs font-mono overflow-x-auto">
-{"X-API-Key: rasid_<your-key>"}
+{"X-API-Key: rsdway_<your-key>"}
           </pre>
           <p className="text-muted-foreground">{t("settings.apiExample")}</p>
           <pre dir="ltr" className="bg-background border rounded px-3 py-2 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all">
 {`POST ${baseUrl}/api/external/v1/dispatch
-X-API-Key: rasid_<your-key>
+X-API-Key: rsdway_<your-key>
 Content-Type: application/json
 
 {
