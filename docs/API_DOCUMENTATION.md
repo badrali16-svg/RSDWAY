@@ -37,7 +37,7 @@ RSDWAY is a bilingual (Arabic/English) REST API gateway that proxies JSON reques
 ### Base URL
 
 ```
-https://ash1-xpu7.onrender.com/api
+https://app.rsdway.com/api
 ```
 
 ---
@@ -103,7 +103,7 @@ The API Key is tied to a user. That user must have DTTS credentials configured i
 
 ```bash
 curl -X POST \
-  https://ash1-xpu7.onrender.com/api/auth/test-connection \
+  https://app.rsdway.com/api/auth/test-connection \
   -H "Content-Type: application/json" \
   -H "X-API-Key: rasid_your_key_here"
 ```
@@ -112,7 +112,7 @@ curl -X POST \
 
 ```bash
 curl -X GET \
-  https://ash1-xpu7.onrender.com/api/auth/config \
+  https://app.rsdway.com/api/auth/config \
   -H "X-API-Key: rasid_your_key_here"
 ```
 
@@ -120,7 +120,7 @@ curl -X GET \
 
 ```bash
 curl -X POST \
-  https://ash1-xpu7.onrender.com/api/auth/config \
+  https://app.rsdway.com/api/auth/config \
   -H "Content-Type: application/json" \
   -H "X-API-Key: rasid_your_key_here" \
   -d '{
@@ -801,7 +801,7 @@ For Batch operations, some products may succeed and others may fail. The respons
 ```python
 import requests
 
-BASE_URL = "https://ash1-xpu7.onrender.com/api"
+BASE_URL = "https://app.rsdway.com/api"
 API_KEY = "rasid_your_key_here"
 
 headers = {
@@ -879,7 +879,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 class RsdwayIntegration:
-    def __init__(self, api_key, base_url="https://ash1-xpu7.onrender.com/api"):
+    def __init__(self, api_key, base_url="https://app.rsdway.com/api"):
         self.api_key = api_key
         self.base_url = base_url
         self.headers = {
@@ -929,13 +929,13 @@ class RsdwayIntegration:
 ```bash
 # Test connection
 curl -X POST \
-  https://ash1-xpu7.onrender.com/api/auth/test-connection \
+  https://app.rsdway.com/api/auth/test-connection \
   -H "X-API-Key: rasid_your_key" \
   -H "Content-Type: application/json"
 
 # Dispatch batch
 curl -X POST \
-  https://ash1-xpu7.onrender.com/api/rasid/dispatch-batch \
+  https://app.rsdway.com/api/rasid/dispatch-batch \
   -H "X-API-Key: rasid_your_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -947,7 +947,7 @@ curl -X POST \
 
 # Check status
 curl -X POST \
-  https://ash1-xpu7.onrender.com/api/rasid/check-status \
+  https://app.rsdway.com/api/rasid/check-status \
   -H "X-API-Key: rasid_your_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -958,7 +958,7 @@ curl -X POST \
 
 # Get history
 curl -X GET \
-  https://ash1-xpu7.onrender.com/api/rasid/history \
+  https://app.rsdway.com/api/rasid/history \
   -H "X-API-Key: rasid_your_key"
 ```
 
@@ -970,7 +970,7 @@ class RsdwayClient {
     private $baseUrl;
     private $apiKey;
     
-    public function __construct($apiKey, $baseUrl = "https://ash1-xpu7.onrender.com/api") {
+    public function __construct($apiKey, $baseUrl = "https://app.rsdway.com/api") {
         $this->apiKey = $apiKey;
         $this->baseUrl = $baseUrl;
     }
@@ -1016,7 +1016,7 @@ if ($result["success"]) {
 ```javascript
 const axios = require('axios');
 
-const BASE_URL = 'https://ash1-xpu7.onrender.com/api';
+const BASE_URL = 'https://app.rsdway.com/api';
 const API_KEY = 'rasid_your_key_here';
 
 const client = axios.create({
