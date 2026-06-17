@@ -164,7 +164,7 @@ curl -X POST \
 #### Import (إستيراد)
 
 ```http
-POST /api/rasid/import
+POST /api/external/v1/import
 Authorization: Bearer <session> OR X-API-Key: rsdway_...
 Content-Type: application/json
 
@@ -180,7 +180,7 @@ Content-Type: application/json
 #### Import Cancel
 
 ```http
-POST /api/rasid/import-cancel
+POST /api/rasid/import-cancel  ⚠️ Portal Session Only
 
 {
   "products": [
@@ -196,7 +196,7 @@ POST /api/rasid/import-cancel
 Same body as Import.
 
 ```http
-POST /api/rasid/supply
+POST /api/external/v1/supply
 
 {
   "GTIN": "12345678901234",
@@ -210,7 +210,7 @@ POST /api/rasid/supply
 #### Supply Cancel
 
 ```http
-POST /api/rasid/supply-cancel
+POST /api/rasid/supply-cancel  ⚠️ Portal Session Only
 
 {
   "products": [
@@ -224,7 +224,7 @@ POST /api/rasid/supply-cancel
 #### Dispatch (Serial Number)
 
 ```http
-POST /api/rasid/dispatch
+POST /api/external/v1/dispatch
 
 {
   "toGLN": "1234567890123",
@@ -237,7 +237,7 @@ POST /api/rasid/dispatch
 #### Dispatch Cancel
 
 ```http
-POST /api/rasid/dispatch-cancel
+POST /api/external/v1/dispatch-cancel
 
 {
   "toGLN": "1234567890123",
@@ -250,7 +250,7 @@ POST /api/rasid/dispatch-cancel
 #### Dispatch Batch (by Batch Number)
 
 ```http
-POST /api/rasid/dispatch-batch
+POST /api/external/v1/dispatch-batch
 
 {
   "toGLN": "1234567890123",
@@ -263,7 +263,7 @@ POST /api/rasid/dispatch-batch
 #### Dispatch Cancel Batch
 
 ```http
-POST /api/rasid/dispatch-cancel-batch
+POST /api/external/v1/dispatch-cancel-batch
 
 {
   "toGLN": "1234567890123",
@@ -278,7 +278,7 @@ POST /api/rasid/dispatch-cancel-batch
 #### Accept (Serial Number)
 
 ```http
-POST /api/rasid/accept
+POST /api/external/v1/accept
 
 {
   "fromGLN": "1234567890123",
@@ -291,7 +291,7 @@ POST /api/rasid/accept
 #### Accept Batch
 
 ```http
-POST /api/rasid/accept-batch
+POST /api/external/v1/accept-batch
 
 {
   "fromGLN": "1234567890123",
@@ -304,7 +304,7 @@ POST /api/rasid/accept-batch
 #### Accept Dispatch (قبول إرسال)
 
 ```http
-POST /api/rasid/accept-dispatch
+POST /api/external/v1/accept-dispatch
 
 {
   "dispatchNotificationId": "2668909225"
@@ -316,7 +316,7 @@ POST /api/rasid/accept-dispatch
 #### Return (Serial Number)
 
 ```http
-POST /api/rasid/return
+POST /api/external/v1/return
 
 {
   "toGLN": "1234567890123",
@@ -329,7 +329,7 @@ POST /api/rasid/return
 #### Return Batch
 
 ```http
-POST /api/rasid/return-batch
+POST /api/external/v1/return-batch
 
 {
   "toGLN": "1234567890123",
@@ -344,7 +344,7 @@ POST /api/rasid/return-batch
 #### Consume
 
 ```http
-POST /api/rasid/consume
+POST /api/rasid/consume  ⚠️ Portal Session Only
 
 {
   "products": [
@@ -356,7 +356,7 @@ POST /api/rasid/consume
 #### Consume Cancel
 
 ```http
-POST /api/rasid/consume-cancel
+POST /api/rasid/consume-cancel  ⚠️ Portal Session Only
 
 {
   "products": [
@@ -370,7 +370,7 @@ POST /api/rasid/consume-cancel
 #### Transfer (Serial Number)
 
 ```http
-POST /api/rasid/transfer
+POST /api/external/v1/transfer
 
 {
   "toGLN": "1234567890123",
@@ -383,7 +383,7 @@ POST /api/rasid/transfer
 #### Transfer Cancel
 
 ```http
-POST /api/rasid/transfer-cancel
+POST /api/external/v1/transfer-cancel
 
 {
   "toGLN": "1234567890123",
@@ -396,7 +396,7 @@ POST /api/rasid/transfer-cancel
 #### Transfer Batch
 
 ```http
-POST /api/rasid/transfer-batch
+POST /api/external/v1/transfer-batch
 
 {
   "toGLN": "1234567890123",
@@ -409,7 +409,7 @@ POST /api/rasid/transfer-batch
 #### Transfer Cancel Batch
 
 ```http
-POST /api/rasid/transfer-cancel-batch
+POST /api/external/v1/transfer-cancel-batch
 
 {
   "toGLN": "1234567890123",
@@ -424,7 +424,7 @@ POST /api/rasid/transfer-cancel-batch
 #### Pharmacy Sale
 
 ```http
-POST /api/rasid/pharmacy-sale
+POST /api/rasid/pharmacy-sale  ⚠️ Portal Session Only
 
 {
   "toGLN": "1234567890123",
@@ -441,7 +441,7 @@ POST /api/rasid/pharmacy-sale
 #### Pharmacy Sale Cancel
 
 ```http
-POST /api/rasid/pharmacy-sale-cancel
+POST /api/rasid/pharmacy-sale-cancel  ⚠️ Portal Session Only
 
 {
   "toGLN": "1234567890123",
@@ -457,7 +457,7 @@ POST /api/rasid/pharmacy-sale-cancel
 #### Deactivation
 
 ```http
-POST /api/rasid/deactivation
+POST /api/rasid/deactivation  ⚠️ Portal Session Only
 
 {
   "DR": "123",
@@ -471,7 +471,7 @@ POST /api/rasid/deactivation
 #### Deactivation Cancel
 
 ```http
-POST /api/rasid/deactivation-cancel
+POST /api/rasid/deactivation-cancel  ⚠️ Portal Session Only
 
 {
   "products": [
@@ -485,7 +485,7 @@ POST /api/rasid/deactivation-cancel
 #### Export
 
 ```http
-POST /api/rasid/export
+POST /api/rasid/export  ⚠️ Portal Session Only
 
 {
   "countryCode": "USA",
@@ -498,7 +498,7 @@ POST /api/rasid/export
 #### Export Cancel
 
 ```http
-POST /api/rasid/export-cancel
+POST /api/rasid/export-cancel  ⚠️ Portal Session Only
 
 {
   "products": [
@@ -512,7 +512,7 @@ POST /api/rasid/export-cancel
 #### Package Upload
 
 ```http
-POST /api/rasid/package-upload
+POST /api/rasid/package-upload  ⚠️ Portal Session Only
 
 {
   "toGLN": "1234567890123",
@@ -523,7 +523,7 @@ POST /api/rasid/package-upload
 #### Package Download
 
 ```http
-POST /api/rasid/package-download
+POST /api/rasid/package-download  ⚠️ Portal Session Only
 
 {
   "transferId": "123456"
@@ -533,7 +533,7 @@ POST /api/rasid/package-download
 #### Package Query
 
 ```http
-POST /api/rasid/package-query
+POST /api/rasid/package-query  ⚠️ Portal Session Only
 
 {
   "fromGLN": "1234567890123",
@@ -553,7 +553,7 @@ These endpoints do **not** change the state — they are read-only lookups.
 ### 5.1 Check Product Status
 
 ```http
-POST /api/rasid/check-status
+POST /api/rasid/check-status  ⚠️ Portal Session Only
 
 {
   "products": [
@@ -565,7 +565,7 @@ POST /api/rasid/check-status
 ### 5.2 Get Dispatch Details
 
 ```http
-POST /api/rasid/dispatch-detail
+POST /api/rasid/dispatch-detail  ⚠️ Portal Session Only
 
 {
   "dispatchNotificationId": "2668909225"
@@ -575,19 +575,19 @@ POST /api/rasid/dispatch-detail
 ### 5.3 Get Country List
 
 ```http
-POST /api/rasid/country-list
+POST /api/rasid/country-list  ⚠️ Portal Session Only
 ```
 
 ### 5.4 Get City List
 
 ```http
-POST /api/rasid/city-list
+POST /api/rasid/city-list  ⚠️ Portal Session Only
 ```
 
 ### 5.5 Get Drug List
 
 ```http
-POST /api/rasid/drug-list
+POST /api/rasid/drug-list  ⚠️ Portal Session Only
 
 {
   "drugStatus": 1
@@ -597,13 +597,13 @@ POST /api/rasid/drug-list
 ### 5.6 Get Error Code List
 
 ```http
-POST /api/rasid/error-code-list
+POST /api/rasid/error-code-list  ⚠️ Portal Session Only
 ```
 
 ### 5.7 Get Stakeholder List
 
 ```http
-POST /api/rasid/stakeholder-list
+POST /api/rasid/stakeholder-list  ⚠️ Portal Session Only
 
 {
   "stakeholderType": 1,
@@ -810,7 +810,7 @@ headers = {
 }
 
 # 1. Test connection
-response = requests.post(f"{BASE_URL}/auth/test-connection", headers=headers)
+response = requests.post(f"{BASE_URL}/auth/test-connection"  # Portal Session Only - requires cookie login, headers=headers)
 print(response.json())
 
 # 2. Dispatch a product
@@ -826,7 +826,7 @@ payload = {
     ]
 }
 
-response = requests.post(f"{BASE_URL}/rasid/dispatch", headers=headers, json=payload)
+response = requests.post(f"{BASE_URL}/external/v1/dispatch", headers=headers, json=payload)
 result = response.json()
 
 if result["success"]:
@@ -848,7 +848,7 @@ batch_payload = {
     ]
 }
 
-response = requests.post(f"{BASE_URL}/rasid/dispatch-batch", headers=headers, json=batch_payload)
+response = requests.post(f"{BASE_URL}/external/v1/dispatch-batch", headers=headers, json=batch_payload)
 result = response.json()
 print(result)
 
@@ -859,11 +859,11 @@ status_payload = {
     ]
 }
 
-response = requests.post(f"{BASE_URL}/rasid/check-status", headers=headers, json=status_payload)
+response = requests.post(f"{BASE_URL}/rasid/check-status"  # Portal Session Only, headers=headers, json=status_payload)
 print(response.json())
 
 # 5. Get operation history
-response = requests.get(f"{BASE_URL}/rasid/history", headers=headers)
+response = requests.get(f"{BASE_URL}/rasid/history"  # Portal Session Only, headers=headers)
 history = response.json()
 for entry in history:
     print(f"{entry['createdAt']}: {entry['operation']} - {'✅' if entry['success'] else '❌'}")
@@ -894,7 +894,7 @@ class RsdwayIntegration:
             "products": products
         }
         response = requests.post(
-            f"{self.base_url}/rasid/dispatch-batch",
+            f"{self.base_url}/external/v1/dispatch-batch",
             headers=self.headers,
             json=payload
         )
@@ -906,7 +906,7 @@ class RsdwayIntegration:
             "products": products
         }
         response = requests.post(
-            f"{self.base_url}/rasid/accept-batch",
+            f"{self.base_url}/external/v1/accept-batch",
             headers=self.headers,
             json=payload
         )
@@ -935,7 +935,7 @@ curl -X POST \
 
 # Dispatch batch
 curl -X POST \
-  https://app.rsdway.com/api/rasid/dispatch-batch \
+  https://app.rsdway.com/api/external/v1/dispatch-batch \
   -H "X-API-Key: rsdway_your_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -947,7 +947,7 @@ curl -X POST \
 
 # Check status
 curl -X POST \
-  https://app.rsdway.com/api/rasid/check-status \
+  https://app.rsdway.com/api/rasid/check-status  # Portal Session Only \
   -H "X-API-Key: rsdway_your_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -958,7 +958,7 @@ curl -X POST \
 
 # Get history
 curl -X GET \
-  https://app.rsdway.com/api/rasid/history \
+  https://app.rsdway.com/api/rasid/history  # Portal Session Only \
   -H "X-API-Key: rsdway_your_key"
 ```
 
@@ -981,7 +981,7 @@ class RsdwayClient {
             "products" => $products
         ];
         
-        $ch = curl_init("$this->baseUrl/rasid/dispatch-batch");
+        $ch = curl_init("$this->baseUrl/external/v1/dispatch-batch");
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -1248,8 +1248,9 @@ This file can be imported into Swagger UI, Postman, or any OpenAPI client genera
 
 ### Need Help?
 
-- Check the operation history: `GET /api/rasid/history`
-- Test your connection: `POST /api/auth/test-connection`
+- Check the operation history: `GET /api/rasid/history` *(Portal Session Only — requires cookie login)*
+- Test your connection via API key: use `POST /api/external/v1/dispatch` with a test product
+- Portal-only: `POST /api/auth/test-connection` *(requires cookie login, not API key)*
 - Review the raw XML response in `rawXml` field for DTTS details
 - Enable per-operation permissions in the admin panel
 
