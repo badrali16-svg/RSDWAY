@@ -8,12 +8,12 @@ import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/lib/use-language";
-import { parseDttsResponse, getDttsStatus, getDttsErrorMessage } from "@/lib/dtts-error-codes";
+import { parseDttsResponse, getDttsStatus, getDttsErrorMessageWithFallback } from "@/lib/dtts-error-codes";
 
 export function SoapResponseViewer({ response }: { response: SoapResponse | null }) {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const isAdmin = user?.role === "admin";
 
   if (!response) return null;
@@ -40,7 +40,7 @@ export function SoapResponseViewer({ response }: { response: SoapResponse | null
 
   // Error message: use DTTS mapping for the overall code (non-00000 codes only)
   const overallErrorMsg = responseCode && responseCode !== "00000"
-    ? (getDttsErrorMessage(responseCode) ?? `كود الخطأ: ${responseCode}`)
+    ? getDttsErrorMessageWithFallback(responseCode, lang)
     : null;
 
   return (
@@ -88,7 +88,7 @@ export function SoapResponseViewer({ response }: { response: SoapResponse | null
           {failedProducts.length > 0 && (
             <div className="mt-1 space-y-1">
               {failedProducts.map((fp, i) => {
-                const msg = getDttsErrorMessage(fp.rc) ?? `كود: ${fp.rc}`;
+                const msg = getDttsErrorMessageWithFallback(fp.rc, lang)!;
                 return (
                   <div key={i} className="text-xs rounded bg-background/60 border px-3 py-1.5 flex flex-wrap items-start gap-x-3 gap-y-0.5">
                     <Badge variant="destructive" className="text-[10px] font-mono shrink-0">{fp.rc}</Badge>

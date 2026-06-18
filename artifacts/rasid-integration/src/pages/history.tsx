@@ -43,44 +43,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
 import { useAuth } from "@/hooks/use-auth";
+import { getDttsErrorMessageWithFallback } from "@/lib/dtts-error-codes";
 import * as XLSX from "xlsx";
 
-const FC_MESSAGES: Record<string, string> = {
-  "00000": "نجاح",
-  // Auth errors
-  "401":   "غير مصرح — بيانات الاعتماد مفقودة",
-  "80000": "بيانات الاعتماد غير صحيحة (اسم المستخدم أو كلمة المرور خاطئة)",
-  "80001": "المستخدم غير موجود في النظام",
-  "80002": "المستخدم غير مفعّل",
-  "80003": "كلمة المرور منتهية الصلاحية",
-  // Product / GTIN errors
-  "10001": "GTIN غير مسجّل في النظام",
-  "10002": "الرقم التسلسلي مكرر",
-  "10003": "تاريخ الإنتاج أكبر من اليوم",
-  "10004": "تاريخ الانتهاء أقل من اليوم",
-  "10005": "الرقم التسلسلي غير موجود",
-  "10006": "حالة المنتج لا تسمح بهذه العملية",
-  "10007": "GTIN غير مرتبط بالمنشأة",
-  "10008": "كمية غير صالحة",
-  "10009": "بيانات المنتج غير مكتملة",
-  "11037": "صيغة GTIN لمعلومات المنتج غير صالحة",
-  // GLN / Stakeholder errors
-  "20001": "GLN المُرسَل إليه غير موجود",
-  "20002": "GLN المُرسِل غير موجود",
-  "20003": "GLN غير مرتبط بالمنشأة",
-  "20004": "نوع المنشأة لا يدعم هذه العملية",
-  // Dispatch / Batch errors
-  "21000": "خطأ في طلب الإرسال",
-  "21001": "الإشعار غير موجود",
-  "21002": "الإشعار منتهي الصلاحية",
-  "21003": "الإشعار مُستخدم مسبقاً",
-  "21030": "يرجى التحقق من حالة اشتراك نقاط صحة والتأكد من أنه فعّال",
-  "21031": "رقم الدُفعة (BN) غير صالح",
-  "21032": "تاريخ انتهاء الصلاحية غير صالح",
-  // Notification errors
-  "30001": "رقم الإشعار غير موجود",
-  "30002": "الإشعار لا ينتمي لهذه المنشأة",
-};
 
 type LocalBatchProduct = { GTIN: string; BN?: string; XD?: string; QUANTITY?: number };
 type BatchPayload  = { toGLN?: string; fromGLN?: string; products?: LocalBatchProduct[]; invoiceNumber?: string };
@@ -142,7 +107,7 @@ function exportHistoryToExcel(
 export default function HistoryPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { toast } = useToast();
   const qc = useQueryClient();
   const cancelBatch = useDispatchCancelBatchProducts();
@@ -384,7 +349,7 @@ export default function HistoryPage() {
                               </div>
                               {resolveErrorCode(op) && (() => {
                                 const ec = resolveErrorCode(op)!;
-                                const msg = FC_MESSAGES[ec] ?? `خطأ من رصد — كود: ${ec}`;
+                                const msg = getDttsErrorMessageWithFallback(ec, lang)!;
                                 return (
                                   <div className="mt-0.5">
                                     <span className="block font-mono text-xs text-destructive/80" dir="ltr">
@@ -478,7 +443,7 @@ export default function HistoryPage() {
                     <div dir="ltr" className="text-start">
                       <span className="font-mono font-semibold text-destructive">FC: {ec}</span>
                       <span className="block text-xs text-destructive/80 mt-0.5">
-                        {FC_MESSAGES[ec] ?? `خطأ من رصد — كود: ${ec}`}
+                        {getDttsErrorMessageWithFallback(ec, lang)}
                       </span>
                     </div>
                   </div>
