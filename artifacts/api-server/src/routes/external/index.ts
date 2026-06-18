@@ -127,6 +127,7 @@ async function proxyExternal(
     responsePayload: result.rawXml,
     success: result.success,
     notificationId,
+    errorCode: result.faultCode ?? undefined,
   });
   res.json({ success: result.success, rawXml: result.rawXml, error: result.error, notificationId });
 }

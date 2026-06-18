@@ -384,16 +384,15 @@ export default function HistoryPage() {
                               </div>
                               {resolveErrorCode(op) && (() => {
                                 const ec = resolveErrorCode(op)!;
+                                const msg = FC_MESSAGES[ec] ?? `خطأ من رصد — كود: ${ec}`;
                                 return (
                                   <div className="mt-0.5">
                                     <span className="block font-mono text-xs text-destructive/80" dir="ltr">
                                       FC: {ec}
                                     </span>
-                                    {FC_MESSAGES[ec] && (
-                                      <span className="block text-xs text-destructive/70 mt-0.5">
-                                        {FC_MESSAGES[ec]}
-                                      </span>
-                                    )}
+                                    <span className="block text-xs text-destructive/70 mt-0.5">
+                                      {msg}
+                                    </span>
                                   </div>
                                 );
                               })()}
@@ -478,9 +477,9 @@ export default function HistoryPage() {
                     <span className="text-muted-foreground shrink-0 pt-0.5">{t("history.detailErrorCode")}:</span>
                     <div dir="ltr" className="text-start">
                       <span className="font-mono font-semibold text-destructive">FC: {ec}</span>
-                      {FC_MESSAGES[ec] && (
-                        <span className="block text-xs text-destructive/80 mt-0.5">{FC_MESSAGES[ec]}</span>
-                      )}
+                      <span className="block text-xs text-destructive/80 mt-0.5">
+                        {FC_MESSAGES[ec] ?? `خطأ من رصد — كود: ${ec}`}
+                      </span>
                     </div>
                   </div>
                 );
