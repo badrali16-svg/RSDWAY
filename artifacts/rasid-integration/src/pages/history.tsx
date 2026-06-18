@@ -382,11 +382,21 @@ export default function HistoryPage() {
                                 <XCircle className="me-1 h-4 w-4" />
                                 <span>{t("history.failed")}</span>
                               </div>
-                              {resolveErrorCode(op) && (
-                                <span className="block font-mono text-xs text-destructive/80 mt-0.5" dir="ltr">
-                                  FC: {resolveErrorCode(op)}
-                                </span>
-                              )}
+                              {resolveErrorCode(op) && (() => {
+                                const ec = resolveErrorCode(op)!;
+                                return (
+                                  <div className="mt-0.5">
+                                    <span className="block font-mono text-xs text-destructive/80" dir="ltr">
+                                      FC: {ec}
+                                    </span>
+                                    {FC_MESSAGES[ec] && (
+                                      <span className="block text-xs text-destructive/70 mt-0.5">
+                                        {FC_MESSAGES[ec]}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           )}
                         </TableCell>
