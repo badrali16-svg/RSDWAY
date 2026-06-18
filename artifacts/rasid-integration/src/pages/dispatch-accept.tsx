@@ -10,6 +10,7 @@ import {
   useAcceptProducts, 
   useAcceptBatchProducts,
   useAcceptDispatch,
+  useDispatchDetail,
   SoapResponse
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,11 +112,75 @@ function exportBatchFormToExcel(opName: string, glnHeader: string, glnValue: str
   XLSX.writeFile(wb, `${opName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
-function exportNotifToExcel(notifId: string) {
-  const ws = XLSX.utils.json_to_sheet([{ "Notification ID": notifId }]);
+type NotifProduct = {
+  expiryDate: string;
+  gtin: string;
+  sn: string;
+  quantity: string;
+  bn: string;
+  refNotifId: string;
+  operationType: string;
+};
+
+type NotifDetails = {
+  notificationId: string;
+  notificationDate: string;
+  fromStakeholder: string;
+  toStakeholder: string;
+  products: NotifProduct[];
+};
+
+function parseDispatchDetailXml(rawXml: string): NotifDetails | null {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(rawXml, "text/xml");
+    const getText = (el: Element | Document, tag: string) =>
+      el.getElementsByTagName(tag)[0]?.textContent?.trim() ?? "";
+
+    const notificationId   = getText(doc, "NOTIFICATIONID");
+    const notificationDate = getText(doc, "NOTIFICATIONDATE");
+    const fromStakeholder  = getText(doc, "FROMSTAKEHOLDER");
+    const toStakeholder    = getText(doc, "TOSTAKEHOLDER");
+
+    const productEls = Array.from(doc.getElementsByTagName("PRODUCT"));
+    const products: NotifProduct[] = productEls.map(p => ({
+      expiryDate:    getText(p, "XD"),
+      gtin:          getText(p, "GTIN"),
+      sn:            getText(p, "SN"),
+      quantity:      getText(p, "QUANTITY"),
+      bn:            getText(p, "BN"),
+      refNotifId:    getText(p, "REFNOTIFICATIONID"),
+      operationType: getText(p, "OPERATIONTYPE"),
+    }));
+
+    if (!notificationId && products.length === 0) return null;
+    return { notificationId, notificationDate, fromStakeholder, toStakeholder, products };
+  } catch {
+    return null;
+  }
+}
+
+function exportNotifToExcel(notifId: string, details: NotifDetails | null) {
+  const rows = details && details.products.length > 0
+    ? details.products.map(p => ({
+        "Notification ID":  details.notificationId || notifId,
+        "Notification Date": details.notificationDate,
+        "From Stakeholder": details.fromStakeholder,
+        "To Stakeholder":   details.toStakeholder,
+        "Expiry Date":      p.expiryDate,
+        "GTIN":             p.gtin,
+        "SN":               p.sn,
+        "Quantity":         p.quantity,
+        "BN":               p.bn,
+        "Ref Notf ID":      p.refNotifId,
+        "Operation Type":   p.operationType,
+      }))
+    : [{ "Notification ID": notifId }];
+
+  const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "AcceptDispatch");
-  XLSX.writeFile(wb, `AcceptDispatch_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, ws, "Notification Details");
+  XLSX.writeFile(wb, `notification_${notifId || "details"}.xlsx`);
 }
 
 export default function DispatchAcceptPage() {
@@ -126,6 +191,8 @@ export default function DispatchAcceptPage() {
   const [response, setResponse] = useState<SoapResponse | null>(null);
   const [invoiceNum, setInvoiceNum] = useState("");
   const [invoiceAlert, setInvoiceAlert] = useState(true);
+  const [notifDetails, setNotifDetails] = useState<NotifDetails | null>(null);
+  const [notifDetailLoading, setNotifDetailLoading] = useState(false);
   const { guard, dialogOpen, confirmSubmit, cancelSubmit } = useInvoiceGuard(invoiceNum, invoiceAlert);
 
   const dispatchMutation = useDispatchProducts();
@@ -135,6 +202,7 @@ export default function DispatchAcceptPage() {
   const acceptMutation = useAcceptProducts();
   const acceptBatchMutation = useAcceptBatchProducts();
   const acceptDispatchMutation = useAcceptDispatch();
+  const dispatchDetailMutation = useDispatchDetail();
 
   const dispatchForm = useForm<z.infer<typeof dispatchSchema>>({
     resolver: zodResolver(dispatchSchema),
@@ -436,7 +504,23 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...acceptDispatchForm}>
-                <form onSubmit={acceptDispatchForm.handleSubmit((v) => guard(() => acceptDispatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successAcceptDispatch")), onError })))} className="space-y-6">
+                <form onSubmit={acceptDispatchForm.handleSubmit((v) => guard(async () => {
+                  const notifId = v.dispatchNotificationId;
+                  setNotifDetails(null);
+                  setNotifDetailLoading(true);
+                  try {
+                    const detailRes = await dispatchDetailMutation.mutateAsync({ data: { dispatchNotificationId: notifId } });
+                    if (detailRes?.rawXml) {
+                      const parsed = parseDispatchDetailXml(detailRes.rawXml);
+                      setNotifDetails(parsed);
+                    }
+                  } catch {
+                    // detail fetch failed — proceed silently
+                  } finally {
+                    setNotifDetailLoading(false);
+                  }
+                  acceptDispatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successAcceptDispatch")), onError });
+                }))} className="space-y-6">
                   <FormField control={acceptDispatchForm.control} name="dispatchNotificationId" render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("dispatch.notifId")}</FormLabel>
@@ -445,17 +529,91 @@ export default function DispatchAcceptPage() {
                     </FormItem>
                   )} />
                   <div className="flex flex-wrap gap-2">
-                    <Button type="submit" disabled={acceptDispatchMutation.isPending || !canDo("op:accept-dispatch")} title={!canDo("op:accept-dispatch") ? t("common.noPermission") : undefined}>
-                      {acceptDispatchMutation.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:accept-dispatch") ? <Lock className="me-2 h-4 w-4" /> : null}
+                    <Button type="submit" disabled={acceptDispatchMutation.isPending || notifDetailLoading || !canDo("op:accept-dispatch")} title={!canDo("op:accept-dispatch") ? t("common.noPermission") : undefined}>
+                      {(acceptDispatchMutation.isPending || notifDetailLoading) ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : !canDo("op:accept-dispatch") ? <Lock className="me-2 h-4 w-4" /> : null}
                       {t("dispatch.executeAcceptDispatch")}
                     </Button>
-                    <Button type="button" variant="outline" onClick={() => exportNotifToExcel(acceptDispatchForm.getValues("dispatchNotificationId"))}>
+                    <Button type="button" variant="outline" onClick={() => exportNotifToExcel(acceptDispatchForm.getValues("dispatchNotificationId"), notifDetails)}>
                       <Download className="me-2 h-4 w-4" />
                       {t("dispatch.downloadData")}
                     </Button>
                   </div>
                 </form>
               </Form>
+
+              {/* ── Notification Details Table ── */}
+              {notifDetailLoading && (
+                <div className="mt-6 flex items-center gap-2 text-muted-foreground text-sm">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>جاري جلب تفاصيل الإشعار...</span>
+                </div>
+              )}
+
+              {notifDetails && !notifDetailLoading && (
+                <div className="mt-6 space-y-4">
+                  <h3 className="text-base font-semibold text-primary border-b pb-2">تفاصيل الإشعار (Notification Details)</h3>
+
+                  {/* Header info */}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    {notifDetails.notificationId && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground font-medium">Notification ID</p>
+                        <p className="font-mono bg-muted px-2 py-1 rounded text-sm">{notifDetails.notificationId}</p>
+                      </div>
+                    )}
+                    {notifDetails.notificationDate && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground font-medium">Notification Date</p>
+                        <p className="bg-muted px-2 py-1 rounded text-sm">{notifDetails.notificationDate}</p>
+                      </div>
+                    )}
+                    {notifDetails.fromStakeholder && (
+                      <div className="space-y-1 col-span-2">
+                        <p className="text-xs text-muted-foreground font-medium">From Stakeholder</p>
+                        <p className="bg-muted px-2 py-1 rounded text-sm">{notifDetails.fromStakeholder}</p>
+                      </div>
+                    )}
+                    {notifDetails.toStakeholder && (
+                      <div className="space-y-1 col-span-2">
+                        <p className="text-xs text-muted-foreground font-medium">To Stakeholder</p>
+                        <p className="bg-muted px-2 py-1 rounded text-sm">{notifDetails.toStakeholder}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Products table */}
+                  {notifDetails.products.length > 0 && (
+                    <div className="overflow-x-auto rounded-md border">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted">
+                          <tr>
+                            <th className="text-left px-3 py-2 font-semibold whitespace-nowrap">Expiry Date</th>
+                            <th className="text-left px-3 py-2 font-semibold whitespace-nowrap font-mono">GTIN</th>
+                            <th className="text-left px-3 py-2 font-semibold whitespace-nowrap font-mono">SN</th>
+                            <th className="text-left px-3 py-2 font-semibold whitespace-nowrap">Quantity</th>
+                            <th className="text-left px-3 py-2 font-semibold whitespace-nowrap">BN</th>
+                            <th className="text-left px-3 py-2 font-semibold whitespace-nowrap">Ref Notf ID</th>
+                            <th className="text-left px-3 py-2 font-semibold whitespace-nowrap">Operation Type</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {notifDetails.products.map((p, i) => (
+                            <tr key={i} className={i % 2 === 0 ? "bg-background" : "bg-muted/30"}>
+                              <td className="px-3 py-2 whitespace-nowrap">{p.expiryDate || "—"}</td>
+                              <td className="px-3 py-2 font-mono whitespace-nowrap">{p.gtin || "—"}</td>
+                              <td className="px-3 py-2 font-mono whitespace-nowrap">{p.sn || "—"}</td>
+                              <td className="px-3 py-2 text-center">{p.quantity || "—"}</td>
+                              <td className="px-3 py-2 whitespace-nowrap">{p.bn || "—"}</td>
+                              <td className="px-3 py-2 font-mono whitespace-nowrap">{p.refNotifId || "—"}</td>
+                              <td className="px-3 py-2 whitespace-nowrap">{p.operationType || "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
