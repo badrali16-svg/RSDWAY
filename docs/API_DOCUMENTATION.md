@@ -572,6 +572,26 @@ POST /api/rasid/dispatch-detail  ⚠️ Portal Session Only
 }
 ```
 
+**Response — Notification Details:**
+
+The portal automatically parses and displays the response in a table. The raw XML contains:
+
+| Field | XML Tag | Description |
+|-------|---------|-------------|
+| Notification ID | `<NOTIFICATIONID>` | Unique ID of the dispatch notification |
+| Notification Date | `<NOTIFICATIONDATE>` | Date the dispatch was created |
+| From Stakeholder | `<FROMSTAKEHOLDER>` | Name of the sending entity |
+| To Stakeholder | `<TOSTAKEHOLDER>` | Name of the receiving entity |
+| Expiry Date | `<XD>` (per product) | Product expiry date |
+| GTIN | `<GTIN>` (per product) | 14-digit product identifier |
+| SN | `<SN>` (per product) | Serial Number (if available) |
+| Quantity | `<QUANTITY>` (per product) | Number of units |
+| BN | `<BN>` (per product) | Batch/Lot Number |
+| Ref Notf ID | `<REFNOTIFICATIONID>` (per product) | Reference notification ID (if any) |
+| Operation Type | `<OPERATIONTYPE>` (per product) | Type of the original operation |
+
+> **Portal Feature:** When using **Accept Dispatch** (`استلام بالإشعار`), the portal automatically fetches and displays these details in a table after submission. The **"تحميل البيانات"** button exports the full table to an Excel file named `notification_<ID>.xlsx`.
+
 ### 5.3 Get Country List
 
 ```http
@@ -1141,6 +1161,8 @@ async function getHistory() {
 | 21017 | صاحب المصلحة غير مصرح | Stakeholder not authorized |
 | 21018 | حالة الباركود غير معرّفة | Barcode status undefined |
 | 21020 | سبب إلغاء التنشيط غير صالح | Invalid deactivation reason |
+| 21021 | GLN المستهدف غير صالح | Invalid target GLN |
+| 21030 | يرجى التحقق من حالة اشتراك نقاط صحة والتأكد من أنه فعّال | Please verify the Seha Points subscription status and ensure that it is active |
 | 11208 | معلومات المكان المقصود غير صالحة | Invalid destination |
 | 11213 | تم تسجيل رقم الوصفة الطبية سابقاً | Prescription already registered |
 | 11215 | معلومات البائع غير صالحة | Invalid seller info |
