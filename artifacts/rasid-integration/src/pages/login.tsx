@@ -117,17 +117,8 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={login.isPending}>
-              {login.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <LogIn className="h-4 w-4" />
-              )}
-              <span className="ms-2">{t("login.submit")}</span>
-            </Button>
-
             {/* Remember me */}
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex items-center gap-2">
               <Checkbox
                 id="remember-me"
                 checked={rememberMe}
@@ -141,6 +132,15 @@ export default function LoginPage() {
                 {lang === "ar" ? "تذكر بيانات الدخول" : "Remember login info"}
               </Label>
             </div>
+
+            <Button type="submit" className="w-full" disabled={login.isPending}>
+              {login.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <LogIn className="h-4 w-4" />
+              )}
+              <span className="ms-2">{t("login.submit")}</span>
+            </Button>
           </form>
         </CardContent>
       </Card>
