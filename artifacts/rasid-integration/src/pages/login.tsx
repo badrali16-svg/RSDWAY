@@ -141,27 +141,45 @@ export default function LoginPage() {
               )}
               <span className="ms-2">{t("login.submit")}</span>
             </Button>
+
+            {/* Back to main site */}
+            <div className="text-center pt-1">
+              <a
+                href="https://www.rsdway.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline underline-offset-2"
+              >
+                {lang === "ar" ? "العودة للصفحة الرئيسية" : "Back to main website"}
+              </a>
+            </div>
           </form>
         </CardContent>
       </Card>
 
-      <p className="absolute bottom-6 text-center text-xs text-muted-foreground px-4">
-        {lang === "ar" ? (
-          <>
-            إذا واجهتك مشكلة في تسجيل الدخول يمكنك التواصل مع الدعم الفني على البريد:{" "}
-            <a href="mailto:Support@rsdway.com" className="text-primary underline underline-offset-2">
-              Support@rsdway.com
-            </a>
-          </>
-        ) : (
-          <>
-            If you have trouble logging in, contact support at:{" "}
-            <a href="mailto:Support@rsdway.com" className="text-primary underline underline-offset-2">
-              Support@rsdway.com
-            </a>
-          </>
-        )}
-      </p>
+      {/* Footer */}
+      <div className="absolute bottom-0 w-full py-4 text-center space-y-1">
+        <p className="text-xs text-muted-foreground">
+          {lang === "ar" ? (
+            <>
+              إذا واجهتك مشكلة في تسجيل الدخول يمكنك التواصل مع الدعم الفني على البريد:{" "}
+              <a href="mailto:Support@rsdway.com" className="text-primary underline underline-offset-2">
+                Support@rsdway.com
+              </a>
+            </>
+          ) : (
+            <>
+              If you have trouble logging in, contact support at:{" "}
+              <a href="mailto:Support@rsdway.com" className="text-primary underline underline-offset-2">
+                Support@rsdway.com
+              </a>
+            </>
+          )}
+        </p>
+        <p className="text-xs text-muted-foreground/70">
+          Copyright © RSDWAY.COM 2026
+        </p>
+      </div>
     </div>
   );
 }
