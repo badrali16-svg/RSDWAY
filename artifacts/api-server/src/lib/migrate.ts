@@ -9,6 +9,11 @@ export async function runMigrations(): Promise<void> {
       ALTER TABLE operation_logs ADD COLUMN IF NOT EXISTS error_code TEXT;
     `);
 
+    // 2. Add current_session_token column to users if missing
+    await client.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS current_session_token TEXT;
+    `);
+
     // 2. Fix old records: notification_id = '-1' means the operation actually failed
     const r1 = await client.query(`
       UPDATE operation_logs
