@@ -161,7 +161,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <Link href="/">
             <div className="flex items-center gap-2 font-bold text-primary cursor-pointer text-lg">
               <img
-                src={`${import.meta.env.BASE_URL}logo.png`}
+                src={`${import.meta.env.BASE_URL}logo-small.png`}
                 alt="Logo"
                 className="h-7 w-7 object-contain shrink-0"
               />
@@ -217,7 +217,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <Link href="/">
             <div className="flex items-center gap-2 font-bold text-primary cursor-pointer">
               <img
-                src={`${import.meta.env.BASE_URL}logo.png`}
+                src={`${import.meta.env.BASE_URL}logo-small.png`}
                 alt="Logo"
                 className="h-6 w-6 object-contain shrink-0"
               />

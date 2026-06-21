@@ -59,11 +59,11 @@ export default function LoginPage() {
 
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-3">
+          <div className="mx-auto mb-4">
             <img
-              src={`${import.meta.env.BASE_URL}logo.png`}
-              alt="Logo"
-              className="h-16 w-16 object-contain"
+              src={`${import.meta.env.BASE_URL}logo-large.png`}
+              alt="RSDWAY Logo"
+              className="h-28 w-28 object-contain"
             />
           </div>
           <CardTitle className="text-2xl">{t("login.title")}</CardTitle>
