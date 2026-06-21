@@ -160,7 +160,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex h-16 items-center justify-between border-b px-4">
           <Link href="/">
             <div className="flex items-center gap-2 font-bold text-primary cursor-pointer text-lg">
-              <Box className="h-6 w-6 shrink-0" />
+              <img
+                src={`${import.meta.env.BASE_URL}logo.png`}
+                alt="Logo"
+                className="h-7 w-7 object-contain shrink-0"
+              />
               <span>{t("layout.systemNameShort")}</span>
             </div>
           </Link>
@@ -212,7 +216,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <header className="flex h-16 items-center justify-between border-b bg-card px-4 md:hidden">
           <Link href="/">
             <div className="flex items-center gap-2 font-bold text-primary cursor-pointer">
-              <Box className="h-5 w-5" />
+              <img
+                src={`${import.meta.env.BASE_URL}logo.png`}
+                alt="Logo"
+                className="h-6 w-6 object-contain shrink-0"
+              />
               <span>{t("layout.systemNameShort")}</span>
             </div>
           </Link>

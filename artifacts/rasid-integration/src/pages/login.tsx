@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Box, Loader2, LogIn, Languages } from "lucide-react";
+import { Loader2, LogIn, Languages } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
 
@@ -59,8 +59,12 @@ export default function LoginPage() {
 
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-            <Box className="h-7 w-7 text-primary" />
+          <div className="mx-auto mb-3">
+            <img
+              src={`${import.meta.env.BASE_URL}logo.png`}
+              alt="Logo"
+              className="h-16 w-16 object-contain"
+            />
           </div>
           <CardTitle className="text-2xl">{t("login.title")}</CardTitle>
           <CardDescription>{t("login.subtitle")}</CardDescription>
