@@ -1,21 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLogin, getGetCurrentSessionQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, LogIn, Languages } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
 
+const STORAGE_KEY = "rsdway_remembered";
+
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const login = useLogin();
   const qc = useQueryClient();
   const { toast } = useToast();
   const { t, dir, lang, setLang } = useLanguage();
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const { username: u, password: p } = JSON.parse(saved) as { username: string; password: string };
+        setUsername(u ?? "");
+        setPassword(p ?? "");
+        setRememberMe(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +42,11 @@ export default function LoginPage() {
       { data: { username, password } },
       {
         onSuccess: async () => {
+          if (rememberMe) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ username, password }));
+          } else {
+            localStorage.removeItem(STORAGE_KEY);
+          }
           await qc.invalidateQueries({ queryKey: getGetCurrentSessionQueryKey() });
           window.location.href = import.meta.env.BASE_URL || "/";
         },
@@ -102,6 +125,22 @@ export default function LoginPage() {
               )}
               <span className="ms-2">{t("login.submit")}</span>
             </Button>
+
+            {/* Remember me */}
+            <div className="flex items-center gap-2 pt-1">
+              <Checkbox
+                id="remember-me"
+                checked={rememberMe}
+                onCheckedChange={(v) => {
+                  const checked = v === true;
+                  setRememberMe(checked);
+                  if (!checked) localStorage.removeItem(STORAGE_KEY);
+                }}
+              />
+              <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer select-none">
+                {lang === "ar" ? "تذكر بيانات الدخول" : "Remember login info"}
+              </Label>
+            </div>
           </form>
         </CardContent>
       </Card>
