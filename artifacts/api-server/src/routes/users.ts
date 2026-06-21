@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable, authConfigTable } from "@workspace/db";
-import { eq, asc } from "drizzle-orm";
+import { db, usersTable, authConfigTable, sessionTable } from "@workspace/db";
+import { eq, asc, sql } from "drizzle-orm";
 import { hashPassword, ALL_PERMISSIONS } from "../lib/sessionAuth";
 import { requireAdmin } from "../middlewares/requireAuth";
 
@@ -21,6 +21,12 @@ function sanitisePermissions(input: unknown): string[] {
   if (!Array.isArray(input)) return [];
   const allowed = new Set<string>(ALL_PERMISSIONS as readonly string[]);
   return input.filter((v): v is string => typeof v === "string" && allowed.has(v));
+}
+
+async function invalidateUserSessions(userId: number): Promise<void> {
+  await db.delete(sessionTable).where(
+    sql`(${sessionTable.sess}->'user'->>'id')::int = ${userId}`
+  );
 }
 
 router.get("/users", requireAdmin, async (_req, res): Promise<void> => {
@@ -55,7 +61,6 @@ router.post("/users", requireAdmin, async (req, res): Promise<void> => {
     })
     .returning();
 
-  // Save DTTS credentials for the new user if provided
   if (dttsConfig?.username && dttsConfig?.password) {
     await db.insert(authConfigTable).values({
       userId: row.id,
@@ -67,8 +72,6 @@ router.post("/users", requireAdmin, async (req, res): Promise<void> => {
 
   res.json(toSummary(row));
 });
-
-// ── Per-user DTTS auth config (admin only) ───────────────────────────────────
 
 router.get("/users/:id/auth-config", requireAdmin, async (req, res): Promise<void> => {
   const id = Number(req.params.id);
@@ -135,6 +138,8 @@ router.patch("/users/:id", requireAdmin, async (req, res): Promise<void> => {
   };
   if (password) {
     updates.passwordHash = await hashPassword(password);
+    updates.currentSessionToken = null;
+    await invalidateUserSessions(id);
   }
   const [row] = await db.update(usersTable).set(updates).where(eq(usersTable.id, id)).returning();
   res.json(toSummary(row));
@@ -160,6 +165,9 @@ router.patch("/users/:id/status", requireAdmin, async (req, res): Promise<void> 
     res.status(400).json({ error: "isActive must be a boolean" });
     return;
   }
+  if (!isActive) {
+    await invalidateUserSessions(id);
+  }
   const [row] = await db.update(usersTable).set({ isActive }).where(eq(usersTable.id, id)).returning();
   res.json(toSummary(row));
 });
@@ -179,6 +187,7 @@ router.delete("/users/:id", requireAdmin, async (req, res): Promise<void> => {
     res.status(403).json({ error: "Cannot delete admin user" });
     return;
   }
+  await invalidateUserSessions(id);
   await db.delete(usersTable).where(eq(usersTable.id, id));
   res.json({ ok: true });
 });

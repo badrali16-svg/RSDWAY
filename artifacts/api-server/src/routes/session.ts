@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { verifyPassword, SETTINGS_PASSWORD, type SessionUser } from "../lib/sessionAuth";
+import { randomUUID } from "crypto";
 
 const router: IRouter = Router();
 
@@ -26,14 +27,22 @@ router.post("/session/login", async (req, res): Promise<void> => {
     res.status(401).json({ error: "Invalid username or password" });
     return;
   }
+
+  const sessionToken = randomUUID();
+
+  await db.update(usersTable)
+    .set({ currentSessionToken: sessionToken })
+    .where(eq(usersTable.id, row.id));
+
   const user: SessionUser = {
     id: row.id,
     username: row.username,
     role: row.role,
     permissions: row.permissions ?? [],
+    sessionToken,
   };
   req.session.user = user;
-  res.json(user);
+  res.json({ id: user.id, username: user.username, role: user.role, permissions: user.permissions });
 });
 
 router.post("/session/logout", (req, res): void => {
@@ -44,28 +53,37 @@ router.post("/session/logout", (req, res): void => {
 });
 
 router.get("/session/me", async (req, res): Promise<void> => {
-  // Never cache — permissions may change without the client knowing
   res.set("Cache-Control", "no-store");
 
   if (!req.session?.user) {
     res.json({ user: null });
     return;
   }
-  // Re-read fresh data from DB so permission changes are reflected immediately
+
   const rows = await db.select().from(usersTable).where(eq(usersTable.id, req.session.user.id)).limit(1);
   if (rows.length === 0 || !rows[0].isActive) {
+    req.session.destroy(() => {});
     res.json({ user: null });
     return;
   }
+
   const row = rows[0];
+
+  if (row.currentSessionToken !== req.session.user.sessionToken) {
+    req.session.destroy(() => {});
+    res.json({ user: null, reason: "SESSION_REPLACED" });
+    return;
+  }
+
   const freshUser: SessionUser = {
     id: row.id,
     username: row.username,
     role: row.role,
     permissions: row.permissions ?? [],
+    sessionToken: req.session.user.sessionToken,
   };
   req.session.user = freshUser;
-  res.json({ user: freshUser });
+  res.json({ user: { id: freshUser.id, username: freshUser.username, role: freshUser.role, permissions: freshUser.permissions } });
 });
 
 router.post("/session/unlock-settings", (req, res): void => {

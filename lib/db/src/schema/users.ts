@@ -8,6 +8,7 @@ export const usersTable = pgTable("users", {
   permissions: jsonb("permissions").$type<string[]>().notNull().default([]),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  currentSessionToken: text("current_session_token"),
 });
 
 export type UserRow = typeof usersTable.$inferSelect;
