@@ -70,9 +70,15 @@ app.use("/api", router);
 // ── Serve built frontend (for standalone / external hosting) ─────────────────
 const frontendDir = path.resolve(import.meta.dirname, "../public");
 if (existsSync(frontendDir)) {
-  app.use(express.static(frontendDir));
-  // SPA fallback — all non-API routes return index.html (Express 5 requires regex for wildcard)
+  // Hashed assets (JS/CSS) can be cached long-term; index.html must never be cached
+  app.use(express.static(frontendDir, { index: false }));
+  // SPA fallback — all non-API routes return index.html with no-cache headers
   app.get(/.*/, (_req, res) => {
+    res.set({
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0",
+    });
     res.sendFile(path.join(frontendDir, "index.html"));
   });
 }
