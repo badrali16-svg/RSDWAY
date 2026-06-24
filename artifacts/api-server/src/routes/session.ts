@@ -116,6 +116,46 @@ router.get("/session/me", async (req, res): Promise<void> => {
   res.json({ user: { id: freshUser.id, username: freshUser.username, role: freshUser.role, permissions: freshUser.permissions } });
 });
 
+// Emergency endpoint: verifies credentials then wipes ALL sessions for that user
+// so the user can log in fresh from any device/browser.
+router.post("/session/reset", async (req, res): Promise<void> => {
+  const { username, password } = req.body as { username?: string; password?: string };
+  if (!username || !password) {
+    res.status(400).json({ error: "username and password are required" });
+    return;
+  }
+  const rows = await db.select().from(usersTable).where(eq(usersTable.username, username)).limit(1);
+  if (rows.length === 0) {
+    res.status(401).json({ error: "Invalid username or password" });
+    return;
+  }
+  const row = rows[0];
+  if (!row.isActive) {
+    res.status(403).json({ error: "Account is inactive" });
+    return;
+  }
+  const ok = await verifyPassword(password, row.passwordHash);
+  if (!ok) {
+    res.status(401).json({ error: "Invalid username or password" });
+    return;
+  }
+  // Delete every session row for this user
+  try {
+    await pool.query(
+      `DELETE FROM session WHERE sess::jsonb -> 'user' ->> 'id' = $1`,
+      [String(row.id)],
+    );
+  } catch {
+    // Best-effort
+  }
+  // Clear the token so any in-memory session also becomes invalid
+  await db.update(usersTable)
+    .set({ currentSessionToken: null })
+    .where(eq(usersTable.id, row.id));
+
+  res.json({ ok: true });
+});
+
 router.post("/session/unlock-settings", (req, res): void => {
   if (!req.session?.user) {
     res.status(401).json({ ok: false, error: "Not logged in" });

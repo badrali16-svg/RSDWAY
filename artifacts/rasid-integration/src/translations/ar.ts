@@ -30,6 +30,11 @@ export const ar: Record<string, string> = {
   "login.submit": "تسجيل الدخول",
   "login.failTitle": "فشل تسجيل الدخول",
   "login.failDesc": "اسم المستخدم أو كلمة المرور غير صحيحة",
+  "login.resetBtn": "مسح الجلسات القديمة",
+  "login.resetConfirm": "هل تريد مسح جميع الجلسات القديمة لهذا الحساب؟",
+  "login.resetOk": "تم مسح الجلسات — يمكنك الدخول الآن",
+  "login.resetErr": "تعذّر مسح الجلسات — تحقق من بيانات الدخول",
+  "login.resetNeedCreds": "أدخل اسم المستخدم وكلمة المرور أولاً",
 
   // Common
   "common.save": "حفظ",

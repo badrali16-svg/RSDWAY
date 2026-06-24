@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, LogIn, Languages } from "lucide-react";
+import { Loader2, LogIn, Languages, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
 
@@ -34,6 +34,35 @@ export default function LoginPage() {
       /* ignore */
     }
   }, []);
+
+  const [resetting, setResetting] = useState(false);
+
+  const handleReset = async () => {
+    if (!username || !password) {
+      toast({ title: t("login.resetNeedCreds"), variant: "destructive" });
+      return;
+    }
+    if (!window.confirm(t("login.resetConfirm"))) return;
+    setResetting(true);
+    try {
+      const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+      const res = await fetch(`${base}/api/session/reset`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+        credentials: "include",
+      });
+      if (res.ok) {
+        toast({ title: t("login.resetOk") });
+      } else {
+        toast({ title: t("login.resetErr"), variant: "destructive" });
+      }
+    } catch {
+      toast({ title: t("login.resetErr"), variant: "destructive" });
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,6 +170,25 @@ export default function LoginPage() {
               )}
               <span className="ms-2">{t("login.submit")}</span>
             </Button>
+
+            {/* Emergency session reset button */}
+            <div className="flex justify-center">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground hover:text-destructive gap-1.5 h-7 px-3"
+                onClick={handleReset}
+                disabled={resetting}
+              >
+                {resetting ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3 w-3" />
+                )}
+                {t("login.resetBtn")}
+              </Button>
+            </div>
 
             {/* Back to main site */}
             <div className="text-center pt-1">
