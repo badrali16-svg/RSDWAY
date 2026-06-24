@@ -49,7 +49,6 @@ export interface SessionUser {
   username: string;
   role: "admin" | "client";
   permissions: string[];
-  sessionToken: string;
 }
 
 declare module "express-session" {

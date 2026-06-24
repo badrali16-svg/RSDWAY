@@ -7,19 +7,12 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     res.status(401).json({ error: "Not logged in" });
     return;
   }
-  const { sessionToken, id } = req.session.user;
   const rows = await db
-    .select({ tok: usersTable.currentSessionToken, active: usersTable.isActive })
+    .select({ active: usersTable.isActive })
     .from(usersTable)
-    .where(eq(usersTable.id, id))
+    .where(eq(usersTable.id, req.session.user.id))
     .limit(1);
   if (rows.length === 0 || !rows[0].active) {
-    req.session.destroy(() => {});
-    res.status(401).json({ error: "Not logged in" });
-    return;
-  }
-  const dbToken = rows[0].tok;
-  if (!dbToken || !sessionToken || dbToken !== sessionToken) {
     req.session.destroy(() => {});
     res.status(401).json({ error: "Not logged in" });
     return;
@@ -32,19 +25,12 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
     res.status(401).json({ error: "Not logged in" });
     return;
   }
-  const { sessionToken, id } = req.session.user;
   const rows = await db
-    .select({ tok: usersTable.currentSessionToken, active: usersTable.isActive, role: usersTable.role })
+    .select({ active: usersTable.isActive, role: usersTable.role })
     .from(usersTable)
-    .where(eq(usersTable.id, id))
+    .where(eq(usersTable.id, req.session.user.id))
     .limit(1);
   if (rows.length === 0 || !rows[0].active) {
-    req.session.destroy(() => {});
-    res.status(401).json({ error: "Not logged in" });
-    return;
-  }
-  const dbToken = rows[0].tok;
-  if (!dbToken || !sessionToken || dbToken !== sessionToken) {
     req.session.destroy(() => {});
     res.status(401).json({ error: "Not logged in" });
     return;
