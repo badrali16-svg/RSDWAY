@@ -42,6 +42,18 @@ router.post("/session/login", async (req, res): Promise<void> => {
     sessionToken,
   };
   req.session.user = user;
+
+  // Explicitly save the session before responding so the new sessionToken is
+  // persisted in PostgreSQL before the client fires its next /me request.
+  // Without this, a race condition causes SESSION_REPLACED on the very next
+  // request because the session store still holds the old token.
+  await new Promise<void>((resolve, reject) => {
+    req.session.save((err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+
   res.json({ id: user.id, username: user.username, role: user.role, permissions: user.permissions });
 });
 
