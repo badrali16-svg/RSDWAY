@@ -13,9 +13,15 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     .from(usersTable)
     .where(eq(usersTable.id, id))
     .limit(1);
-  if (rows.length === 0 || !rows[0].active || rows[0].tok !== sessionToken) {
+  if (rows.length === 0 || !rows[0].active) {
     req.session.destroy(() => {});
-    res.status(401).json({ error: "SESSION_REPLACED" });
+    res.status(401).json({ error: "Not logged in" });
+    return;
+  }
+  const dbToken = rows[0].tok;
+  if (!dbToken || !sessionToken || dbToken !== sessionToken) {
+    req.session.destroy(() => {});
+    res.status(401).json({ error: "Not logged in" });
     return;
   }
   next();
@@ -32,9 +38,15 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
     .from(usersTable)
     .where(eq(usersTable.id, id))
     .limit(1);
-  if (rows.length === 0 || !rows[0].active || rows[0].tok !== sessionToken) {
+  if (rows.length === 0 || !rows[0].active) {
     req.session.destroy(() => {});
-    res.status(401).json({ error: "SESSION_REPLACED" });
+    res.status(401).json({ error: "Not logged in" });
+    return;
+  }
+  const dbToken = rows[0].tok;
+  if (!dbToken || !sessionToken || dbToken !== sessionToken) {
+    req.session.destroy(() => {});
+    res.status(401).json({ error: "Not logged in" });
     return;
   }
   if (req.session.user.role !== "admin") {
