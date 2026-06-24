@@ -13,6 +13,22 @@ const app: Express = express();
 
 app.set("trust proxy", 1);
 
+// ── Canonical-host redirect ──────────────────────────────────────────────────
+// If CANONICAL_HOST is set (e.g. "app.rsdway.com"), any request arriving on a
+// different hostname is permanently redirected to the canonical domain.
+// This prevents split-session issues when the app is reachable via multiple URLs.
+const canonicalHost = process.env["CANONICAL_HOST"];
+if (canonicalHost) {
+  app.use((req, res, next) => {
+    if (req.hostname && req.hostname !== canonicalHost) {
+      const redirectUrl = `https://${canonicalHost}${req.originalUrl}`;
+      res.redirect(301, redirectUrl);
+      return;
+    }
+    next();
+  });
+}
+
 app.use(
   pinoHttp({
     logger,
