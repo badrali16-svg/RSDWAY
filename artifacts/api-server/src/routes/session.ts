@@ -81,9 +81,19 @@ router.get("/session/me", async (req, res): Promise<void> => {
 
   const row = rows[0];
 
-  if (row.currentSessionToken !== req.session.user.sessionToken) {
+  // Only signal SESSION_REPLACED when both tokens are present and differ.
+  // If either is missing (old session pre-feature, or token not yet set),
+  // silently clear the session so the user gets a clean login prompt.
+  const dbToken = row.currentSessionToken;
+  const sessToken = req.session.user.sessionToken;
+  if (dbToken && sessToken && dbToken !== sessToken) {
     req.session.destroy(() => {});
     res.json({ user: null, reason: "SESSION_REPLACED" });
+    return;
+  }
+  if (!dbToken || !sessToken) {
+    req.session.destroy(() => {});
+    res.json({ user: null });
     return;
   }
 
