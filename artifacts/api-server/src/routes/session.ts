@@ -1,10 +1,21 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable } from "@workspace/db";
+import { db, usersTable, pool } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { verifyPassword, SETTINGS_PASSWORD, type SessionUser } from "../lib/sessionAuth";
 import { randomUUID } from "crypto";
 
 const router: IRouter = Router();
+
+async function deleteOtherSessions(userId: number, currentSid: string): Promise<void> {
+  try {
+    await pool.query(
+      `DELETE FROM session WHERE sid != $1 AND sess::jsonb -> 'user' ->> 'id' = $2`,
+      [currentSid, String(userId)],
+    );
+  } catch {
+    // Best-effort – do not fail the login if session cleanup fails
+  }
+}
 
 router.post("/session/login", async (req, res): Promise<void> => {
   const { username, password } = req.body as { username?: string; password?: string };
@@ -43,16 +54,18 @@ router.post("/session/login", async (req, res): Promise<void> => {
   };
   req.session.user = user;
 
-  // Explicitly save the session before responding so the new sessionToken is
-  // persisted in PostgreSQL before the client fires its next /me request.
-  // Without this, a race condition causes SESSION_REPLACED on the very next
-  // request because the session store still holds the old token.
+  // Save session synchronously before responding to avoid race conditions
+  // where /session/me fires before the new token is persisted.
   await new Promise<void>((resolve, reject) => {
     req.session.save((err) => {
       if (err) reject(err);
       else resolve();
     });
   });
+
+  // Delete all other sessions for this user so old devices are signed out
+  // silently (no error message – they just see the login page).
+  await deleteOtherSessions(row.id, req.sessionID);
 
   res.json({ id: user.id, username: user.username, role: user.role, permissions: user.permissions });
 });
@@ -80,18 +93,13 @@ router.get("/session/me", async (req, res): Promise<void> => {
   }
 
   const row = rows[0];
-
-  // Only signal SESSION_REPLACED when both tokens are present and differ.
-  // If either is missing (old session pre-feature, or token not yet set),
-  // silently clear the session so the user gets a clean login prompt.
   const dbToken = row.currentSessionToken;
   const sessToken = req.session.user.sessionToken;
-  if (dbToken && sessToken && dbToken !== sessToken) {
-    req.session.destroy(() => {});
-    res.json({ user: null, reason: "SESSION_REPLACED" });
-    return;
-  }
-  if (!dbToken || !sessToken) {
+
+  // If tokens don't match or are missing, silently clear the session.
+  // The user will see the login page with no error – their old session
+  // was replaced by a newer login on another device/browser.
+  if (!dbToken || !sessToken || dbToken !== sessToken) {
     req.session.destroy(() => {});
     res.json({ user: null });
     return;
