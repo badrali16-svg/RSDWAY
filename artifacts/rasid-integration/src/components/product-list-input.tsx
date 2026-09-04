@@ -150,6 +150,77 @@ type ExtendedCameraConstraints = MediaTrackConstraintSet & {
 };
 type CameraZoomRange = { min: number; max: number; step: number };
 
+function scoreCameraDevice(device: MediaDeviceInfo, facing: CameraFacing): number {
+  const label = device.label.toLowerCase();
+
+  if (facing === "user") {
+    let score = 0;
+    if (/\b(front|user|selfie)\b/.test(label)) score += 200;
+    if (/\b(back|rear|environment|world)\b/.test(label)) score -= 300;
+    return score;
+  }
+
+  let score = 0;
+  if (/\b(back|rear|environment|world)\b/.test(label)) score += 100;
+  if (/\b(main|primary)\b/.test(label)) score += 250;
+  if (/\bwide\b/.test(label) && !/\bultra[\s-]?wide\b/.test(label)) score += 180;
+  if (/\b1[.,]?0?x\b|\(1x\)/.test(label)) score += 180;
+  if (/camera2\s*0\b/.test(label)) score += 120;
+
+  if (/\bultra[\s-]?wide\b|\b0[.,]5x\b|\b0[.,]6x\b/.test(label)) score -= 500;
+  if (/\bmacro\b|\btele(photo)?\b|\bzoom\b|\bdepth\b/.test(label)) score -= 300;
+  if (/\b(front|user|selfie)\b/.test(label)) score -= 500;
+
+  return score;
+}
+
+async function openPreferredCamera(facing: CameraFacing): Promise<MediaStream> {
+  const baseVideoConstraints: MediaTrackConstraints = {
+    facingMode: { ideal: facing },
+    width: { ideal: 1920 },
+    height: { ideal: 1080 },
+    frameRate: { ideal: 30 },
+  };
+
+  const initialStream = await navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: baseVideoConstraints,
+  });
+
+  try {
+    const devices = (await navigator.mediaDevices.enumerateDevices())
+      .filter((device) => device.kind === "videoinput" && device.deviceId);
+    const preferredDevice = [...devices]
+      .sort((a, b) => scoreCameraDevice(b, facing) - scoreCameraDevice(a, facing))[0];
+    const currentDeviceId = initialStream.getVideoTracks()[0]?.getSettings().deviceId;
+    const preferredScore = preferredDevice ? scoreCameraDevice(preferredDevice, facing) : 0;
+
+    if (!preferredDevice || preferredScore <= 0 || preferredDevice.deviceId === currentDeviceId) {
+      return initialStream;
+    }
+
+    initialStream.getTracks().forEach((track) => track.stop());
+
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          ...baseVideoConstraints,
+          facingMode: undefined,
+          deviceId: { exact: preferredDevice.deviceId },
+        },
+      });
+    } catch {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: baseVideoConstraints,
+      });
+    }
+  } catch {
+    return initialStream;
+  }
+}
+
 async function applyCameraConstraints(
   track: MediaStreamTrack,
   constraints: MediaTrackConstraints,
@@ -402,15 +473,7 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
           throw new Error("Camera API unavailable");
         }
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            facingMode: { ideal: cameraFacing },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            frameRate: { ideal: 30 },
-          },
-        });
+        const stream = await openPreferredCamera(cameraFacing);
 
         if (cancelled) {
           stream.getTracks().forEach((track) => track.stop());
