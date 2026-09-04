@@ -16,6 +16,11 @@ export interface OkResponse {
 export interface LoginRequest {
   username: string;
   password: string;
+  /**
+   * @minLength 8
+   * @maxLength 200
+   */
+  deviceId: string;
 }
 
 export interface UnlockSettingsRequest {

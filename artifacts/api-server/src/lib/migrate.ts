@@ -14,6 +14,15 @@ export async function runMigrations(): Promise<void> {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS current_session_token TEXT;
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS active_sessions (
+        user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        device_id TEXT NOT NULL,
+        session_token TEXT NOT NULL UNIQUE,
+        last_activity TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+
     // 2. Fix old records: notification_id = '-1' means the operation actually failed
     const r1 = await client.query(`
       UPDATE operation_logs

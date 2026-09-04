@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { db, usersTable } from "@workspace/db";
+import { db, pool, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "./logger";
 
@@ -40,9 +40,7 @@ export const ALL_PERMISSIONS = [
   ...ALL_SETTINGS_PERMISSIONS,
 ] as const;
 
-export const SETTINGS_PASSWORD = "Ash@123456";
 const DEFAULT_ADMIN_USERNAME = "Admin";
-const DEFAULT_ADMIN_PASSWORD = "Ash@123456";
 
 export interface SessionUser {
   id: number;
@@ -54,6 +52,8 @@ export interface SessionUser {
 declare module "express-session" {
   interface SessionData {
     user?: SessionUser;
+    deviceId?: string;
+    sessionToken?: string;
   }
 }
 
@@ -65,10 +65,36 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
   return bcrypt.compare(plain, hash);
 }
 
+export async function acquireUserSessionLock(userId: number): Promise<() => Promise<void>> {
+  const client = await pool.connect();
+  let released = false;
+  try {
+    await client.query("SELECT pg_advisory_lock($1)", [userId]);
+  } catch (error) {
+    client.release();
+    throw error;
+  }
+
+  return async () => {
+    if (released) return;
+    released = true;
+    try {
+      await client.query("SELECT pg_advisory_unlock($1)", [userId]);
+    } finally {
+      client.release();
+    }
+  };
+}
+
 export async function ensureDefaultAdmin(): Promise<void> {
   const existing = await db.select().from(usersTable).where(eq(usersTable.username, DEFAULT_ADMIN_USERNAME)).limit(1);
   if (existing.length > 0) return;
-  const passwordHash = await hashPassword(DEFAULT_ADMIN_PASSWORD);
+  const defaultAdminPassword = process.env["DEFAULT_ADMIN_PASSWORD"];
+  if (!defaultAdminPassword) {
+    logger.warn("DEFAULT_ADMIN_PASSWORD is not configured; default admin was not created");
+    return;
+  }
+  const passwordHash = await hashPassword(defaultAdminPassword);
   await db.insert(usersTable).values({
     username: DEFAULT_ADMIN_USERNAME,
     passwordHash,

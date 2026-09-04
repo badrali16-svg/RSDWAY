@@ -104,7 +104,7 @@ function AuthedRoutes() {
 }
 
 function Gate() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, sessionReplaced } = useAuth();
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -112,7 +112,7 @@ function Gate() {
       </div>
     );
   }
-  if (!user) return <LoginPage />;
+  if (!user) return <LoginPage sessionReplaced={sessionReplaced} />;
   return <AuthedRoutes />;
 }
 
