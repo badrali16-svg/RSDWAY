@@ -5,7 +5,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "./ui/f
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
-import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2, Download, ScanLine, AlertCircle, AlertTriangle, Camera, Loader2 } from "lucide-react";
+import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2, Download, ScanLine, AlertCircle, AlertTriangle, Camera, Loader2, SwitchCamera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -137,6 +137,7 @@ export function parseGS1DataMatrix(raw: string): ParsedGS1 | null {
 // ─── DataMatrix scanner widget ────────────────────────────────────────────────
 
 type ScanFlash = "ok" | "err" | null;
+type CameraFacing = "environment" | "user";
 
 function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
   mode: "sn" | "batch";
@@ -151,6 +152,7 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
   const [flash, setFlash] = useState<ScanFlash>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraStarting, setCameraStarting] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState<CameraFacing>("environment");
   const inputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
@@ -257,6 +259,7 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
   const openCamera = () => {
     scanSucceededRef.current = false;
     failureShownRef.current = false;
+    setCameraFacing("environment");
     setCameraOpen(true);
   };
 
@@ -280,16 +283,35 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
           throw new Error("Camera API unavailable");
         }
 
-        const controls = await reader.decodeFromConstraints(
-          {
-            audio: false,
-            video: {
-              facingMode: { ideal: "environment" },
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
-            },
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: { ideal: cameraFacing },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
           },
-          videoRef.current!,
+        });
+
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        const video = videoRef.current;
+        if (!video) {
+          stream.getTracks().forEach((track) => track.stop());
+          throw new Error("Video element unavailable");
+        }
+
+        video.srcObject = stream;
+        video.muted = true;
+        video.setAttribute("autoplay", "true");
+        video.setAttribute("playsinline", "true");
+        await video.play();
+
+        const controls = await reader.decodeFromStream(
+          stream,
+          video,
           (result, _error, scannerControls) => {
             if (!result || cancelled || scanSucceededRef.current) return;
             const parsed = parseGS1DataMatrix(result.getText());
@@ -342,7 +364,7 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
       if (guidanceTimer) clearTimeout(guidanceTimer);
       stopCamera();
     };
-  }, [cameraOpen, addParsedProduct, stopCamera, toast, t]);
+  }, [cameraOpen, cameraFacing, addParsedProduct, stopCamera, toast, t]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -418,6 +440,30 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
               {t("products.dmCameraTitle")}
             </DialogTitle>
             <DialogDescription>{t("products.dmCameraHint")}</DialogDescription>
+            <div className="grid grid-cols-2 gap-2 pt-2" dir="rtl">
+              <Button
+                type="button"
+                size="sm"
+                variant={cameraFacing === "environment" ? "default" : "outline"}
+                className="gap-1.5"
+                aria-pressed={cameraFacing === "environment"}
+                onClick={() => setCameraFacing("environment")}
+              >
+                <Camera className="h-4 w-4" />
+                {t("products.dmRearCamera")}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={cameraFacing === "user" ? "default" : "outline"}
+                className="gap-1.5"
+                aria-pressed={cameraFacing === "user"}
+                onClick={() => setCameraFacing("user")}
+              >
+                <SwitchCamera className="h-4 w-4" />
+                {t("products.dmFrontCamera")}
+              </Button>
+            </div>
           </DialogHeader>
           <div className="relative aspect-[3/4] w-full overflow-hidden bg-black sm:aspect-video">
             <video
