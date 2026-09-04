@@ -5,7 +5,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "./ui/f
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
-import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2, Download, ScanLine, AlertCircle, AlertTriangle, Camera, Loader2, SwitchCamera } from "lucide-react";
+import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2, Download, ScanLine, AlertCircle, AlertTriangle, Camera, Loader2, SwitchCamera, Focus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -140,11 +140,11 @@ type ScanFlash = "ok" | "err" | null;
 type CameraFacing = "environment" | "user";
 type ExtendedCameraCapabilities = MediaTrackCapabilities & {
   focusMode?: string[];
-  zoom?: { min: number; max: number; step: number };
+  focusDistance?: { min: number; max: number; step: number };
 };
 type ExtendedCameraConstraints = MediaTrackConstraintSet & {
   focusMode?: string;
-  zoom?: number;
+  focusDistance?: number;
 };
 
 async function optimizeCameraTrack(track: MediaStreamTrack) {
@@ -161,16 +161,6 @@ async function optimizeCameraTrack(track: MediaStreamTrack) {
     }
   }
 
-  if (capabilities.zoom && capabilities.zoom.max > capabilities.zoom.min) {
-    const targetZoom = Math.min(capabilities.zoom.max, Math.max(capabilities.zoom.min, 1.5));
-    try {
-      await track.applyConstraints({
-        advanced: [{ zoom: targetZoom } as ExtendedCameraConstraints],
-      });
-    } catch {
-      // Optical/digital zoom support varies between Android camera drivers.
-    }
-  }
 }
 
 function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
@@ -186,9 +176,11 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
   const [flash, setFlash] = useState<ScanFlash>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraStarting, setCameraStarting] = useState(false);
+  const [cameraFocusing, setCameraFocusing] = useState(false);
   const [cameraFacing, setCameraFacing] = useState<CameraFacing>("environment");
   const inputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const videoTrackRef = useRef<MediaStreamTrack | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   const scanSucceededRef = useRef(false);
   const failureShownRef = useRef(false);
@@ -274,8 +266,48 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
     if (stream instanceof MediaStream) {
       stream.getTracks().forEach((track) => track.stop());
     }
+    videoTrackRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
     setCameraStarting(false);
+    setCameraFocusing(false);
+  }, []);
+
+  const refocusCamera = useCallback(async () => {
+    const track = videoTrackRef.current;
+    if (!track || track.readyState !== "live") return;
+
+    const capabilities = track.getCapabilities?.() as ExtendedCameraCapabilities | undefined;
+    if (!capabilities) return;
+
+    setCameraFocusing(true);
+    try {
+      if (capabilities.focusMode?.includes("single-shot")) {
+        await track.applyConstraints({
+          advanced: [{ focusMode: "single-shot" } as ExtendedCameraConstraints],
+        });
+      } else if (
+        capabilities.focusMode?.includes("manual") &&
+        capabilities.focusDistance &&
+        capabilities.focusDistance.max > capabilities.focusDistance.min
+      ) {
+        const { min, max } = capabilities.focusDistance;
+        const closeFocusDistance = min + (max - min) * 0.75;
+        await track.applyConstraints({
+          advanced: [{
+            focusMode: "manual",
+            focusDistance: closeFocusDistance,
+          } as ExtendedCameraConstraints],
+        });
+      } else if (capabilities.focusMode?.includes("continuous")) {
+        await track.applyConstraints({
+          advanced: [{ focusMode: "continuous" } as ExtendedCameraConstraints],
+        });
+      }
+    } catch {
+      // Some Android camera drivers report focus modes they cannot apply.
+    } finally {
+      window.setTimeout(() => setCameraFocusing(false), 700);
+    }
   }, []);
 
   const closeCamera = useCallback((showFailure = false) => {
@@ -338,7 +370,10 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
         }
 
         const videoTrack = stream.getVideoTracks()[0];
-        if (videoTrack) await optimizeCameraTrack(videoTrack);
+        if (videoTrack) {
+          videoTrackRef.current = videoTrack;
+          await optimizeCameraTrack(videoTrack);
+        }
 
         video.srcObject = stream;
         video.muted = true;
@@ -508,7 +543,8 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
               autoPlay
               muted
               playsInline
-              className="h-full w-full object-cover"
+              className="h-full w-full cursor-crosshair object-cover"
+              onClick={() => void refocusCamera()}
             />
             <div className="pointer-events-none absolute inset-[12%] rounded-2xl border-2 border-white/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.28)]">
               <span className="absolute -left-0.5 -top-0.5 h-8 w-8 rounded-tl-2xl border-l-4 border-t-4 border-primary" />
@@ -521,6 +557,18 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
                 <Loader2 className="h-5 w-5 animate-spin" />
                 {t("products.dmCameraStarting")}
               </div>
+            )}
+            {!cameraStarting && (
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 gap-1.5 bg-white/90 text-slate-900 shadow-lg hover:bg-white"
+                onClick={() => void refocusCamera()}
+              >
+                <Focus className={`h-4 w-4 ${cameraFocusing ? "animate-pulse text-primary" : ""}`} />
+                {cameraFocusing ? t("products.dmCameraFocusing") : t("products.dmCameraRefocus")}
+              </Button>
             )}
           </div>
           <div className="px-5 pb-5">
