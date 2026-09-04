@@ -94,7 +94,7 @@ export default function LoginPage() {
   return (
     <div
       dir={dir}
-      className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-muted/40 via-background to-muted/30 p-4 font-sans"
+      className="flex min-h-screen w-full flex-col items-center justify-center gap-4 bg-gradient-to-br from-muted/40 via-background to-muted/30 px-4 py-6 font-sans"
     >
       {/* Language toggle */}
       <div className="absolute top-4 end-4">
@@ -109,7 +109,7 @@ export default function LoginPage() {
         </Button>
       </div>
 
-      <Card className="w-full max-w-md shadow-xl">
+      <Card className="w-full max-w-md shrink-0 shadow-xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
             <img
@@ -206,8 +206,8 @@ export default function LoginPage() {
       </Card>
 
       {/* Footer */}
-      <div className="absolute bottom-0 w-full py-4 text-center space-y-1">
-        <p className="text-xs text-muted-foreground">
+      <div className="w-full max-w-2xl shrink-0 space-y-1 pb-1 text-center">
+        <p className="text-xs leading-5 text-muted-foreground">
           {lang === "ar" ? (
             <>
               إذا واجهتك مشكلة في تسجيل الدخول يمكنك التواصل مع الدعم الفني على البريد:{" "}
