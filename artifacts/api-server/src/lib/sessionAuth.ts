@@ -49,6 +49,19 @@ export interface SessionUser {
   permissions: string[];
 }
 
+type SessionLockAttempt = {
+  userId: number;
+  processId: number;
+};
+
+let sessionLockAttemptObserver: ((attempt: SessionLockAttempt) => void) | undefined;
+
+export function observeSessionLockAttemptsForTests(
+  observer: ((attempt: SessionLockAttempt) => void) | undefined,
+): void {
+  sessionLockAttemptObserver = observer;
+}
+
 declare module "express-session" {
   interface SessionData {
     user?: SessionUser;
@@ -69,6 +82,12 @@ export async function acquireUserSessionLock(userId: number): Promise<() => Prom
   const client = await pool.connect();
   let released = false;
   try {
+    if (sessionLockAttemptObserver) {
+      const result = await client.query<{ processId: number }>(
+        `SELECT pg_backend_pid() AS "processId"`,
+      );
+      sessionLockAttemptObserver({ userId, processId: result.rows[0].processId });
+    }
     await client.query("SELECT pg_advisory_lock($1)", [userId]);
   } catch (error) {
     client.release();
