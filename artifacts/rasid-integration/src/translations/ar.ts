@@ -567,6 +567,13 @@ export const ar: Record<string, string> = {
   "products.dmHint": "كل مسح يضيف منتجًا جديدًا تلقائيًا. يدعم GS1 Data Matrix بصيغة AI: (01) (17) (10) (21)",
   "products.dmErrTitle": "فشل قراءة الباركود",
   "products.dmErrDesc": "تأكد أن الباركود بصيغة GS1 Data Matrix ويحتوي على GTIN على الأقل",
+  "products.dmCamera": "مسح بالكاميرا",
+  "products.dmCameraTitle": "مسح GS1 Data Matrix",
+  "products.dmCameraHint": "وجّه الكاميرا الخلفية نحو رمز Data Matrix وثبّت الهاتف حتى تتم القراءة.",
+  "products.dmCameraStarting": "جارٍ تشغيل الكاميرا...",
+  "products.dmCameraSuccess": "تم قراءة Data Matrix وإضافة المنتج بنجاح",
+  "products.dmCameraFailure": "تعذر قراءة Data Matrix، حاول تقريب الكاميرا أو تحسين الإضاءة.",
+  "products.dmCameraClose": "إغلاق الكاميرا",
 
   // SOAP Response Viewer
   "soap.successTitle": "نجاح العملية",

@@ -5,9 +5,12 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "./ui/f
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
-import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2, Download, ScanLine, AlertCircle, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2, Download, ScanLine, AlertCircle, AlertTriangle, Camera, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
+import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
+import { BarcodeFormat, DecodeHintType } from "@zxing/library";
 import * as XLSX from "xlsx";
 
 // ─── GS1 Data Matrix parser ──────────────────────────────────────────────────
@@ -146,17 +149,20 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
   const { toast } = useToast();
   const [value, setValue] = useState("");
   const [flash, setFlash] = useState<ScanFlash>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraStarting, setCameraStarting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const controlsRef = useRef<IScannerControls | null>(null);
+  const scanSucceededRef = useRef(false);
+  const failureShownRef = useRef(false);
 
   const triggerFlash = (type: ScanFlash) => {
     setFlash(type);
     setTimeout(() => setFlash(null), 1200);
   };
 
-  const handleScan = useCallback(() => {
-    const raw = value.trim();
-    if (!raw) return;
-    const parsed = parseGS1DataMatrix(raw);
+  const addParsedProduct = useCallback((parsed: ParsedGS1): boolean => {
     if (!parsed || !parsed.gtin) {
       triggerFlash("err");
       toast({
@@ -164,8 +170,7 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
         description: t("products.dmErrDesc"),
         variant: "destructive",
       });
-      setValue("");
-      return;
+      return false;
     }
 
     if (mode === "batch") {
@@ -198,8 +203,7 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
             description: `${t("import.dmDupDesc")} ${snValue}`,
             variant: "destructive",
           });
-          setValue("");
-          return;
+          return false;
         }
       }
       append({
@@ -207,14 +211,138 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
         SN: snValue,
         BN: parsed.bn ?? "",
         XD: parsed.xd ?? "",
-        QUANTITY: parsed.qty ?? undefined,
+        QUANTITY: parsed.qty ?? 1,
       });
     }
 
     triggerFlash("ok");
+    return true;
+  }, [mode, name, append, getValues, setFormValue, toast, t]);
+
+  const handleScan = useCallback(() => {
+    const raw = value.trim();
+    if (!raw) return;
+    const parsed = parseGS1DataMatrix(raw);
+    if (!parsed || !addParsedProduct(parsed)) {
+      setValue("");
+      return;
+    }
     setValue("");
     setTimeout(() => inputRef.current?.focus(), 50);
-  }, [value, mode, name, append, getValues, setFormValue, toast, t]);
+  }, [value, addParsedProduct]);
+
+  const stopCamera = useCallback(() => {
+    controlsRef.current?.stop();
+    controlsRef.current = null;
+    const stream = videoRef.current?.srcObject;
+    if (stream instanceof MediaStream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setCameraStarting(false);
+  }, []);
+
+  const closeCamera = useCallback((showFailure = false) => {
+    stopCamera();
+    setCameraOpen(false);
+    if (showFailure && !scanSucceededRef.current && !failureShownRef.current) {
+      failureShownRef.current = true;
+      toast({
+        title: t("products.dmCameraFailure"),
+        variant: "destructive",
+      });
+    }
+  }, [stopCamera, toast, t]);
+
+  const openCamera = () => {
+    scanSucceededRef.current = false;
+    failureShownRef.current = false;
+    setCameraOpen(true);
+  };
+
+  useEffect(() => {
+    if (!cameraOpen) return;
+
+    let cancelled = false;
+    let guidanceTimer: ReturnType<typeof setTimeout> | undefined;
+    const hints = new Map();
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.DATA_MATRIX]);
+    hints.set(DecodeHintType.TRY_HARDER, true);
+    const reader = new BrowserMultiFormatReader(hints, {
+      delayBetweenScanAttempts: 150,
+      delayBetweenScanSuccess: 500,
+    });
+
+    const start = async () => {
+      setCameraStarting(true);
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error("Camera API unavailable");
+        }
+
+        const controls = await reader.decodeFromConstraints(
+          {
+            audio: false,
+            video: {
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          },
+          videoRef.current!,
+          (result, _error, scannerControls) => {
+            if (!result || cancelled || scanSucceededRef.current) return;
+            const parsed = parseGS1DataMatrix(result.getText());
+            if (!parsed?.gtin) return;
+            if (!addParsedProduct(parsed)) return;
+
+            scanSucceededRef.current = true;
+            scannerControls.stop();
+            controlsRef.current = null;
+            if (guidanceTimer) clearTimeout(guidanceTimer);
+            toast({
+              title: t("products.dmCameraSuccess"),
+              className: "border-green-500 bg-green-50 text-green-900 dark:border-green-700 dark:bg-green-950 dark:text-green-100",
+            });
+            setCameraOpen(false);
+          },
+        );
+
+        if (cancelled) {
+          controls.stop();
+          return;
+        }
+        controlsRef.current = controls;
+        setCameraStarting(false);
+        guidanceTimer = setTimeout(() => {
+          if (!scanSucceededRef.current && !failureShownRef.current) {
+            failureShownRef.current = true;
+            toast({
+              title: t("products.dmCameraFailure"),
+              variant: "destructive",
+            });
+          }
+        }, 12000);
+      } catch {
+        if (cancelled) return;
+        setCameraStarting(false);
+        failureShownRef.current = true;
+        toast({
+          title: t("products.dmCameraFailure"),
+          variant: "destructive",
+        });
+        setCameraOpen(false);
+      }
+    };
+
+    void start();
+
+    return () => {
+      cancelled = true;
+      if (guidanceTimer) clearTimeout(guidanceTimer);
+      stopCamera();
+    };
+  }, [cameraOpen, addParsedProduct, stopCamera, toast, t]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -236,7 +364,7 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
         <ScanLine className="h-4 w-4 text-primary" />
         {t("products.dmLabel")}
       </Label>
-      <div className="relative flex gap-2">
+      <div className="relative flex flex-col gap-2 sm:flex-row">
         <div className={`flex-1 relative flex items-center rounded-md border transition-colors ${borderClass}`}>
           <Input
             ref={inputRef}
@@ -264,8 +392,66 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
         >
           {t("products.dmAdd")}
         </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="shrink-0 gap-1.5"
+          onClick={openCamera}
+        >
+          <Camera className="h-4 w-4" />
+          {t("products.dmCamera")}
+        </Button>
       </div>
       <p className="text-xs text-muted-foreground">{t("products.dmHint")}</p>
+
+      <Dialog
+        open={cameraOpen}
+        onOpenChange={(open) => {
+          if (!open) closeCamera(true);
+        }}
+      >
+        <DialogContent className="w-[calc(100%-1rem)] max-w-xl overflow-hidden p-0 sm:rounded-xl">
+          <DialogHeader className="space-y-2 px-5 pt-5 text-start">
+            <DialogTitle className="flex items-center gap-2">
+              <Camera className="h-5 w-5 text-primary" />
+              {t("products.dmCameraTitle")}
+            </DialogTitle>
+            <DialogDescription>{t("products.dmCameraHint")}</DialogDescription>
+          </DialogHeader>
+          <div className="relative aspect-[3/4] w-full overflow-hidden bg-black sm:aspect-video">
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
+              className="h-full w-full object-cover"
+            />
+            <div className="pointer-events-none absolute inset-[12%] rounded-2xl border-2 border-white/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.28)]">
+              <span className="absolute -left-0.5 -top-0.5 h-8 w-8 rounded-tl-2xl border-l-4 border-t-4 border-primary" />
+              <span className="absolute -right-0.5 -top-0.5 h-8 w-8 rounded-tr-2xl border-r-4 border-t-4 border-primary" />
+              <span className="absolute -bottom-0.5 -left-0.5 h-8 w-8 rounded-bl-2xl border-b-4 border-l-4 border-primary" />
+              <span className="absolute -bottom-0.5 -right-0.5 h-8 w-8 rounded-br-2xl border-b-4 border-r-4 border-primary" />
+            </div>
+            {cameraStarting && (
+              <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/65 text-sm font-medium text-white">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                {t("products.dmCameraStarting")}
+              </div>
+            )}
+          </div>
+          <div className="px-5 pb-5">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => closeCamera(true)}
+            >
+              {t("products.dmCameraClose")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
