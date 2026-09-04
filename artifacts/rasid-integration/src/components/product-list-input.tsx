@@ -5,7 +5,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "./ui/f
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
-import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2, Download, ScanLine, AlertCircle, AlertTriangle, Camera, Loader2, SwitchCamera, Focus } from "lucide-react";
+import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2, Download, ScanLine, AlertCircle, AlertTriangle, Camera, Loader2, SwitchCamera, Focus, ZoomIn, ZoomOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -141,11 +141,14 @@ type CameraFacing = "environment" | "user";
 type ExtendedCameraCapabilities = MediaTrackCapabilities & {
   focusMode?: string[];
   focusDistance?: { min: number; max: number; step: number };
+  zoom?: { min: number; max: number; step: number };
 };
 type ExtendedCameraConstraints = MediaTrackConstraintSet & {
   focusMode?: string;
   focusDistance?: number;
+  zoom?: number;
 };
+type CameraZoomRange = { min: number; max: number; step: number };
 
 async function applyCameraConstraints(
   track: MediaStreamTrack,
@@ -196,9 +199,12 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
   const [cameraStarting, setCameraStarting] = useState(false);
   const [cameraFocusing, setCameraFocusing] = useState(false);
   const [cameraFacing, setCameraFacing] = useState<CameraFacing>("environment");
+  const [cameraZoom, setCameraZoom] = useState(1);
+  const [cameraZoomRange, setCameraZoomRange] = useState<CameraZoomRange | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoTrackRef = useRef<MediaStreamTrack | null>(null);
+  const zoomTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   const scanSucceededRef = useRef(false);
   const failureShownRef = useRef(false);
@@ -284,7 +290,13 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
     if (stream instanceof MediaStream) {
       stream.getTracks().forEach((track) => track.stop());
     }
+    if (zoomTimerRef.current) {
+      clearTimeout(zoomTimerRef.current);
+      zoomTimerRef.current = null;
+    }
     videoTrackRef.current = null;
+    setCameraZoomRange(null);
+    setCameraZoom(1);
     if (videoRef.current) videoRef.current.srcObject = null;
     setCameraStarting(false);
     setCameraFocusing(false);
@@ -327,6 +339,30 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
       window.setTimeout(() => setCameraFocusing(false), 700);
     }
   }, []);
+
+  const changeCameraZoom = useCallback((requestedZoom: number) => {
+    const track = videoTrackRef.current;
+    const range = cameraZoomRange;
+    if (!track || !range || track.readyState !== "live") return;
+
+    const zoom = Math.min(range.max, Math.max(range.min, requestedZoom));
+    setCameraZoom(zoom);
+
+    if (zoomTimerRef.current) clearTimeout(zoomTimerRef.current);
+    zoomTimerRef.current = setTimeout(() => {
+      void applyCameraConstraints(track, {
+        advanced: [{ zoom } as ExtendedCameraConstraints],
+      }).catch(() => {
+        // Keep the camera running if an Android driver rejects one zoom value.
+      });
+    }, 80);
+  }, [cameraZoomRange]);
+
+  const adjustCameraZoom = useCallback((direction: -1 | 1) => {
+    if (!cameraZoomRange) return;
+    const increment = Math.max(cameraZoomRange.step || 0.1, 0.1);
+    changeCameraZoom(cameraZoom + direction * increment);
+  }, [cameraZoom, cameraZoomRange, changeCameraZoom]);
 
   const closeCamera = useCallback((showFailure = false) => {
     stopCamera();
@@ -400,6 +436,19 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
         setCameraStarting(false);
 
         if (videoTrack) {
+          const capabilities = videoTrack.getCapabilities?.() as ExtendedCameraCapabilities | undefined;
+          const zoomCapabilities = capabilities?.zoom;
+          if (zoomCapabilities && zoomCapabilities.max > zoomCapabilities.min) {
+            const settings = videoTrack.getSettings() as MediaTrackSettings & { zoom?: number };
+            const initialZoom = Math.min(
+              zoomCapabilities.max,
+              Math.max(zoomCapabilities.min, settings.zoom ?? zoomCapabilities.min),
+            );
+            setCameraZoomRange(zoomCapabilities);
+            setCameraZoom(initialZoom);
+          } else {
+            setCameraZoomRange(null);
+          }
           void optimizeCameraTrack(videoTrack);
         }
 
@@ -557,6 +606,45 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
                 {t("products.dmFrontCamera")}
               </Button>
             </div>
+            {cameraZoomRange && (
+              <div className="flex items-center gap-2 rounded-lg border bg-muted/30 px-2 py-2">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8 shrink-0"
+                  aria-label={t("products.dmCameraZoomOut")}
+                  onClick={() => adjustCameraZoom(-1)}
+                  disabled={cameraZoom <= cameraZoomRange.min}
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <input
+                  type="range"
+                  className="h-2 min-w-0 flex-1 cursor-pointer accent-primary"
+                  min={cameraZoomRange.min}
+                  max={cameraZoomRange.max}
+                  step={cameraZoomRange.step || 0.1}
+                  value={cameraZoom}
+                  aria-label={t("products.dmCameraZoom")}
+                  onChange={(event) => changeCameraZoom(Number(event.target.value))}
+                />
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8 shrink-0"
+                  aria-label={t("products.dmCameraZoomIn")}
+                  onClick={() => adjustCameraZoom(1)}
+                  disabled={cameraZoom >= cameraZoomRange.max}
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+                <span className="w-12 shrink-0 text-center text-xs font-semibold tabular-nums">
+                  {cameraZoom.toFixed(1)}×
+                </span>
+              </div>
+            )}
           </DialogHeader>
           <div className="relative aspect-[3/4] w-full overflow-hidden bg-black sm:aspect-video">
             <video
