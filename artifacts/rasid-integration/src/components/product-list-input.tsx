@@ -147,13 +147,31 @@ type ExtendedCameraConstraints = MediaTrackConstraintSet & {
   focusDistance?: number;
 };
 
+async function applyCameraConstraints(
+  track: MediaStreamTrack,
+  constraints: MediaTrackConstraints,
+  timeoutMs = 1200,
+) {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      track.applyConstraints(constraints),
+      new Promise<void>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error("Camera constraint timed out")), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
 async function optimizeCameraTrack(track: MediaStreamTrack) {
   const capabilities = track.getCapabilities?.() as ExtendedCameraCapabilities | undefined;
   if (!capabilities) return;
 
   if (capabilities.focusMode?.includes("continuous")) {
     try {
-      await track.applyConstraints({
+      await applyCameraConstraints(track, {
         advanced: [{ focusMode: "continuous" } as ExtendedCameraConstraints],
       });
     } catch {
@@ -282,7 +300,7 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
     setCameraFocusing(true);
     try {
       if (capabilities.focusMode?.includes("single-shot")) {
-        await track.applyConstraints({
+        await applyCameraConstraints(track, {
           advanced: [{ focusMode: "single-shot" } as ExtendedCameraConstraints],
         });
       } else if (
@@ -292,14 +310,14 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
       ) {
         const { min, max } = capabilities.focusDistance;
         const closeFocusDistance = min + (max - min) * 0.75;
-        await track.applyConstraints({
+        await applyCameraConstraints(track, {
           advanced: [{
             focusMode: "manual",
             focusDistance: closeFocusDistance,
           } as ExtendedCameraConstraints],
         });
       } else if (capabilities.focusMode?.includes("continuous")) {
-        await track.applyConstraints({
+        await applyCameraConstraints(track, {
           advanced: [{ focusMode: "continuous" } as ExtendedCameraConstraints],
         });
       }
@@ -372,7 +390,6 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           videoTrackRef.current = videoTrack;
-          await optimizeCameraTrack(videoTrack);
         }
 
         video.srcObject = stream;
@@ -380,6 +397,11 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
         video.setAttribute("autoplay", "true");
         video.setAttribute("playsinline", "true");
         await video.play();
+        setCameraStarting(false);
+
+        if (videoTrack) {
+          void optimizeCameraTrack(videoTrack);
+        }
 
         const controls = await reader.decodeFromStream(
           stream,
@@ -407,7 +429,6 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
           return;
         }
         controlsRef.current = controls;
-        setCameraStarting(false);
         guidanceTimer = setTimeout(() => {
           if (!scanSucceededRef.current && !failureShownRef.current) {
             failureShownRef.current = true;
