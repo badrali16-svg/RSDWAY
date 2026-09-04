@@ -9,8 +9,8 @@ import { Plus, Trash2, Upload, FileSpreadsheet, X, CheckCircle2, Download, ScanL
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
-import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
-import { BarcodeFormat, DecodeHintType } from "@zxing/library";
+import { BrowserDatamatrixCodeReader, type IScannerControls } from "@zxing/browser";
+import { DecodeHintType } from "@zxing/library";
 import * as XLSX from "xlsx";
 
 // ─── GS1 Data Matrix parser ──────────────────────────────────────────────────
@@ -138,6 +138,40 @@ export function parseGS1DataMatrix(raw: string): ParsedGS1 | null {
 
 type ScanFlash = "ok" | "err" | null;
 type CameraFacing = "environment" | "user";
+type ExtendedCameraCapabilities = MediaTrackCapabilities & {
+  focusMode?: string[];
+  zoom?: { min: number; max: number; step: number };
+};
+type ExtendedCameraConstraints = MediaTrackConstraintSet & {
+  focusMode?: string;
+  zoom?: number;
+};
+
+async function optimizeCameraTrack(track: MediaStreamTrack) {
+  const capabilities = track.getCapabilities?.() as ExtendedCameraCapabilities | undefined;
+  if (!capabilities) return;
+
+  if (capabilities.focusMode?.includes("continuous")) {
+    try {
+      await track.applyConstraints({
+        advanced: [{ focusMode: "continuous" } as ExtendedCameraConstraints],
+      });
+    } catch {
+      // Unsupported combinations are ignored; the camera's default focus remains active.
+    }
+  }
+
+  if (capabilities.zoom && capabilities.zoom.max > capabilities.zoom.min) {
+    const targetZoom = Math.min(capabilities.zoom.max, Math.max(capabilities.zoom.min, 1.5));
+    try {
+      await track.applyConstraints({
+        advanced: [{ zoom: targetZoom } as ExtendedCameraConstraints],
+      });
+    } catch {
+      // Optical/digital zoom support varies between Android camera drivers.
+    }
+  }
+}
 
 function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
   mode: "sn" | "batch";
@@ -269,10 +303,9 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
     let cancelled = false;
     let guidanceTimer: ReturnType<typeof setTimeout> | undefined;
     const hints = new Map();
-    hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.DATA_MATRIX]);
     hints.set(DecodeHintType.TRY_HARDER, true);
-    const reader = new BrowserMultiFormatReader(hints, {
-      delayBetweenScanAttempts: 150,
+    const reader = new BrowserDatamatrixCodeReader(hints, {
+      delayBetweenScanAttempts: 100,
       delayBetweenScanSuccess: 500,
     });
 
@@ -287,8 +320,9 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
           audio: false,
           video: {
             facingMode: { ideal: cameraFacing },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            frameRate: { ideal: 30 },
           },
         });
 
@@ -302,6 +336,9 @@ function DataMatrixScanner({ mode, name, append, getValues, setFormValue }: {
           stream.getTracks().forEach((track) => track.stop());
           throw new Error("Video element unavailable");
         }
+
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) await optimizeCameraTrack(videoTrack);
 
         video.srcObject = stream;
         video.muted = true;
