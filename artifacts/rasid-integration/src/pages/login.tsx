@@ -9,10 +9,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, LogIn, Languages, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
+import { getDeviceId } from "@/lib/device-id";
 
 const STORAGE_KEY = "rsdway_remembered";
 
-export default function LoginPage() {
+export default function LoginPage({ sessionReplaced = false }: { sessionReplaced?: boolean }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -25,10 +26,10 @@ export default function LoginPage() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const { username: u, password: p } = JSON.parse(saved) as { username: string; password: string };
+        const { username: u } = JSON.parse(saved) as { username?: string };
         setUsername(u ?? "");
-        setPassword(p ?? "");
         setRememberMe(true);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ username: u ?? "" }));
       }
     } catch {
       /* ignore */
@@ -68,11 +69,11 @@ export default function LoginPage() {
     e.preventDefault();
     if (!username || !password) return;
     login.mutate(
-      { data: { username, password } },
+      { data: { username, password, deviceId: getDeviceId() } },
       {
         onSuccess: async () => {
           if (rememberMe) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ username, password }));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ username }));
           } else {
             localStorage.removeItem(STORAGE_KEY);
           }
@@ -122,6 +123,14 @@ export default function LoginPage() {
           <CardDescription>{t("login.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
+          {sessionReplaced && (
+            <div
+              role="alert"
+              className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm leading-6 text-destructive"
+            >
+              {t("login.sessionReplaced")}
+            </div>
+          )}
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username">{t("login.username")}</Label>
@@ -158,7 +167,7 @@ export default function LoginPage() {
                 }}
               />
               <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer select-none">
-                {lang === "ar" ? "تذكر بيانات الدخول" : "Remember login info"}
+                {lang === "ar" ? "تذكر اسم المستخدم" : "Remember username"}
               </Label>
             </div>
 

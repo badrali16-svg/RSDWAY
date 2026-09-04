@@ -30,6 +30,7 @@ export const en: Record<string, string> = {
   "login.submit": "Login",
   "login.failTitle": "Login Failed",
   "login.failDesc": "Invalid username or password",
+  "login.sessionReplaced": "This account was signed in on another device, so your current session has been ended.",
   "login.resetBtn": "Clear Old Sessions",
   "login.resetConfirm": "Clear all old sessions for this account?",
   "login.resetOk": "Sessions cleared — you can now log in",

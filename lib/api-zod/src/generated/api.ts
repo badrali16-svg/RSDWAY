@@ -61,9 +61,13 @@ export const HealthCheckResponse = zod.object({
 /**
  * @summary Log into the portal
  */
+export const loginBodyDeviceIdMin = 8;
+export const loginBodyDeviceIdMax = 200;
+
 export const LoginBody = zod.object({
   username: zod.string(),
   password: zod.string(),
+  deviceId: zod.string().min(loginBodyDeviceIdMin).max(loginBodyDeviceIdMax),
 });
 
 export const LoginResponse = zod.object({

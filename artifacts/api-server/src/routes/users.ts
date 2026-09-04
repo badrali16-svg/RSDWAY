@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable, authConfigTable, sessionTable } from "@workspace/db";
+import { activeSessionsTable, db, usersTable, authConfigTable, sessionTable } from "@workspace/db";
 import { eq, asc, sql } from "drizzle-orm";
 import { hashPassword, ALL_PERMISSIONS } from "../lib/sessionAuth";
 import { requireAdmin } from "../middlewares/requireAuth";
@@ -24,6 +24,7 @@ function sanitisePermissions(input: unknown): string[] {
 }
 
 async function invalidateUserSessions(userId: number): Promise<void> {
+  await db.delete(activeSessionsTable).where(eq(activeSessionsTable.userId, userId));
   await db.delete(sessionTable).where(
     sql`(${sessionTable.sess}->'user'->>'id')::int = ${userId}`
   );

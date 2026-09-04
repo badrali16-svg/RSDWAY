@@ -1185,7 +1185,11 @@ components:
           type: string
         password:
           type: string
-      required: [username, password]
+        deviceId:
+          type: string
+          minLength: 8
+          maxLength: 200
+      required: [username, password, deviceId]
 
     UnlockSettingsRequest:
       type: object
