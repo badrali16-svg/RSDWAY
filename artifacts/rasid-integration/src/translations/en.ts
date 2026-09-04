@@ -567,6 +567,13 @@ export const en: Record<string, string> = {
   "products.dmHint": "Each scan adds a new product row automatically. Supports GS1 Data Matrix with AIs: (01) (17) (10) (21)",
   "products.dmErrTitle": "Barcode read failed",
   "products.dmErrDesc": "Make sure the barcode is in GS1 Data Matrix format and contains at least a GTIN",
+  "products.dmCamera": "Scan with camera",
+  "products.dmCameraTitle": "Scan GS1 Data Matrix",
+  "products.dmCameraHint": "Point the rear camera at the Data Matrix code and hold the phone steady until it is read.",
+  "products.dmCameraStarting": "Starting camera...",
+  "products.dmCameraSuccess": "Data Matrix read and product added successfully",
+  "products.dmCameraFailure": "Could not read the Data Matrix. Move the camera closer or improve the lighting.",
+  "products.dmCameraClose": "Close camera",
 
   // SOAP Response Viewer
   "soap.successTitle": "Operation Successful",
