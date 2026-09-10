@@ -4,6 +4,7 @@ import { db, operationLogsTable, authConfigTable, usersTable } from "@workspace/
 import { desc, eq, and, asc } from "drizzle-orm";
 import { callSoap, buildProductListXml, extractNotificationId } from "../../lib/soapProxy";
 import { getCredentialsForUser, clearCredentialCacheForUser } from "../../lib/authStore";
+import { toDttsDate } from "../../lib/dttsDate";
 
 const router: IRouter = Router();
 
@@ -16,7 +17,7 @@ function buildBatchProductListXml(products: Array<{ GTIN: string; BN?: string; X
   if (!products || products.length === 0) return "<PRODUCTLIST/>";
   const items = products.map(p => {
     const bn  = p.BN  ? `<BN>${p.BN}</BN>`   : "";
-    const xd  = p.XD  ? `<XD>${p.XD}</XD>`   : "";
+    const xd  = p.XD  ? `<XD>${toDttsDate(p.XD)}</XD>` : "";
     return `<PRODUCT><GTIN>${p.GTIN}</GTIN>${bn}${xd}<QUANTITY>${p.QUANTITY}</QUANTITY></PRODUCT>`;
   }).join("");
   return `<PRODUCTLIST>${items}</PRODUCTLIST>`;
@@ -230,7 +231,7 @@ router.post("/rasid/import", async (req, res): Promise<void> => {
   const { GTIN, MD, XD, BN, serialNumbers } = req.body;
   const snList = (serialNumbers as string[]).map((sn: string) => `<SN>${sn}</SN>`).join("");
   const body = `<imp:ImportServiceRequest xmlns:imp="http://dtts.sfda.gov.sa/ImportService">
-  <MD>${MD}</MD><GTIN>${GTIN}</GTIN><XD>${XD}</XD><BN>${BN}</BN>
+  <MD>${toDttsDate(MD)}</MD><GTIN>${GTIN}</GTIN><XD>${toDttsDate(XD)}</XD><BN>${BN}</BN>
   <SNREQUESTLIST>${snList}</SNREQUESTLIST>
 </imp:ImportServiceRequest>`;
   await proxy("op:import", "Import", "ImportService", body, req.body, req, res);
@@ -249,7 +250,7 @@ router.post("/rasid/supply", async (req, res): Promise<void> => {
   const { GTIN, MD, XD, BN, serialNumbers } = req.body;
   const snList = (serialNumbers as string[]).map((sn: string) => `<SN>${sn}</SN>`).join("");
   const body = `<sup:SupplyServiceRequest xmlns:sup="http://dtts.sfda.gov.sa/SupplyService">
-  <MD>${MD}</MD><GTIN>${GTIN}</GTIN><XD>${XD}</XD><BN>${BN}</BN>
+  <MD>${toDttsDate(MD)}</MD><GTIN>${GTIN}</GTIN><XD>${toDttsDate(XD)}</XD><BN>${BN}</BN>
   <SNREQUESTLIST>${snList}</SNREQUESTLIST>
 </sup:SupplyServiceRequest>`;
   await proxy("op:supply", "Supply", "SupplyService", body, req.body, req, res);
@@ -348,7 +349,7 @@ router.post("/rasid/pharmacy-sale", async (req, res): Promise<void> => {
   ${doctorId ? `<DOCTORID>${doctorId}</DOCTORID>` : "<DOCTORID/>"}
   ${patientNationalId ? `<PATIENTNATIONALID>${patientNationalId}</PATIENTNATIONALID>` : "<PATIENTNATIONALID/>"}
   <PRESCRIPTIONID>${prescriptionId}</PRESCRIPTIONID>
-  <PRESCRIPTIONDATE>${prescriptionDate}</PRESCRIPTIONDATE>
+  <PRESCRIPTIONDATE>${toDttsDate(prescriptionDate)}</PRESCRIPTIONDATE>
   ${buildProductListXml(products)}
 </phar:PharmacySaleServiceRequest>`;
   await proxy("op:pharmacy-sale", "PharmacySale", "PharmacySaleService", body, req.body, req, res);
@@ -475,8 +476,8 @@ router.post("/rasid/package-query", async (req, res): Promise<void> => {
   ${fromGLN ? `<FROMGLN>${fromGLN}</FROMGLN>` : "<FROMGLN/>"}
   ${toGLN ? `<TOGLN>${toGLN}</TOGLN>` : "<TOGLN/>"}
   <GETALL>${getAll ? "true" : "false"}</GETALL>
-  ${startDate ? `<STARTDATE>${startDate}</STARTDATE>` : ""}
-  ${endDate ? `<ENDDATE>${endDate}</ENDDATE>` : ""}
+  ${startDate ? `<STARTDATE>${toDttsDate(startDate)}</STARTDATE>` : ""}
+  ${endDate ? `<ENDDATE>${toDttsDate(endDate)}</ENDDATE>` : ""}
 </pac:PackageQueryServiceRequest>`;
   await proxy("op:package-query", "PackageQuery", "PackageQueryService", body, req.body, req, res);
 });

@@ -37,6 +37,7 @@ import crypto from "node:crypto";
 import { callSoap, buildProductListXml, extractNotificationId } from "../../lib/soapProxy";
 import { getCredentialsForUser } from "../../lib/authStore";
 import { requireAuth } from "../../middlewares/requireAuth";
+import { toDttsDate } from "../../lib/dttsDate";
 
 const router = Router();
 
@@ -49,7 +50,7 @@ function svcEndpoint(baseUrl: string, svc: string, op?: string): string {
 function buildBatchXml(products: Array<{ GTIN: string; BN?: string; XD?: string; QUANTITY: number }>): string {
   if (!products?.length) return "<PRODUCTLIST/>";
   return `<PRODUCTLIST>${products.map(p =>
-    `<PRODUCT><GTIN>${p.GTIN}</GTIN>${p.BN ? `<BN>${p.BN}</BN>` : ""}${p.XD ? `<XD>${p.XD}</XD>` : ""}<QUANTITY>${p.QUANTITY}</QUANTITY></PRODUCT>`
+    `<PRODUCT><GTIN>${p.GTIN}</GTIN>${p.BN ? `<BN>${p.BN}</BN>` : ""}${p.XD ? `<XD>${toDttsDate(p.XD)}</XD>` : ""}<QUANTITY>${p.QUANTITY}</QUANTITY></PRODUCT>`
   ).join("")}</PRODUCTLIST>`;
 }
 
@@ -287,7 +288,7 @@ router.post("/external/v1/transfer-cancel-batch", async (req, res): Promise<void
 router.post("/external/v1/import", async (req, res): Promise<void> => {
   const { GTIN, MD, XD, BN, serialNumbers } = req.body;
   const sns = (serialNumbers as string[] ?? []).map((sn: string) => `<SN>${sn}</SN>`).join("");
-  const body = `<imp:ImportServiceRequest xmlns:imp="http://dtts.sfda.gov.sa/ImportService"><GTIN>${GTIN}</GTIN><MD>${MD}</MD><XD>${XD}</XD><BN>${BN}</BN><SERIALNUMBERS>${sns}</SERIALNUMBERS></imp:ImportServiceRequest>`;
+  const body = `<imp:ImportServiceRequest xmlns:imp="http://dtts.sfda.gov.sa/ImportService"><GTIN>${GTIN}</GTIN><MD>${toDttsDate(MD)}</MD><XD>${toDttsDate(XD)}</XD><BN>${BN}</BN><SERIALNUMBERS>${sns}</SERIALNUMBERS></imp:ImportServiceRequest>`;
   await proxyExternal("op:import", "Import", "ImportService", body, req.body, getKeyInfo(req), res);
 });
 

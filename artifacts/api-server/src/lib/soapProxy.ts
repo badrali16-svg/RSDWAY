@@ -1,4 +1,5 @@
 import { logger } from "./logger";
+import { toDttsDate } from "./dttsDate";
 
 export interface SoapCallOptions {
   endpoint: string;
@@ -276,7 +277,7 @@ export function buildProductListXml(products: Array<{ GTIN: string; SN?: string 
   return `<PRODUCTLIST>${products.map(p => {
     const sn = p.SN != null && p.SN !== "" ? `<SN>${p.SN}</SN>` : "";
     const bn = p.BN != null && p.BN !== "" ? `<BN>${p.BN}</BN>` : "";
-    const xd = p.XD != null && p.XD !== "" ? `<XD>${p.XD}</XD>` : "";
+    const xd = p.XD != null && p.XD !== "" ? `<XD>${toDttsDate(p.XD)}</XD>` : "";
     const qty = p.QUANTITY != null && Number(p.QUANTITY) > 0 ? `<QUANTITY>${p.QUANTITY}</QUANTITY>` : "";
     return `<PRODUCT><GTIN>${p.GTIN}</GTIN>${sn}${bn}${xd}${qty}</PRODUCT>`;
   }).join("")}</PRODUCTLIST>`;

@@ -12,7 +12,10 @@ const outdir = path.join(artifactDir, "test-dist");
 
 await rm(outdir, { recursive: true, force: true });
 await build({
-  entryPoints: [path.join(artifactDir, "test/session-concurrency.test.ts")],
+  entryPoints: [
+    path.join(artifactDir, "test/session-concurrency.test.ts"),
+    path.join(artifactDir, "test/dtts-date.test.ts"),
+  ],
   platform: "node",
   bundle: true,
   format: "esm",
