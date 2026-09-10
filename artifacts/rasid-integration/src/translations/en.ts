@@ -548,7 +548,7 @@ export const en: Record<string, string> = {
   "products.uploadFile": "Upload Excel / CSV",
   "products.addManual": "Add Manually",
   "products.uploadHint": "You can upload an Excel or CSV file with the columns:",
-  "products.separatorHint": "Separator can be (;) or (,) — Date format DD/MM/YYYY or YYYY-MM-DD",
+  "products.separatorHint": "Separator can be (;) or (,) — Date format DD-MM-YYYY",
   "products.manualHint": "Or add products manually by clicking \"Add Manually\"",
   "products.item": "Product",
   "products.bnRequired": "(required)",

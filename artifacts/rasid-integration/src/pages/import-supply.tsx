@@ -26,6 +26,7 @@ import { InvoiceBar } from "@/components/invoice-bar";
 import { useInvoiceGuard } from "@/lib/use-invoice-guard";
 import * as XLSX from "xlsx";
 import { useLanguage } from "@/lib/use-language";
+import { DatePickerInput } from "@/components/date-picker-input";
 
 function withInvoice<T extends object>(data: T, inv: string): T {
   if (!inv.trim()) return data;
@@ -475,14 +476,14 @@ export default function ImportSupplyPage() {
           <FormField control={form.control} name="MD" render={({ field }) => (
             <FormItem>
               <FormLabel>{t("import.mdLabel")}</FormLabel>
-              <FormControl><Input dir="ltr" className="text-left" type="date" {...field} /></FormControl>
+              <FormControl><DatePickerInput {...field} /></FormControl>
               <FormMessage />
             </FormItem>
           )} />
           <FormField control={form.control} name="XD" render={({ field }) => (
             <FormItem>
               <FormLabel>{t("import.xdLabel")}</FormLabel>
-              <FormControl><Input dir="ltr" className="text-left" type="date" {...field} /></FormControl>
+              <FormControl><DatePickerInput {...field} /></FormControl>
               <FormMessage />
             </FormItem>
           )} />

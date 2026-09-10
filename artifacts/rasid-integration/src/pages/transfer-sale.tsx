@@ -26,6 +26,7 @@ import { GlnInput } from "@/components/gln-input";
 import { InvoiceBar } from "@/components/invoice-bar";
 import { useInvoiceGuard } from "@/lib/use-invoice-guard";
 import { useLanguage } from "@/lib/use-language";
+import { DatePickerInput } from "@/components/date-picker-input";
 
 function withInvoice<T extends object>(data: T, inv: string): T {
   if (!inv.trim()) return data;
@@ -366,7 +367,7 @@ export default function TransferSalePage() {
                     <FormField control={pharmacySaleForm.control} name="prescriptionDate" render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t("transfer.prescriptionDate")}</FormLabel>
-                        <FormControl><Input dir="ltr" className="text-left" type="date" {...field} /></FormControl>
+                        <FormControl><DatePickerInput {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />

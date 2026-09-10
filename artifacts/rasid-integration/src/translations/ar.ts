@@ -548,7 +548,7 @@ export const ar: Record<string, string> = {
   "products.uploadFile": "رفع ملف Excel / CSV",
   "products.addManual": "إضافة يدوي",
   "products.uploadHint": "يمكنك رفع ملف Excel أو CSV يحتوي على الأعمدة:",
-  "products.separatorHint": "الفاصل يمكن أن يكون (;) أو (,) — التاريخ بصيغة DD/MM/YYYY أو YYYY-MM-DD",
+  "products.separatorHint": "الفاصل يمكن أن يكون (;) أو (,) — التاريخ بصيغة DD-MM-YYYY",
   "products.manualHint": "أو إضافة المنتجات يدوياً بالضغط على \"إضافة يدوي\"",
   "products.item": "المنتج",
   "products.bnRequired": "(مطلوب)",

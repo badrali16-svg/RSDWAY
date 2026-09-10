@@ -20,6 +20,7 @@ import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { GlnInput } from "@/components/gln-input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLanguage } from "@/lib/use-language";
+import { DatePickerInput } from "@/components/date-picker-input";
 
 const uploadSchema = z.object({
   toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),
@@ -205,14 +206,14 @@ export default function PackagesPage() {
                     <FormField control={queryForm.control} name="startDate" render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t("packages.startDate")}</FormLabel>
-                        <FormControl><Input dir="ltr" className="text-left" type="date" {...field} /></FormControl>
+                        <FormControl><DatePickerInput {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={queryForm.control} name="endDate" render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t("packages.endDate")}</FormLabel>
-                        <FormControl><Input dir="ltr" className="text-left" type="date" {...field} /></FormControl>
+                        <FormControl><DatePickerInput {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />

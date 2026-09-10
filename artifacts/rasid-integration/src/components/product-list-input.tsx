@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { BrowserDatamatrixCodeReader, type IScannerControls } from "@zxing/browser";
 import { DecodeHintType } from "@zxing/library";
 import * as XLSX from "xlsx";
+import { DatePickerInput } from "@/components/date-picker-input";
+import { formatDateValue, normalizeDateValue } from "@/lib/date-format";
 
 // ─── GS1 Data Matrix parser ──────────────────────────────────────────────────
 
@@ -19,12 +21,12 @@ type ParsedGS1 = {
   gtin?: string;
   sn?: string;
   bn?: string;
-  xd?: string;   // YYYY-MM-DD
+  xd?: string;   // DD-MM-YYYY
   qty?: number;
 };
 
-/** Convert GS1 YYMMDD to YYYY-MM-DD. Day=00 → last day of month. */
-function gs1DateToIso(raw: string): string {
+/** Convert GS1 YYMMDD to DD-MM-YYYY. Day=00 → last day of month. */
+function gs1DateToDisplay(raw: string): string {
   if (raw.length !== 6) return "";
   const yy = parseInt(raw.slice(0, 2), 10);
   const mm = parseInt(raw.slice(2, 4), 10);
@@ -34,7 +36,7 @@ function gs1DateToIso(raw: string): string {
     // Last day of month
     dd = new Date(year, mm, 0).getDate();
   }
-  return `${year}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
+  return formatDateValue(new Date(year, mm - 1, dd));
 }
 
 /** Parse GS1 Data Matrix with parentheses notation e.g. (01)GTIN(17)DATE(10)BN(21)SN */
@@ -46,7 +48,7 @@ function parseParentheses(s: string): ParsedGS1 {
     const ai = m[1];
     const val = m[2].trim();
     if (ai === "01" && val.length >= 13) result.gtin = val.slice(0, 14);
-    else if (ai === "17" && val.length >= 6) result.xd = gs1DateToIso(val.slice(0, 6));
+    else if (ai === "17" && val.length >= 6) result.xd = gs1DateToDisplay(val.slice(0, 6));
     else if (ai === "10") result.bn = val || undefined;
     else if (ai === "21") result.sn = val || undefined;
     else if (ai === "30" || ai === "37") { const q = parseInt(val, 10); if (!isNaN(q)) result.qty = q; }
@@ -76,7 +78,7 @@ function parseRaw(s: string): ParsedGS1 {
       result.gtin = remaining.slice(2, 16);
       i += 16;
     } else if (ai2 === "17" && remaining.length >= 8) {
-      result.xd = gs1DateToIso(remaining.slice(2, 8));
+      result.xd = gs1DateToDisplay(remaining.slice(2, 8));
       i += 8;
     } else if (ai2 === "10") {
       i += 2;
@@ -831,11 +833,7 @@ function parseProductsFromSheet(data: ArrayBuffer): ProductRow[] {
     if (!GTIN) continue;
 
     const XD_raw = findCol(obj, ["XD", "EXPIRY", "EXPIRY DATE", "EXP DATE"]);
-    let XD = XD_raw;
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(XD_raw)) {
-      const [d, m, y] = XD_raw.split("/");
-      XD = `${y}-${m}-${d}`;
-    }
+    const XD = normalizeDateValue(XD_raw) || XD_raw;
 
     const QUANTITY_raw = findCol(obj, ["QUANTITY", "QTY", "AMOUNT"]);
     const QUANTITY = QUANTITY_raw ? Number(QUANTITY_raw) || undefined : undefined;
@@ -1097,7 +1095,7 @@ export function ProductListInput({ name = "products", mode = "sn" }: { name?: st
                 <FormField control={control} name={`${name}.${index}.XD`} render={({ field }) => (
                   <FormItem>
                     <FormLabel>XD</FormLabel>
-                    <FormControl><Input dir="ltr" className="text-left" type="date" placeholder="YYYY-MM-DD" {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || undefined)} /></FormControl>
+                    <FormControl><DatePickerInput {...field} value={field.value ?? ""} onChange={(value) => field.onChange(value || undefined)} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
