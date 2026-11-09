@@ -23,6 +23,8 @@ import { InvoiceBar } from "@/components/invoice-bar";
 import { useInvoiceGuard } from "@/lib/use-invoice-guard";
 import { useLanguage } from "@/lib/use-language";
 import { downloadReturnConsumeData } from "@/lib/return-consume-export";
+import { ConsumeQuickCancel, type ConsumptionReceipt } from "@/components/consume-quick-cancel";
+import { isCompleteOperationSuccess } from "@/lib/operation-success";
 
 function withInvoice<T extends object>(data: T, inv: string): T {
   if (!inv.trim()) return data;
@@ -66,6 +68,8 @@ export default function ReturnConsumePage() {
   const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
+  const [consumptionReceipt, setConsumptionReceipt] = useState<ConsumptionReceipt | null>(null);
+  const [quickCancelPending, setQuickCancelPending] = useState(false);
   const [invoiceNum, setInvoiceNum] = useState("");
   const [invoiceAlert, setInvoiceAlert] = useState(true);
   const { guard, dialogOpen, confirmSubmit, cancelSubmit } = useInvoiceGuard(invoiceNum, invoiceAlert);
@@ -74,6 +78,8 @@ export default function ReturnConsumePage() {
   const returnBatchMutation = useReturnBatchProducts();
   const consumeMutation = useConsumeProducts();
   const consumeCancelMutation = useConsumeCancelProducts();
+  const operationPending = returnMutation.isPending || returnBatchMutation.isPending ||
+    consumeMutation.isPending || consumeCancelMutation.isPending;
 
   const returnForm = useForm<z.infer<typeof returnSchema>>({
     resolver: zodResolver(returnSchema),
@@ -96,8 +102,14 @@ export default function ReturnConsumePage() {
   });
 
   const onSuccess = (res: SoapResponse, msg: string) => {
+    setConsumptionReceipt(null);
     setResponse(res);
-    toast({ title: t("common.saved"), description: msg });
+    const succeeded = isCompleteOperationSuccess(res);
+    toast({
+      title: succeeded ? t("common.saved") : t("common.error"),
+      description: succeeded ? msg : (res.error || t("soap.failMsg")),
+      variant: succeeded ? "default" : "destructive",
+    });
   };
   const onError = () => toast({ title: t("common.error"), description: "حدث خطأ أثناء الاتصال بالنظام", variant: "destructive" });
 
@@ -118,6 +130,7 @@ export default function ReturnConsumePage() {
         onDialogCancel={cancelSubmit}
       />
 
+      <fieldset disabled={quickCancelPending || operationPending} className="min-w-0">
       <Tabs defaultValue={["return","return-batch","consume","consume-cancel"].find(tab => canDo(`op:${tab}`)) ?? "return"} onValueChange={() => setInvoiceNum("")} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
           {canDo("op:return") && <TabsTrigger value="return">{t("return.tabReturn")}</TabsTrigger>}
@@ -222,7 +235,25 @@ export default function ReturnConsumePage() {
             </CardHeader>
             <CardContent>
               <Form {...consumeForm}>
-                <form onSubmit={consumeForm.handleSubmit((v) => guard(() => consumeMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("return.successConsume")), onError })))} className="space-y-6">
+                <form onSubmit={consumeForm.handleSubmit((values) => {
+                  const request = structuredClone(values);
+                  guard(() => {
+                    setConsumptionReceipt(null);
+                    setResponse(null);
+                    consumeMutation.mutate({ data: request }, {
+                      onSuccess: (result) => {
+                        onSuccess(result, t("return.successConsume"));
+                        if (isCompleteOperationSuccess(result)) {
+                          setConsumptionReceipt({
+                            request: structuredClone(request),
+                            notificationId: result.notificationId,
+                          });
+                        }
+                      },
+                      onError,
+                    });
+                  });
+                })} className="space-y-6">
                   <ProductListInput mode="sn" />
                   <div className="flex flex-wrap gap-2">
                     <Button type="submit" disabled={consumeMutation.isPending}>
@@ -280,8 +311,16 @@ export default function ReturnConsumePage() {
         </TabsContent>
         )}
       </Tabs>
+      </fieldset>
 
       <SoapResponseViewer response={response} />
+      {consumptionReceipt && (
+        <ConsumeQuickCancel
+          receipt={consumptionReceipt}
+          disabled={operationPending}
+          onPendingChange={setQuickCancelPending}
+        />
+      )}
     </div>
   );
 }

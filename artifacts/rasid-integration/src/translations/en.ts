@@ -356,6 +356,13 @@ export const en: Record<string, string> = {
   "return.successReturnBatch": "Return (batch) completed successfully",
   "return.successConsume": "Consume executed successfully",
   "return.successConsumeCancel": "Consume cancelled successfully",
+  "return.quickCancel": "Cancel Operation",
+  "return.quickCancelTitle": "Confirm Consumption Cancellation",
+  "return.quickCancelDescription": "A cancellation request will be sent to RSD using the exact products from the successful consumption, even if you edited the fields afterwards. Continue?",
+  "return.keepOperation": "Keep Operation",
+  "return.confirmQuickCancel": "Confirm Cancellation",
+  "return.quickCancelFailed": "RSD rejected the cancellation. Review the response details.",
+  "return.quickCancelConnectionError": "The cancellation result could not be confirmed due to a connection error. Check operation history and product status before retrying.",
 
   // Transfer/Sale
   "transfer.title": "Transfer & Pharmacy Sale",

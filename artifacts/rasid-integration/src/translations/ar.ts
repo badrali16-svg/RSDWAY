@@ -356,6 +356,13 @@ export const ar: Record<string, string> = {
   "return.successReturnBatch": "تم الإرجاع بالتشغيلة بنجاح",
   "return.successConsume": "تم تنفيذ الاستهلاك بنجاح",
   "return.successConsumeCancel": "تم إلغاء الاستهلاك بنجاح",
+  "return.quickCancel": "إلغاء العملية",
+  "return.quickCancelTitle": "تأكيد إلغاء الاستهلاك",
+  "return.quickCancelDescription": "سيتم إرسال طلب إلغاء إلى رصد باستخدام نفس منتجات عملية الاستهلاك الناجحة، حتى لو عدّلت الحقول بعدها. هل تريد المتابعة؟",
+  "return.keepOperation": "الاحتفاظ بالعملية",
+  "return.confirmQuickCancel": "تأكيد الإلغاء",
+  "return.quickCancelFailed": "رفض رصد إلغاء العملية. راجع تفاصيل الاستجابة.",
+  "return.quickCancelConnectionError": "تعذر تأكيد نتيجة الإلغاء بسبب خطأ في الاتصال. تحقق من سجل العمليات وحالة المنتجات قبل إعادة المحاولة.",
 
   // Transfer/Sale
   "transfer.title": "النقل وصرف الصيدليات",
