@@ -45,6 +45,8 @@ const DEFAULT_ADMIN_USERNAME = "Admin";
 export interface SessionUser {
   id: number;
   username: string;
+  facilityName?: string;
+  showFacilityName?: boolean;
   role: "admin" | "client";
   permissions: string[];
 }

@@ -1,14 +1,9 @@
 import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
-import { getGetCurrentSessionQueryKey, useGetCurrentSession } from "@workspace/api-client-react";
+import { getGetCurrentSessionQueryKey, useGetCurrentSession, type SessionUser } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/use-language";
 
-export interface SessionUser {
-  id: number;
-  username: string;
-  role: "admin" | "client";
-  permissions: string[];
-}
+export type { SessionUser } from "@workspace/api-client-react";
 
 interface AuthContextValue {
   user: SessionUser | null;

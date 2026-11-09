@@ -94,6 +94,8 @@ export default function UsersPage() {
   const invalidate = () => qc.invalidateQueries({ queryKey: getListUsersQueryKey() });
 
   const [newUsername, setNewUsername] = useState("");
+  const [facilityName, setFacilityName] = useState("");
+  const [showFacilityName, setShowFacilityName] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [newPermissions, setNewPermissions] = useState<string[]>(ALL_DEFAULT_PERMS);
 
@@ -170,6 +172,8 @@ export default function UsersPage() {
     }
     const payload: Parameters<typeof createUser.mutate>[0]["data"] = {
       username: newUsername,
+      facilityName: facilityName.trim(),
+      showFacilityName,
       password: newPassword,
       permissions: newPermissions,
       ...(dttsIsFilled && dttsTestStatus === "success"
@@ -182,6 +186,8 @@ export default function UsersPage() {
         onSuccess: () => {
           toast({ title: t("users.createdTitle"), description: `${t("users.createdDesc")} — ${newUsername}` });
           setNewUsername("");
+          setFacilityName("");
+          setShowFacilityName(false);
           setNewPassword("");
           setNewPermissions(ALL_DEFAULT_PERMS);
           resetDtts();
@@ -232,6 +238,26 @@ export default function UsersPage() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
                 />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Label htmlFor="new-facility-name">{t("users.facilityName")}</Label>
+              <Input
+                id="new-facility-name"
+                className="w-full sm:w-72"
+                value={facilityName}
+                onChange={(event) => setFacilityName(event.target.value)}
+                maxLength={200}
+                required={showFacilityName}
+              />
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="show-facility-name"
+                  checked={showFacilityName}
+                  onCheckedChange={(checked) => setShowFacilityName(checked === true)}
+                />
+                <Label htmlFor="show-facility-name">{t("users.showFacilityName")}</Label>
               </div>
             </div>
 

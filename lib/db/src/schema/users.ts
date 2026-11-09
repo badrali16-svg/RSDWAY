@@ -3,6 +3,8 @@ import { pgTable, serial, text, timestamp, jsonb, boolean } from "drizzle-orm/pg
 export const usersTable = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
+  facilityName: text("facility_name").notNull().default(""),
+  showFacilityName: boolean("show_facility_name").notNull().default(false),
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ["admin", "client"] }).notNull().default("client"),
   permissions: jsonb("permissions").$type<string[]>().notNull().default([]),

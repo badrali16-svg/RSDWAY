@@ -8,6 +8,8 @@
 import type { SessionUserRole } from "./sessionUserRole";
 
 export interface SessionUser {
+  facilityName?: string;
+  showFacilityName?: boolean;
   id: number;
   username: string;
   role: SessionUserRole;

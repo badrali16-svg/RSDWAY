@@ -4,6 +4,10 @@ import { logger } from "./logger";
 export async function runMigrations(): Promise<void> {
   const client = await pool.connect();
   try {
+    await client.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS facility_name TEXT NOT NULL DEFAULT '';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS show_facility_name BOOLEAN NOT NULL DEFAULT false;
+    `);
     // 1. Add error_code column if missing
     await client.query(`
       ALTER TABLE operation_logs ADD COLUMN IF NOT EXISTS error_code TEXT;

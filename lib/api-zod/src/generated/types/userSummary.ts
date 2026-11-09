@@ -8,6 +8,8 @@
 import type { UserSummaryRole } from "./userSummaryRole";
 
 export interface UserSummary {
+  facilityName?: string;
+  showFacilityName?: boolean;
   id: number;
   username: string;
   role: UserSummaryRole;

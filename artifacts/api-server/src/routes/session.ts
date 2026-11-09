@@ -44,6 +44,8 @@ router.post("/session/login", async (req, res): Promise<void> => {
   const user: SessionUser = {
     id: row.id,
     username: row.username,
+    facilityName: row.facilityName,
+    showFacilityName: row.showFacilityName,
     role: row.role,
     permissions: row.permissions ?? [],
   };
@@ -117,7 +119,7 @@ router.post("/session/login", async (req, res): Promise<void> => {
     await releaseLock();
   }
 
-  res.json({ id: user.id, username: user.username, role: user.role, permissions: user.permissions });
+  res.json(user);
 });
 
 router.post("/session/logout", async (req, res): Promise<void> => {
@@ -169,11 +171,13 @@ router.get("/session/me", async (req, res): Promise<void> => {
   const freshUser: SessionUser = {
     id: row.id,
     username: row.username,
+    facilityName: row.facilityName,
+    showFacilityName: row.showFacilityName,
     role: row.role,
     permissions: row.permissions ?? [],
   };
   req.session.user = freshUser;
-  res.json({ user: { id: freshUser.id, username: freshUser.username, role: freshUser.role, permissions: freshUser.permissions } });
+  res.json({ user: freshUser });
 });
 
 // Emergency endpoint: verifies credentials then wipes ALL sessions for that user

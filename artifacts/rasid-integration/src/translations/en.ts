@@ -1,4 +1,6 @@
 export const en: Record<string, string> = {
+  "users.facilityName": "Facility name",
+  "users.showFacilityName": "Show facility name above username",
   // Nav
   "nav.dashboard": "Dashboard",
   "nav.import": "Import & Supply",

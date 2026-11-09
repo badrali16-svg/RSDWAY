@@ -71,6 +71,8 @@ export const LoginBody = zod.object({
 });
 
 export const LoginResponse = zod.object({
+  facilityName: zod.string().optional(),
+  showFacilityName: zod.boolean().optional(),
   id: zod.number(),
   username: zod.string(),
   role: zod.enum(["admin", "client"]),
@@ -90,6 +92,8 @@ export const LogoutResponse = zod.object({
 export const GetCurrentSessionResponse = zod.object({
   user: zod.union([
     zod.object({
+      facilityName: zod.string().optional(),
+      showFacilityName: zod.boolean().optional(),
       id: zod.number(),
       username: zod.string(),
       role: zod.enum(["admin", "client"]),
@@ -114,6 +118,8 @@ export const UnlockSettingsResponse = zod.object({
  * @summary List all client/admin accounts (admin only)
  */
 export const ListUsersResponseItem = zod.object({
+  facilityName: zod.string().optional(),
+  showFacilityName: zod.boolean().optional(),
   id: zod.number(),
   username: zod.string(),
   role: zod.enum(["admin", "client"]),
@@ -126,7 +132,11 @@ export const ListUsersResponse = zod.array(ListUsersResponseItem);
 /**
  * @summary Create a new client account (admin only)
  */
+export const createUserBodyFacilityNameMax = 200;
+
 export const CreateUserBody = zod.object({
+  facilityName: zod.string().max(createUserBodyFacilityNameMax).optional(),
+  showFacilityName: zod.boolean().optional(),
   username: zod.string(),
   password: zod.string(),
   permissions: zod.array(zod.string()),
@@ -140,6 +150,8 @@ export const CreateUserBody = zod.object({
 });
 
 export const CreateUserResponse = zod.object({
+  facilityName: zod.string().optional(),
+  showFacilityName: zod.boolean().optional(),
   id: zod.number(),
   username: zod.string(),
   role: zod.enum(["admin", "client"]),
@@ -192,6 +204,8 @@ export const SetUserStatusBody = zod.object({
 });
 
 export const SetUserStatusResponse = zod.object({
+  facilityName: zod.string().optional(),
+  showFacilityName: zod.boolean().optional(),
   id: zod.number(),
   username: zod.string(),
   role: zod.enum(["admin", "client"]),
@@ -213,6 +227,8 @@ export const UpdateUserBody = zod.object({
 });
 
 export const UpdateUserResponse = zod.object({
+  facilityName: zod.string().optional(),
+  showFacilityName: zod.boolean().optional(),
   id: zod.number(),
   username: zod.string(),
   role: zod.enum(["admin", "client"]),

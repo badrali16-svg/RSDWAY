@@ -1,4 +1,6 @@
 export const ar: Record<string, string> = {
+  "users.facilityName": "اسم المنشأة",
+  "users.showFacilityName": "إظهار اسم المنشأة أعلى اسم المستخدم",
   // Nav
   "nav.dashboard": "لوحة التحكم",
   "nav.import": "الاستيراد والتصنيع",

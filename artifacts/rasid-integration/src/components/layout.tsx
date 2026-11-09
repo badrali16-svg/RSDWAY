@@ -178,6 +178,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <User className="h-4 w-4 text-primary" />
             </div>
             <div className="min-w-0">
+              {user.showFacilityName && user.facilityName && (
+                <p className="text-sm font-semibold text-primary break-words" title={user.facilityName}>{user.facilityName}</p>
+              )}
               <p className="text-sm font-semibold text-foreground truncate">{user.username}</p>
               <p className="text-xs text-muted-foreground">
                 {user.role === "admin" ? t("layout.admin") : t("layout.client")}
@@ -228,9 +231,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {user && (
               <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1">
                 <User className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-xs font-semibold text-foreground max-w-[80px] truncate">
-                  {user.username}
-                </span>
+                <div className="min-w-0 max-w-[120px]">
+                  {user.showFacilityName && user.facilityName && (
+                    <p className="text-xs font-semibold text-primary truncate" title={user.facilityName}>{user.facilityName}</p>
+                  )}
+                  <p className="text-xs font-semibold text-foreground truncate">{user.username}</p>
+                </div>
                 {user.role === "admin" && (
                   <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
                     {t("layout.admin")}
@@ -250,6 +256,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <span className="font-bold text-primary">{t("layout.menu")}</span>
                   {user && (
                     <div className="text-xs text-muted-foreground">
+                      {user.showFacilityName && user.facilityName && (
+                        <p className="font-semibold text-primary break-words">{user.facilityName}</p>
+                      )}
                       {user.username}
                     </div>
                   )}

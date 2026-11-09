@@ -10,6 +10,8 @@ function toSummary(row: typeof usersTable.$inferSelect) {
   return {
     id: row.id,
     username: row.username,
+    facilityName: row.facilityName,
+    showFacilityName: row.showFacilityName,
     role: row.role,
     permissions: row.permissions ?? [],
     isActive: row.isActive ?? true,
@@ -36,7 +38,9 @@ router.get("/users", requireAdmin, async (_req, res): Promise<void> => {
 });
 
 router.post("/users", requireAdmin, async (req, res): Promise<void> => {
-  const { username, password, permissions, dttsConfig } = req.body as {
+  const { username, password, permissions, dttsConfig, facilityName, showFacilityName } = req.body as {
+    facilityName?: unknown;
+    showFacilityName?: unknown;
     username?: string;
     password?: string;
     permissions?: unknown;
@@ -44,6 +48,12 @@ router.post("/users", requireAdmin, async (req, res): Promise<void> => {
   };
   if (!username || !password) {
     res.status(400).json({ error: "username and password are required" });
+    return;
+  }
+  if ((facilityName !== undefined && (typeof facilityName !== "string" || facilityName.trim().length > 200)) ||
+      (showFacilityName !== undefined && typeof showFacilityName !== "boolean") ||
+      (showFacilityName === true && (typeof facilityName !== "string" || !facilityName.trim()))) {
+    res.status(400).json({ error: "Invalid facility name or display option" });
     return;
   }
   const existing = await db.select().from(usersTable).where(eq(usersTable.username, username)).limit(1);
@@ -56,6 +66,8 @@ router.post("/users", requireAdmin, async (req, res): Promise<void> => {
     .insert(usersTable)
     .values({
       username,
+      facilityName: typeof facilityName === "string" ? facilityName.trim() : "",
+      showFacilityName: showFacilityName === true,
       passwordHash,
       role: "client",
       permissions: sanitisePermissions(permissions),

@@ -36,6 +36,8 @@ export const SessionUserRole = {
 } as const;
 
 export interface SessionUser {
+  facilityName?: string;
+  showFacilityName?: boolean;
   id: number;
   username: string;
   role: SessionUserRole;
@@ -55,6 +57,8 @@ export const UserSummaryRole = {
 } as const;
 
 export interface UserSummary {
+  facilityName?: string;
+  showFacilityName?: boolean;
   id: number;
   username: string;
   role: UserSummaryRole;
@@ -70,6 +74,9 @@ export interface AuthConfigInput {
 }
 
 export interface CreateUserRequest {
+  /** @maxLength 200 */
+  facilityName?: string;
+  showFacilityName?: boolean;
   username: string;
   password: string;
   permissions: string[];

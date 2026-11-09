@@ -8,6 +8,9 @@
 import type { AuthConfigInput } from "./authConfigInput";
 
 export interface CreateUserRequest {
+  /** @maxLength 200 */
+  facilityName?: string;
+  showFacilityName?: boolean;
   username: string;
   password: string;
   permissions: string[];

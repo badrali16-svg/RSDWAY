@@ -1201,6 +1201,10 @@ components:
     SessionUser:
       type: object
       properties:
+        facilityName:
+          type: string
+        showFacilityName:
+          type: boolean
         id:
           type: integer
         username:
@@ -1226,6 +1230,10 @@ components:
     UserSummary:
       type: object
       properties:
+        facilityName:
+          type: string
+        showFacilityName:
+          type: boolean
         id:
           type: integer
         username:
@@ -1246,6 +1254,11 @@ components:
     CreateUserRequest:
       type: object
       properties:
+        facilityName:
+          type: string
+          maxLength: 200
+        showFacilityName:
+          type: boolean
         username:
           type: string
         password:
