@@ -1274,6 +1274,11 @@ components:
     UpdateUserRequest:
       type: object
       properties:
+        facilityName:
+          type: string
+          maxLength: 200
+        showFacilityName:
+          type: boolean
         password:
           type: ["string", "null"]
         permissions:

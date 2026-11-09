@@ -221,7 +221,11 @@ export const UpdateUserParams = zod.object({
   id: zod.coerce.number(),
 });
 
+export const updateUserBodyFacilityNameMax = 200;
+
 export const UpdateUserBody = zod.object({
+  facilityName: zod.string().max(updateUserBodyFacilityNameMax).optional(),
+  showFacilityName: zod.boolean().optional(),
   password: zod.string().nullish(),
   permissions: zod.array(zod.string()),
 });

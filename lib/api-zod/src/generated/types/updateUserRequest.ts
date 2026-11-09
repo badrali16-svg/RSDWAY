@@ -7,6 +7,9 @@
  */
 
 export interface UpdateUserRequest {
+  /** @maxLength 200 */
+  facilityName?: string;
+  showFacilityName?: boolean;
   /** @nullable */
   password?: string | null;
   permissions: string[];

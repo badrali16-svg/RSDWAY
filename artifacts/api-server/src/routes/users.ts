@@ -145,10 +145,28 @@ router.patch("/users/:id", requireAdmin, async (req, res): Promise<void> => {
     res.status(403).json({ error: "Cannot modify admin user" });
     return;
   }
-  const { password, permissions } = req.body as { password?: string | null; permissions?: unknown };
+  const { password, permissions, facilityName, showFacilityName } = req.body as {
+    password?: string | null;
+    permissions?: unknown;
+    facilityName?: unknown;
+    showFacilityName?: unknown;
+  };
+  if ((facilityName !== undefined && (typeof facilityName !== "string" || facilityName.trim().length > 200)) ||
+      (showFacilityName !== undefined && typeof showFacilityName !== "boolean")) {
+    res.status(400).json({ error: "Invalid facility name or display option" });
+    return;
+  }
+  const nextFacilityName = typeof facilityName === "string" ? facilityName.trim() : existing[0].facilityName;
+  const nextShowFacilityName = typeof showFacilityName === "boolean" ? showFacilityName : existing[0].showFacilityName;
+  if (nextShowFacilityName && !nextFacilityName) {
+    res.status(400).json({ error: "Facility name is required when display is enabled" });
+    return;
+  }
   const updates: Partial<typeof usersTable.$inferInsert> = {
     permissions: sanitisePermissions(permissions),
   };
+  if (facilityName !== undefined) updates.facilityName = nextFacilityName;
+  if (showFacilityName !== undefined) updates.showFacilityName = nextShowFacilityName;
   if (password) {
     updates.passwordHash = await hashPassword(password);
     updates.currentSessionToken = null;

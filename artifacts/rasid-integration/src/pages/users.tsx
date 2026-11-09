@@ -9,6 +9,7 @@ import {
   useGetUserAuthConfig,
   useSaveUserAuthConfig,
   getListUsersQueryKey,
+  type UpdateUserRequest,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -558,7 +559,7 @@ export default function UsersPage() {
             },
           )
         }
-        savingId={updateUser.isPending ? -1 : undefined}
+        savingId={updateUser.isPending ? updateUser.variables?.id : undefined}
         deletingId={deleteUser.isPending ? -1 : undefined}
       />
     </div>
@@ -570,6 +571,8 @@ export default function UsersPage() {
 interface UserSummaryItem {
   id: number;
   username: string;
+  facilityName?: string;
+  showFacilityName?: boolean;
   role: string;
   permissions: string[];
   isActive: boolean;
@@ -587,7 +590,7 @@ function ExistingUsersCard({
 }: {
   users: UserSummaryItem[];
   isLoading: boolean;
-  onUpdate: (id: number, data: { password: string | null; permissions: string[] }) => void;
+  onUpdate: (id: number, data: UpdateUserRequest) => void;
   onDelete: (id: number) => void;
   onSetStatus: (id: number, isActive: boolean) => void;
   savingId?: number;
@@ -860,6 +863,8 @@ function UserDttsSection({ userId }: { userId: number }) {
 interface UserRowUser {
   id: number;
   username: string;
+  facilityName?: string;
+  showFacilityName?: boolean;
   role: "admin" | "client";
   permissions: string[];
   isActive: boolean;
@@ -874,7 +879,7 @@ function UserRow({
   deleting,
 }: {
   user: UserRowUser;
-  onUpdate: (data: { password: string | null; permissions: string[] }) => void;
+  onUpdate: (data: UpdateUserRequest) => void;
   onDelete: () => void;
   onSetStatus: (isActive: boolean) => void;
   saving: boolean;
@@ -883,6 +888,15 @@ function UserRow({
   const [expanded, setExpanded] = useState(false);
   const [perms, setPerms] = useState<string[]>(user.permissions);
   const [pwd, setPwd] = useState("");
+  const [facilityName, setFacilityName] = useState(user.facilityName ?? "");
+  const [showFacilityName, setShowFacilityName] = useState(user.showFacilityName ?? false);
+  useEffect(() => {
+    if (!expanded) {
+      setFacilityName(user.facilityName ?? "");
+      setShowFacilityName(user.showFacilityName ?? false);
+      setPerms(user.permissions);
+    }
+  }, [expanded, user.facilityName, user.showFacilityName, user.permissions]);
   const isAdmin = user.role === "admin";
   const { t } = useLanguage();
 
@@ -972,6 +986,26 @@ function UserRow({
       {/* ── Expanded details ── */}
       {expanded && !isAdmin && (
         <div className="border-t px-4 pb-4 pt-3 space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Label htmlFor={`facility-name-${user.id}`}>{t("users.facilityName")}</Label>
+            <Input
+              id={`facility-name-${user.id}`}
+              className="w-full sm:w-72"
+              value={facilityName}
+              maxLength={200}
+              disabled={saving}
+              onChange={(event) => setFacilityName(event.target.value)}
+            />
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id={`show-facility-${user.id}`}
+                checked={showFacilityName}
+                disabled={saving}
+                onCheckedChange={(checked) => setShowFacilityName(checked === true)}
+              />
+              <Label htmlFor={`show-facility-${user.id}`}>{t("users.showFacilityName")}</Label>
+            </div>
+          </div>
           {/* Nav permissions */}
           <div className="space-y-1.5">
             <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
@@ -1089,8 +1123,8 @@ function UserRow({
               />
             </div>
             <Button
-              onClick={() => { onUpdate({ password: pwd || null, permissions: perms }); setPwd(""); }}
-              disabled={saving}
+              onClick={() => { onUpdate({ password: pwd || null, permissions: perms, facilityName: facilityName.trim(), showFacilityName }); setPwd(""); }}
+              disabled={saving || (showFacilityName && !facilityName.trim())}
             >
               {saving ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Save className="ms-2 h-4 w-4" />}
               {t("users.savingBtn")}
