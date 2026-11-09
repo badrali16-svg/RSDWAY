@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, RotateCcw, Activity, Ban, Layers } from "lucide-react";
+import { Loader2, RotateCcw, Activity, Ban, Layers, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { SoapResponseViewer } from "@/components/soap-response-viewer";
@@ -22,6 +22,7 @@ import { GlnInput } from "@/components/gln-input";
 import { InvoiceBar } from "@/components/invoice-bar";
 import { useInvoiceGuard } from "@/lib/use-invoice-guard";
 import { useLanguage } from "@/lib/use-language";
+import { downloadReturnConsumeData } from "@/lib/return-consume-export";
 
 function withInvoice<T extends object>(data: T, inv: string): T {
   if (!inv.trim()) return data;
@@ -145,10 +146,21 @@ export default function ReturnConsumePage() {
                     </FormItem>
                   )} />
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={returnMutation.isPending}>
-                    {returnMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
-                    {t("return.executeReturn")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={returnMutation.isPending}>
+                      {returnMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                      {t("return.executeReturn")}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => downloadReturnConsumeData({
+                      operation: "إرجاع-SN",
+                      mode: "sn",
+                      toGLN: returnForm.getValues("toGLN"),
+                      products: returnForm.getValues("products"),
+                    })}>
+                      <Download className="me-2 h-4 w-4" />
+                      {t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -176,10 +188,21 @@ export default function ReturnConsumePage() {
                     </FormItem>
                   )} />
                   <ProductListInput name="products" mode="batch" />
-                  <Button type="submit" disabled={returnBatchMutation.isPending}>
-                    {returnBatchMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
-                    {t("return.executeReturnBatch")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={returnBatchMutation.isPending}>
+                      {returnBatchMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                      {t("return.executeReturnBatch")}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => downloadReturnConsumeData({
+                      operation: "إرجاع-Batch",
+                      mode: "batch",
+                      toGLN: returnBatchForm.getValues("toGLN"),
+                      products: returnBatchForm.getValues("products"),
+                    })}>
+                      <Download className="me-2 h-4 w-4" />
+                      {t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -201,10 +224,20 @@ export default function ReturnConsumePage() {
               <Form {...consumeForm}>
                 <form onSubmit={consumeForm.handleSubmit((v) => guard(() => consumeMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("return.successConsume")), onError })))} className="space-y-6">
                   <ProductListInput mode="sn" />
-                  <Button type="submit" disabled={consumeMutation.isPending}>
-                    {consumeMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
-                    {t("return.executeConsume")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" disabled={consumeMutation.isPending}>
+                      {consumeMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                      {t("return.executeConsume")}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => downloadReturnConsumeData({
+                      operation: "استهلاك-SN",
+                      mode: "sn",
+                      products: consumeForm.getValues("products"),
+                    })}>
+                      <Download className="me-2 h-4 w-4" />
+                      {t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -226,10 +259,20 @@ export default function ReturnConsumePage() {
               <Form {...cancelForm}>
                 <form onSubmit={cancelForm.handleSubmit((v) => guard(() => consumeCancelMutation.mutate({ data: v }, { onSuccess: (r) => onSuccess(r, t("return.successConsumeCancel")), onError })))} className="space-y-6">
                   <ProductListInput mode="sn" />
-                  <Button type="submit" variant="destructive" disabled={consumeCancelMutation.isPending}>
-                    {consumeCancelMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
-                    {t("return.executeConsumeCancel")}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="submit" variant="destructive" disabled={consumeCancelMutation.isPending}>
+                      {consumeCancelMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                      {t("return.executeConsumeCancel")}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => downloadReturnConsumeData({
+                      operation: "إلغاء-الاستهلاك",
+                      mode: "sn",
+                      products: cancelForm.getValues("products"),
+                    })}>
+                      <Download className="me-2 h-4 w-4" />
+                      {t("dispatch.downloadData")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
