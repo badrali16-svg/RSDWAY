@@ -28,6 +28,8 @@ import { GlnInput } from "@/components/gln-input";
 import { InvoiceBar } from "@/components/invoice-bar";
 import { useInvoiceGuard } from "@/lib/use-invoice-guard";
 import { useLanguage } from "@/lib/use-language";
+import { useOperationCancellation } from "@/hooks/use-operation-cancellation";
+import { OperationQuickCancel } from "@/components/operation-quick-cancel";
 
 const dispatchSchema = z.object({
   toGLN: z.string().min(1, "رقم GLN المستلم مطلوب"),
@@ -189,6 +191,7 @@ export default function DispatchAcceptPage() {
   const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
+  const quickCancel = useOperationCancellation();
   const [invoiceNum, setInvoiceNum] = useState("");
   const [invoiceAlert, setInvoiceAlert] = useState(true);
   const [notifDetails, setNotifDetails] = useState<NotifDetails | null>(null);
@@ -252,6 +255,7 @@ export default function DispatchAcceptPage() {
         onDialogCancel={cancelSubmit}
       />
 
+      <fieldset disabled={quickCancel.pending} className="min-w-0">
       <Tabs defaultValue={["dispatch","dispatch-batch","dispatch-cancel","dispatch-cancel-batch","accept","accept-batch","accept-dispatch"].find(tab => canDo(`op:${tab}`)) ?? "dispatch"} onValueChange={() => setInvoiceNum("")} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
           {canDo("op:dispatch") && <TabsTrigger value="dispatch">{t("dispatch.tabDispatch")}</TabsTrigger>}
@@ -276,7 +280,7 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...dispatchForm}>
-                <form onSubmit={dispatchForm.handleSubmit((v) => guard(() => dispatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatch")), onError })))} className="space-y-6">
+                <form onSubmit={dispatchForm.handleSubmit((v) => guard(() => quickCancel.run("dispatch", withInvoice(v, invoiceNum), dispatchMutation.mutate, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatch")), onError })))} className="space-y-6">
                   <FormField control={dispatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.toGLN")} />
@@ -314,7 +318,7 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...dispatchBatchForm}>
-                <form onSubmit={dispatchBatchForm.handleSubmit((v) => guard(() => dispatchBatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchBatch")), onError })))} className="space-y-6">
+                <form onSubmit={dispatchBatchForm.handleSubmit((v) => guard(() => quickCancel.run("dispatch-batch", withInvoice(v, invoiceNum), dispatchBatchMutation.mutate, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchBatch")), onError })))} className="space-y-6">
                   <FormField control={dispatchBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.toGLN")} />
@@ -352,7 +356,7 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...dispatchForm}>
-                <form onSubmit={dispatchForm.handleSubmit((v) => guard(() => dispatchCancelMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchCancel")), onError })))} className="space-y-6">
+                <form onSubmit={dispatchForm.handleSubmit((v) => guard(() => quickCancel.run("dispatch-cancel", withInvoice(v, invoiceNum), dispatchCancelMutation.mutate, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchCancel")), onError })))} className="space-y-6">
                   <FormField control={dispatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.toGLN")} />
@@ -390,7 +394,7 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...dispatchBatchForm}>
-                <form onSubmit={dispatchBatchForm.handleSubmit((v) => guard(() => dispatchCancelBatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchCancelBatch")), onError })))} className="space-y-6">
+                <form onSubmit={dispatchBatchForm.handleSubmit((v) => guard(() => quickCancel.run("dispatch-cancel-batch", withInvoice(v, invoiceNum), dispatchCancelBatchMutation.mutate, { onSuccess: (r) => onSuccess(r, t("dispatch.successDispatchCancelBatch")), onError })))} className="space-y-6">
                   <FormField control={dispatchBatchForm.control} name="toGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.toGLN")} />
@@ -428,7 +432,7 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...acceptForm}>
-                <form onSubmit={acceptForm.handleSubmit((v) => guard(() => acceptMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successAccept")), onError })))} className="space-y-6">
+                <form onSubmit={acceptForm.handleSubmit((v) => guard(() => quickCancel.run("accept", withInvoice(v, invoiceNum), acceptMutation.mutate, { onSuccess: (r) => onSuccess(r, t("dispatch.successAccept")), onError })))} className="space-y-6">
                   <FormField control={acceptForm.control} name="fromGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.fromGLN")} />
@@ -466,7 +470,7 @@ export default function DispatchAcceptPage() {
             </CardHeader>
             <CardContent>
               <Form {...acceptBatchForm}>
-                <form onSubmit={acceptBatchForm.handleSubmit((v) => guard(() => acceptBatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successAcceptBatch")), onError })))} className="space-y-6">
+                <form onSubmit={acceptBatchForm.handleSubmit((v) => guard(() => quickCancel.run("accept-batch", withInvoice(v, invoiceNum), acceptBatchMutation.mutate, { onSuccess: (r) => onSuccess(r, t("dispatch.successAcceptBatch")), onError })))} className="space-y-6">
                   <FormField control={acceptBatchForm.control} name="fromGLN" render={({ field }) => (
                     <FormItem>
                       <GlnInput value={field.value} onChange={field.onChange} label={t("dispatch.fromGLN")} />
@@ -519,7 +523,7 @@ export default function DispatchAcceptPage() {
                   } finally {
                     setNotifDetailLoading(false);
                   }
-                  acceptDispatchMutation.mutate({ data: withInvoice(v, invoiceNum) }, { onSuccess: (r) => onSuccess(r, t("dispatch.successAcceptDispatch")), onError });
+                  quickCancel.run("accept-dispatch", withInvoice(v, invoiceNum), acceptDispatchMutation.mutate, { onSuccess: (r) => onSuccess(r, t("dispatch.successAcceptDispatch")), onError });
                 }))} className="space-y-6">
                   <FormField control={acceptDispatchForm.control} name="dispatchNotificationId" render={({ field }) => (
                     <FormItem>
@@ -619,8 +623,10 @@ export default function DispatchAcceptPage() {
         </TabsContent>
         )}
       </Tabs>
+      </fieldset>
 
       <SoapResponseViewer response={response} />
+      <OperationQuickCancel receipt={quickCancel.receipt} disabled={quickCancel.pending} onPendingChange={quickCancel.setCancelPending} />
     </div>
   );
 }

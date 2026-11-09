@@ -26,6 +26,8 @@ import { InvoiceBar } from "@/components/invoice-bar";
 import { useInvoiceGuard } from "@/lib/use-invoice-guard";
 import * as XLSX from "xlsx";
 import { useLanguage } from "@/lib/use-language";
+import { useOperationCancellation } from "@/hooks/use-operation-cancellation";
+import { OperationQuickCancel } from "@/components/operation-quick-cancel";
 import { DatePickerInput } from "@/components/date-picker-input";
 
 function withInvoice<T extends object>(data: T, inv: string): T {
@@ -390,6 +392,7 @@ export default function ImportSupplyPage() {
   const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
+  const quickCancel = useOperationCancellation();
   const [invoiceNum, setInvoiceNum] = useState("");
   const [invoiceAlert, setInvoiceAlert] = useState(true);
   const { guard, dialogOpen, confirmSubmit, cancelSubmit } = useInvoiceGuard(invoiceNum, invoiceAlert);
@@ -427,7 +430,7 @@ export default function ImportSupplyPage() {
 
       const mutation = isSupply ? supplyMutation : importMutation;
 
-      mutation.mutate({ data: payload }, {
+      quickCancel.run(isSupply ? "supply" : "import", payload, mutation.mutate, {
         onSuccess: (res) => {
           setResponse(res);
           toast({ title: t("common.saved"), description: isSupply ? t("import.successSupply") : t("import.successImport") });
@@ -443,7 +446,7 @@ export default function ImportSupplyPage() {
     guard(() => {
       const mutation = isSupply ? supplyCancelMutation : importCancelMutation;
 
-      mutation.mutate({ data: withInvoice({ products: values.products }, invoiceNum) }, {
+      quickCancel.run(isSupply ? "supply-cancel" : "import-cancel", withInvoice({ products: values.products }, invoiceNum), mutation.mutate, {
         onSuccess: (res) => {
           setResponse(res);
           toast({ title: t("common.saved"), description: isSupply ? t("import.successSupplyCancel") : t("import.successImportCancel") });
@@ -536,6 +539,7 @@ export default function ImportSupplyPage() {
         onDialogCancel={cancelSubmit}
       />
 
+      <fieldset disabled={quickCancel.pending} className="min-w-0">
       <Tabs defaultValue={canDo("op:import") ? "import" : canDo("op:import-cancel") ? "import-cancel" : canDo("op:supply") ? "supply" : "supply-cancel"} onValueChange={() => setInvoiceNum("")} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
           {canDo("op:import") && <TabsTrigger value="import">{t("import.tabImport")}</TabsTrigger>}
@@ -640,8 +644,10 @@ export default function ImportSupplyPage() {
         </TabsContent>
         )}
       </Tabs>
+      </fieldset>
 
       <SoapResponseViewer response={response} />
+      <OperationQuickCancel receipt={quickCancel.receipt} disabled={quickCancel.pending} onPendingChange={quickCancel.setCancelPending} />
     </div>
   );
 }

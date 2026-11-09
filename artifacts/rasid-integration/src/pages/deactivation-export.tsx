@@ -23,6 +23,8 @@ import { SoapResponseViewer } from "@/components/soap-response-viewer";
 import { ProductListInput } from "@/components/product-list-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/lib/use-language";
+import { useOperationCancellation } from "@/hooks/use-operation-cancellation";
+import { OperationQuickCancel } from "@/components/operation-quick-cancel";
 
 const deactivationSchema = z.object({
   DR: z.string().min(1, "سبب التعطيل مطلوب"),
@@ -75,6 +77,7 @@ export default function DeactivationExportPage() {
   const { t } = useLanguage();
   const canDo = (op: string) => user?.role === "admin" || (user?.permissions ?? []).includes(op);
   const [response, setResponse] = useState<SoapResponse | null>(null);
+  const quickCancel = useOperationCancellation();
 
   const deactivationMutation = useDeactivateProducts();
   const deactivationCancelMutation = useDeactivationCancel();
@@ -102,7 +105,7 @@ export default function DeactivationExportPage() {
   });
 
   const handleDeactivation = (values: z.infer<typeof deactivationSchema>) => {
-    deactivationMutation.mutate({ data: values }, {
+    quickCancel.run("deactivation", values, deactivationMutation.mutate, {
       onSuccess: (res) => {
         setResponse(res);
         toast({ title: t("common.saved"), description: t("deactivation.successDeactivation") });
@@ -112,7 +115,7 @@ export default function DeactivationExportPage() {
   };
 
   const handleDeactivationCancel = (values: z.infer<typeof deactivationCancelSchema>) => {
-    deactivationCancelMutation.mutate({ data: values }, {
+    quickCancel.run("deactivation-cancel", values, deactivationCancelMutation.mutate, {
       onSuccess: (res) => {
         setResponse(res);
         toast({ title: t("common.saved"), description: t("deactivation.successDeactivationCancel") });
@@ -122,7 +125,7 @@ export default function DeactivationExportPage() {
   };
 
   const handleExport = (values: z.infer<typeof exportSchema>) => {
-    exportMutation.mutate({ data: values }, {
+    quickCancel.run("export", values, exportMutation.mutate, {
       onSuccess: (res) => {
         setResponse(res);
         toast({ title: t("common.saved"), description: t("deactivation.successExport") });
@@ -132,7 +135,7 @@ export default function DeactivationExportPage() {
   };
 
   const handleExportCancel = (values: z.infer<typeof deactivationCancelSchema>) => {
-    exportCancelMutation.mutate({ data: { products: values.products } }, {
+    quickCancel.run("export-cancel", { products: values.products }, exportCancelMutation.mutate, {
       onSuccess: (res) => {
         setResponse(res);
         toast({ title: t("common.saved"), description: t("deactivation.successExportCancel") });
@@ -148,6 +151,7 @@ export default function DeactivationExportPage() {
         <p className="text-muted-foreground mt-1">{t("deactivation.subtitle")}</p>
       </div>
 
+      <fieldset disabled={quickCancel.pending} className="min-w-0">
       <Tabs defaultValue={["deactivation","deactivation-cancel","export","export-cancel"].find(tab => canDo(`op:${tab}`)) ?? "deactivation"} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
           {canDo("op:deactivation") && <TabsTrigger value="deactivation">{t("deactivation.tabDeactivation")}</TabsTrigger>}
@@ -320,8 +324,10 @@ export default function DeactivationExportPage() {
         </TabsContent>
         )}
       </Tabs>
+      </fieldset>
 
       <SoapResponseViewer response={response} />
+      <OperationQuickCancel receipt={quickCancel.receipt} disabled={quickCancel.pending} onPendingChange={quickCancel.setCancelPending} />
     </div>
   );
 }
